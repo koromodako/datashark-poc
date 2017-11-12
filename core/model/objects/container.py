@@ -52,6 +52,7 @@ class Container(object):
         self.mime_text = Magic(magic_file=magic_file).from_file(path)
         self.mime_type = Magic(magic_file=magic_file, mime=True).from_file(path)
         self.sha256 = self.__hash()
+        self.dissected = False
         self.children = []
     #---------------------------------------------------------------------------
     # __hash
@@ -66,6 +67,21 @@ class Container(object):
                     h.update(f.read(Container.BLK_SZ))
                     sz -= Container.BLK_SZ
             return h.digest()
+    #---------------------------------------------------------------------------
+    # __children_dissected
+    #---------------------------------------------------------------------------
+    def __children_dissected(self):
+        lgr.debug('Container.__children_dissected()')
+        for child in self.children:
+            if not child.dissected:
+                return False
+        return True
+    #---------------------------------------------------------------------------
+    # dissection_pending
+    #---------------------------------------------------------------------------
+    def dissection_pending(self):
+        lgr.debug('Container.dissection_pending()')
+        return (self.dissected and self.__children_dissected())
     #---------------------------------------------------------------------------
     # exists
     #---------------------------------------------------------------------------

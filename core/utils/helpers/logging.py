@@ -102,9 +102,7 @@ def configure_logging(silent, verbose, debug):
         lgr.addHandler(rfh)
     if not silent:
         sh = logging.StreamHandler()
-        lvl = logging.ERROR
-        if verbose:
-            lvl = logging.INFO
+        lvl = logging.INFO
         if debug:
             lvl = logging.DEBUG
         sh.setLevel(lvl)

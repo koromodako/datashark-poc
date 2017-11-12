@@ -27,7 +27,14 @@
 #===============================================================================
 # IMPORTS
 #===============================================================================
-from utils.helpers.logging import get_logger
+from time                       import sleep
+from utils.helpers.lifo         import LIFO
+from utils.helpers.logging      import get_logger
+from model.objects.container    import Container
+from utils.threading.workerpool import WorkerPool
+## import dissectors below
+import dissection.dissectors.application.octet_stream_dissector as octet_stream_dissector
+## import dissectors before
 #===============================================================================
 # GLOBAL
 #===============================================================================
@@ -39,7 +46,6 @@ lgr = get_logger(__name__)
 # Dissector
 #-------------------------------------------------------------------------------
 class Dissector(object):
-    DISSECTORS = {}
     MANDATORY_FUNCS = [
         'mimes',
         'dissect',
@@ -50,32 +56,55 @@ class Dissector(object):
     #---------------------------------------------------------------------------
     def __init__(self):
         super(Dissector, self).__init__()
+        self.__dissectors = {}
     #---------------------------------------------------------------------------
-    # dissectors
+    # __register_dissector
     #---------------------------------------------------------------------------
-    @staticmethod
-    def dissectors():
-        return sorted(list(Dissector.DISSECTORS.keys()))
-    #---------------------------------------------------------------------------
-    # register_dissector
-    #---------------------------------------------------------------------------
-    @staticmethod
-    def register_dissector(dissector):
+    def __register_dissector(self, dissector):
+        lgr.debug('Dissector.__register_dissector()')
         mod_attributes = dir(dissector)
         for f in Dissector.MANDATORY_FUNCS:
             if not f in mod_attributes:
-                # TRACE
+                lgr.error('failed to add <{0}>: missing mandatory functions.'.format(
+                    dissector))
                 return False
         for mime in dissector.mimes():
-            if Dissector.DISSECTORS.get(mime, None) is None:
-                Dissector.DISSECTORS[mime] = []
-            Dissector.DISSECTORS[mime].append(dissector)
+            if self.__dissectors.get(mime, None) is None:
+                self.__dissectors[mime] = []
+            self.__dissectors[mime].append(dissector)
         return True
+    #---------------------------------------------------------------------------
+    # dissectors
+    #---------------------------------------------------------------------------
+    def dissectors(self):
+        lgr.debug('Dissector.dissectors()')
+        return sorted(list(self.__dissectors.keys()))
     #---------------------------------------------------------------------------
     # dissect
     #---------------------------------------------------------------------------
-    def dissect(self, f):
-        pass
-#===============================================================================
-# SCRIPT
-#===============================================================================
+    def dissect(self, path):
+        lgr.debug('Dissector.dissect()')
+        container = Container(path)
+        pending = LIFO([ container ])
+        pool = WorkerPool(4)
+        while len(pending) > 0:
+            # take next container
+            next_container = pending.pop()
+            # select dissectors for 
+            for dissector in self.__dissectors[next_container.mime_type]:
+                # take worker results
+                for r in pool.results():
+                    # add new containers to pending LIFO
+                    pending.push(r)
+                while not pool.exec_task(func=run_dissector, args=(dissector, next_container)):
+                    sleep(1)
+
+
+    #---------------------------------------------------------------------------
+    # dissect
+    #---------------------------------------------------------------------------
+    def load_dissectors(self):
+        lgr.debug('Dissector.load_dissectors()')
+        ## add dissectors below
+        self.__register_dissector(octet_stream_dissector)
+        ## add dissectors before

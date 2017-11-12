@@ -1,5 +1,5 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#    file: example_dissector.py
+#    file: octet_stream_dissector.py
 #    date: 2017-11-11
 #  author: paul.dautry
 # purpose:
@@ -24,12 +24,17 @@
 #===============================================================================
 # IMPORTS
 #===============================================================================
-from utils.helpers.logging       import get_logger
-from model.objects.container import Container 
+from utils.helpers.cli          import CLI
+from utils.helpers.logging      import get_logger
+from model.objects.container    import Container 
 #===============================================================================
 # GLOBAL
 #===============================================================================
+#===============================================================================
+# GLOBALS / CONFIG
+#===============================================================================
 lgr = get_logger(__name__)
+QEMU_IMG = 'qemu-img'
 #===============================================================================
 # FUNCTIONS
 #===============================================================================
@@ -41,10 +46,9 @@ lgr = get_logger(__name__)
 #-------------------------------------------------------------------------------
 def mimes():
     lgr.debug('mimes()')
-    #return [
-    #    'application/octet-stream'
-    #]
-    raise NotImplementedError
+    return [
+        'application/octet-stream'
+    ]
 #-------------------------------------------------------------------------------
 # can_dissect
 #   /!\ public mandatory function that the module must define /!\
@@ -54,8 +58,9 @@ def mimes():
 #-------------------------------------------------------------------------------
 def can_dissect(container):
     lgr.debug('can_dissect()')
-    #return True
-    raise NotImplementedError
+    return CLI.look_for_commands([
+        QEMU_IMG
+    ])
 #-------------------------------------------------------------------------------
 # dissect
 #   /!\ public mandatory function that the module must define /!\

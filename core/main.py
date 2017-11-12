@@ -16,6 +16,7 @@ from utils.helpers.logging import configure_logging
 # GLOBALS
 #===============================================================================
 lgr = None
+dissector = Dissector()
 #===============================================================================
 # FUNCTIONS 
 #===============================================================================
@@ -27,7 +28,7 @@ def abort(msg, code):
 #-------------------------------------------------------------------------------
 def list_dissectors(args):
     lgr.debug('list_dissectors()')
-    dissectors = Dissector.dissectors()
+    dissectors = dissector.dissectors()
     lgr.info('dissectors:')
     if len(dissectors) > 0:
         for d in dissectors:
@@ -39,10 +40,9 @@ def list_dissectors(args):
 #-------------------------------------------------------------------------------
 def dissect(args):
     lgr.debug('dissect()')
-    d = Dissector()
     if len(args.files) > 0:
         for f in args.files:
-            d.dissect(f)
+            dissector.dissect(f)
     else:
         lgr.error('give at least one file to dissect.')
 #-------------------------------------------------------------------------------
@@ -84,4 +84,5 @@ def main(args):
 if __name__ == '__main__':
     args = parse_args()
     configure_logging(args.silent, args.verbose, args.debug)
+    dissector.load_dissectors()
     exit(main(args))
