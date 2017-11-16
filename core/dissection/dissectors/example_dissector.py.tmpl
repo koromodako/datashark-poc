@@ -46,6 +46,18 @@ def mimes():
     #]
     raise NotImplementedError
 #-------------------------------------------------------------------------------
+# configure
+#   /!\ public mandatory function that the module must define /!\
+#   \brief configures the dissector internal parameters
+#   \param [list(tuple(option, value))] config
+#       configuration taken from Datashark's INI file if found.
+#       config might be None or empty.
+#   \return [bool]
+#-------------------------------------------------------------------------------
+def configure(config):
+    lgr.debug('configure()')
+    return True
+#-------------------------------------------------------------------------------
 # can_dissect
 #   /!\ public mandatory function that the module must define /!\
 #   \brief returns true if dissector can effectively dissect given container

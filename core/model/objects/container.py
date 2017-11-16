@@ -24,14 +24,14 @@
 #===============================================================================
 # IMPORTS
 #===============================================================================
-from os                     import stat
+import os
 from magic                  import Magic
 from hashlib                import sha256
 from utils.helpers.logging  import get_logger
 #===============================================================================
 # GLOBAL
 #===============================================================================
-lgr = get_logger(__name__)
+LGR = get_logger(__name__)
 #===============================================================================
 # FUNCTIONS
 #===============================================================================
@@ -58,9 +58,9 @@ class Container(object):
     # __hash
     #---------------------------------------------------------------------------
     def __hash(self):
-        lgr.debug('Container.__hash()')
+        LGR.debug('Container.__hash()')
         if self.exists():
-            h = sha256.new()
+            h = sha256()
             sz = self.size()
             with open(self.path, 'rb') as f:
                 while sz > 0:
@@ -71,7 +71,7 @@ class Container(object):
     # __children_dissected
     #---------------------------------------------------------------------------
     def __children_dissected(self):
-        lgr.debug('Container.__children_dissected()')
+        LGR.debug('Container.__children_dissected()')
         for child in self.children:
             if not child.dissected:
                 return False
@@ -80,17 +80,17 @@ class Container(object):
     # dissection_pending
     #---------------------------------------------------------------------------
     def dissection_pending(self):
-        lgr.debug('Container.dissection_pending()')
+        LGR.debug('Container.dissection_pending()')
         return (self.dissected and self.__children_dissected())
     #---------------------------------------------------------------------------
     # exists
     #---------------------------------------------------------------------------
     def exists(self):
-        lgr.debug('Container.exists()')
+        LGR.debug('Container.exists()')
         return os.path.isfile(self.path)
     #---------------------------------------------------------------------------
     # size
     #---------------------------------------------------------------------------
     def size(self):
-        lgr.debug('Container.size()')
+        LGR.debug('Container.size()')
         return os.stat(self.path).st_size

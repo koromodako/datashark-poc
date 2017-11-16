@@ -29,6 +29,7 @@ import os
 import logging
 import logging.handlers
 from termcolor          import colored
+from utils.config       import logsdir
 from utils.config       import PROG_NAME
 from utils.helpers.ms   import assert_ms_windows
 #-------------------------------------------------------------------------------
@@ -39,7 +40,7 @@ STREAM_FMT = '[%(levelname)s] - %(message)s'
 DEBUG = False
 VERBOSE = False
 COLORED = True
-LOGS_DIR = 'logs'
+LOGS_DIR = logsdir()
 if assert_ms_windows(no_raise=True):
     COLORED = False
 #-------------------------------------------------------------------------------
@@ -77,29 +78,29 @@ def configure_logging(silent, verbose, debug):
     debug_log = os.path.join(LOGS_DIR, 'datashark.debug.log')
     verbose_log = os.path.join(LOGS_DIR, 'datashark.log')
     os.makedirs(LOGS_DIR, exist_ok=True)
-    lgr = logging.getLogger(PROG_NAME)
-    lgr.setLevel(logging.DEBUG)
+    LGR = logging.getLogger(PROG_NAME)
+    LGR.setLevel(logging.DEBUG)
     fmtr = logging.Formatter(fmt=FMT)
     # add error log
     rfh = logging.handlers.RotatingFileHandler(error_log, 
         maxBytes=10*1024*1024, backupCount=5)
     rfh.setLevel(logging.ERROR)
     rfh.setFormatter(fmtr)
-    lgr.addHandler(rfh)
+    LGR.addHandler(rfh)
     # add verbose log if required
     if verbose:
         rfh = logging.handlers.RotatingFileHandler(verbose_log, 
             maxBytes=10*1024*1024, backupCount=5)
         rfh.setLevel(logging.INFO)
         rfh.setFormatter(fmtr)
-        lgr.addHandler(rfh)
+        LGR.addHandler(rfh)
     # add debug log if required
     if debug:
         rfh = logging.handlers.RotatingFileHandler(debug_log, 
             maxBytes=10*1024*1024, backupCount=5)
         rfh.setLevel(logging.DEBUG)
         rfh.setFormatter(fmtr)
-        lgr.addHandler(rfh)
+        LGR.addHandler(rfh)
     if not silent:
         sh = logging.StreamHandler()
         lvl = logging.INFO
@@ -107,7 +108,7 @@ def configure_logging(silent, verbose, debug):
             lvl = logging.DEBUG
         sh.setLevel(lvl)
         sh.setFormatter(ColoredFormatter(fmt=STREAM_FMT))
-        lgr.addHandler(sh)
+        LGR.addHandler(sh)
 #-------------------------------------------------------------------------------
 # get_logger
 #-------------------------------------------------------------------------------

@@ -33,7 +33,7 @@ from model.objects.container    import Container
 #===============================================================================
 # GLOBALS / CONFIG
 #===============================================================================
-lgr = get_logger(__name__)
+LGR = get_logger(__name__)
 QEMU_IMG = 'qemu-img'
 #===============================================================================
 # FUNCTIONS
@@ -45,10 +45,21 @@ QEMU_IMG = 'qemu-img'
 #   \return [list(str)]
 #-------------------------------------------------------------------------------
 def mimes():
-    lgr.debug('mimes()')
+    LGR.debug('mimes()')
     return [
         'application/octet-stream'
     ]
+#-------------------------------------------------------------------------------
+# configure
+#   /!\ public mandatory function that the module must define /!\
+#   \brief configures the dissector internal parameters
+#   \param [list(tuple(option, value))] config
+#       configuration taken from Datashark's INI file if found.
+#       config might be None or empty.
+#-------------------------------------------------------------------------------
+def configure(config):
+    LGR.debug('configure()')
+    return True
 #-------------------------------------------------------------------------------
 # can_dissect
 #   /!\ public mandatory function that the module must define /!\
@@ -57,7 +68,7 @@ def mimes():
 #   \return [bool]
 #-------------------------------------------------------------------------------
 def can_dissect(container):
-    lgr.debug('can_dissect()')
+    LGR.debug('can_dissect()')
     return CLI.look_for_commands([
         QEMU_IMG
     ])
@@ -66,10 +77,11 @@ def can_dissect(container):
 #   /!\ public mandatory function that the module must define /!\
 #   \brief realize the dissection of the container and returns a list of 
 #          containers found in the dissected container
+#   \param 
 #   \return [list(Container)]
 #-------------------------------------------------------------------------------
 def dissect(container):
-    lgr.debug('dissect()')
+    LGR.debug('dissect()')
     #return []
     raise NotImplementedError
 #===============================================================================

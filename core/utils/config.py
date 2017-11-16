@@ -24,11 +24,13 @@
 # IMPORTS
 #===============================================================================
 import os.path
+from tempfile       import gettempdir
 from argparse       import ArgumentParser
 from configparser   import ConfigParser
 #===============================================================================
 # CONFIGURATION
 #===============================================================================
+ARGS = None # do not edit this value
 CONFIG = None # do not edit this value
 PROG_NAME = 'datashark'
 LICENSE = """
@@ -57,11 +59,13 @@ See LICENSE file for details.
 #===============================================================================
 #-------------------------------------------------------------------------------
 # prog_prompt
+#
 #-------------------------------------------------------------------------------
 def prog_prompt(lvl):
     return '({0})[{1}]> '.format(PROG_NAME, lvl)
 #-------------------------------------------------------------------------------
 # get_arg_parser
+#
 #-------------------------------------------------------------------------------
 def get_arg_parser():
     parser = ArgumentParser()
@@ -80,42 +84,90 @@ def get_arg_parser():
     return parser
 #-------------------------------------------------------------------------------
 # print_license
+#
 #-------------------------------------------------------------------------------
 def print_license():
     print(LICENSE)
 #-------------------------------------------------------------------------------
 # print_license_warranty
+#
 #-------------------------------------------------------------------------------
 def print_license_warranty():
     print(LICENSE_WARRANTY)
 #-------------------------------------------------------------------------------
 # print_license_conditions
+#
 #-------------------------------------------------------------------------------
 def print_license_conditions():
     print(LICENSE_CONDITIONS)
 #-------------------------------------------------------------------------------
 # load_config
+#
 #-------------------------------------------------------------------------------
-def load_config(configfile=None):
+def load_config(args):
+    global ARGS
     global CONFIG
-    if configfile is None:
-        configfile = ''
+    ARGS = args
     CONFIG = ConfigParser()
-    CONFIG.read([
-        '/etc/datashark.conf', 
-        os.path.expanduser('~/datashark.conf'),
-        configfile
-    ])
+    config_files = [
+        '{0}.ini'.format(PROG_NAME),
+        os.path.expanduser('~/{0}.ini'.format(PROG_NAME)),
+        '/etc/{progname}/{progname}.ini'.format(progname=PROG_NAME)
+    ]
+    if 'config' in dir(ARGS):
+        if ARGS.config is not None:
+            config_files.append(ARGS.config)
+    CONFIG.read(config_files, encoding='utf-8')
+#-------------------------------------------------------------------------------
+# logsdir
+#   \brief returns application logs directory
+#-------------------------------------------------------------------------------
+def logsdir():
+    return os.path.join(gettempdir(), PROG_NAME, 'logs')
 #-------------------------------------------------------------------------------
 # config
+#   \brief returns application configuration value
 #-------------------------------------------------------------------------------
-def config(key, section=None, default=None):
-    # try environment variables first
-    env_key = key.upper()
-    if section is not None:
-        env_key = '_'.join([section.upper(), env_key])
-    val = os.getenv(env_key)
-    if val is not None:
+def config(option=None, default=None):
+    # read option following priority order
+    # 1 - try command line option
+    if option in dir(ARGS):
+        val = getattr(ARGS, option)
+        lgr.debug('option value from command line arguments: {0}={1}'.format(
+            option, val))
         return val
-    # try config file and finally fallback
-    return CONFIG.get(section, key, fallback=default)
+    # 2 - try configuration file option
+    val = CONFIG.get(PROG_NAME, option,fallback=None)
+    if val is not None:
+        lgr.debug('option value from configuration file: {0}={1}'.format(
+            option, val))
+        return val
+    # 3 - try environment variable
+    envar = '{0}_{1}'.format(PROG_NAME.upper(), option.upper())
+    val = os.getenv(envar)
+    if val is not None:
+        lgr.debug('option value from environment variable: {0}={1}'.format(
+            envar, val))
+        return val
+    # 4 - finally return default argument
+    lgr.debug('default: {0}={1}'.format(option, default))
+    return default
+#-------------------------------------------------------------------------------
+# module_config
+#   \brief 
+#-------------------------------------------------------------------------------
+def module_config(module, default=[]):
+    #---------------------------------------------------------------------------
+    # ModuleConfig
+    #   \brief 
+    #---------------------------------------------------------------------------
+    class ModuleConfig:
+        def has(self, member):
+            return (member in dir(self))
+    # create and fill config or return None
+    conf = ModuleConfig()
+    if CONFIG.has_section(module):
+        for option, val in CONFIG.items(section):
+            setattr(conf, option, val)
+        return conf
+    return None

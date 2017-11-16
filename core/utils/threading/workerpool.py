@@ -24,33 +24,57 @@
 #===============================================================================
 # IMPORTS
 #===============================================================================
-from threading import Thread
+import multiprocessing as mp
+#===============================================================================
+# FUNCTIONS
+#===============================================================================
+def dissect(container, dissectors):
+    for dissector in dissectors:
+        if dissector.can_dissect(container):
+            dissector.dissect(container)
+
+def worker_routine(queue, dissectors):
+    while True:
+        container = queue.get()
+        # if next container is None it means EXIT NOW
+        if container is None:
+            break
+        # foreach new container resulting of the dissection, add it to the 
+        # dissect queue
+        for new_container in dissect(container, dissectors):
+            queue.put(new_container)
+        queue.task_done()
 #===============================================================================
 # CLASSES
 #===============================================================================
+#-------------------------------------------------------------------------------
+# WorkerPool
+#-------------------------------------------------------------------------------
 class WorkerPool(object):
-    def __init__(self, max_workers):
+    def __init__(self, num_workers, dissectors):
         super(WorkerPool, self).__init__()
-        self.max_workers = max_workers
+        self.num_workers = num_workers
+        self.dissectors = dissectors
         self.workers = []
-
-    def results(self):
-        results = []
-        to_remove = []
-        for worker in self.workers:
-            if not worker.is_alive():
-                to_remove.append(worker)
-        for worker in to_remove:
-            worker.join()
-            results.append(worker.result)
-            self.workers.remove(worker)
-        return results
-
-    def exec_task(func, args):
-        if len(self.workers) < self.max_workers:
-            worker = Worker(target=func, args=args)
+        self.queue = mp.Queue()
+    #---------------------------------------------------------------------------
+    # process
+    #---------------------------------------------------------------------------
+    def process(self, containers):
+        # add given containers to lifo
+        for container in containers:
+            self.queue.put(container)
+        # create as much workers as needed
+        for i in range(self.num_workers):
+            worker = mp.Process(
+                target=worker_routine, 
+                args=(self.queue, self.dissectors))
             worker.start()
             self.workers.append(worker)
-            return True
-        return False
-
+        # wait for the lifo to be empty
+        self.queue.join()
+        # stop all workers
+        for i in range(self.num_workers):
+            self.queue.put(None)
+        for worker in self.workers:
+            worker.join()

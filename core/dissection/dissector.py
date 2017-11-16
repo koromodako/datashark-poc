@@ -27,18 +27,17 @@
 #===============================================================================
 # IMPORTS
 #===============================================================================
-from time                       import sleep
-from utils.helpers.lifo         import LIFO
+import os
+from importlib                  import import_module
+from utils.config               import config
+from utils.config               import module_config
 from utils.helpers.logging      import get_logger
 from model.objects.container    import Container
 from utils.threading.workerpool import WorkerPool
-## import dissectors below
-import dissection.dissectors.application.octet_stream_dissector as octet_stream_dissector
-## import dissectors before
 #===============================================================================
 # GLOBAL
 #===============================================================================
-lgr = get_logger(__name__)
+LGR = get_logger(__name__)
 #===============================================================================
 # CLASSES
 #===============================================================================
@@ -46,11 +45,12 @@ lgr = get_logger(__name__)
 # Dissector
 #-------------------------------------------------------------------------------
 class Dissector(object):
-    MANDATORY_FUNCS = [
+    MANDATORY_FUNCS = set([
         'mimes',
         'dissect',
-        'can_dissect'
-    ]
+        'can_dissect',
+        'configure'
+    ])
     #---------------------------------------------------------------------------
     # __init__
     #---------------------------------------------------------------------------
@@ -60,51 +60,86 @@ class Dissector(object):
     #---------------------------------------------------------------------------
     # __register_dissector
     #---------------------------------------------------------------------------
+    def __configure_dissector(self, dissector):
+        LGR.debug('Dissector.__configure_dissector()')
+        conf = module_config(dissector.name)
+        return dissector.configure(conf)
+    #---------------------------------------------------------------------------
+    # __register_dissector
+    #---------------------------------------------------------------------------
     def __register_dissector(self, dissector):
-        lgr.debug('Dissector.__register_dissector()')
-        mod_attributes = dir(dissector)
-        for f in Dissector.MANDATORY_FUNCS:
-            if not f in mod_attributes:
-                lgr.error('failed to add <{0}>: missing mandatory functions.'.format(
-                    dissector))
-                return False
+        LGR.debug('Dissector.__register_dissector()')
+        mod_funcs = set(dir(dissector))
+        missing_funcs = mod_funcs.intersection(Dissector.MANDATORY_FUNCS)
+        missing_funcs = list(missing_funcs.symmetric_difference(Dissector.MANDATORY_FUNCS))
+        if len(missing_funcs) > 0:
+            LGR.error("""failed to add:
+    {0}
+    >>> details: missing mandatory functions ({1}).""".format(dissector, missing_funcs))
+            return False
         for mime in dissector.mimes():
             if self.__dissectors.get(mime, None) is None:
                 self.__dissectors[mime] = []
             self.__dissectors[mime].append(dissector)
         return True
     #---------------------------------------------------------------------------
-    # dissectors
+    # __import_dissector
     #---------------------------------------------------------------------------
-    def dissectors(self):
-        lgr.debug('Dissector.dissectors()')
-        return sorted(list(self.__dissectors.keys()))
-    #---------------------------------------------------------------------------
-    # dissect
-    #---------------------------------------------------------------------------
-    def dissect(self, path):
-        lgr.debug('Dissector.dissect()')
-        container = Container(path)
-        pending = LIFO([ container ])
-        pool = WorkerPool(4)
-        while len(pending) > 0:
-            # take next container
-            next_container = pending.pop()
-            # select dissectors for 
-            for dissector in self.__dissectors[next_container.mime_type]:
-                # take worker results
-                for r in pool.results():
-                    # add new containers to pending LIFO
-                    pending.push(r)
-                while not pool.exec_task(func=run_dissector, args=(dissector, next_container)):
-                    sleep(1)
-
-
+    def __import_dissector(self, import_path):
+        LGR.debug('importing: {0}'.format(import_path))
+        try:
+            dissector = import_module(import_path)
+            dissector.name = import_path.split('.')[-1]
+        except Exception as e:
+            LGR.error('failed to import: {0}'.format(import_path))
+            LGR.error('error: {0}'.format(e))
+            return False
+        if not self.__register_dissector(dissector):
+            LGR.warning('failed to load dissector, see errors above.')
+            return False
+        if not self.__configure_dissector(dissector):
+            LGR.warning('failed to configure dissector, see errors above.')
+            return False
+        return True
     #---------------------------------------------------------------------------
     # dissect
     #---------------------------------------------------------------------------
     def load_dissectors(self):
-        lgr.debug('Dissector.load_dissectors()')
-        ## add dissectors below
-        self.__register_dissector(octet_stream_dissector)
-        ## add dissectors before
+        LGR.debug('Dissector.load_dissectors()')
+        LGR.info('loading dissectors...')
+        ok = True
+        script_path = os.path.dirname(__file__)
+        search_path = os.path.join(script_path, 'dissectors')
+        rel_import_path = search_path.split(os.sep)[-2:]
+        LGR.debug('dissectors search_path: {0}'.format(search_path))
+        for root, dirs, files in os.walk(search_path):
+            rel_root = root.replace(search_path, '')[1:]
+            for f in files:
+                if f.endswith('.py'):
+                    rel_import_path += rel_root.split(os.sep)
+                    rel_import_path.append(f[:-3])
+                    import_path = '.'.join(rel_import_path)
+                    if not self.__import_dissector(import_path):
+                        ok = False
+        LGR.info('dissectors loaded{0}'.format(' (with errors).' if not ok else '.'))
+        return ok
+    #---------------------------------------------------------------------------
+    # dissectors
+    #---------------------------------------------------------------------------
+    def dissectors(self):
+        LGR.debug('Dissector.dissectors()')
+        dissectors = []
+        for mime in sorted(list(self.__dissectors.keys())):
+            mime_dissectors = []
+            for dissector in self.__dissectors[mime]:
+                mime_dissectors.append(dissector.name)
+            dissectors.append([mime, sorted(mime_dissectors)])
+        return dissectors
+    #---------------------------------------------------------------------------
+    # dissect
+    #---------------------------------------------------------------------------
+    def dissect(self, path, num_threads=1):
+        LGR.debug('Dissector.dissect()')
+        container = Container(path)
+        pool = WorkerPool(config('num_workers'), self.__dissectors)
+        pool.process([container]) # will hang until container has been fully processed.

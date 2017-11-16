@@ -15,8 +15,8 @@ from utils.helpers.logging import configure_logging
 #===============================================================================
 # GLOBALS
 #===============================================================================
-lgr = None
-dissector = Dissector()
+LGR = None
+DISSECTOR = Dissector()
 #===============================================================================
 # FUNCTIONS 
 #===============================================================================
@@ -27,24 +27,26 @@ def abort(msg, code):
 # list_dissectors
 #-------------------------------------------------------------------------------
 def list_dissectors(args):
-    lgr.debug('list_dissectors()')
-    dissectors = dissector.dissectors()
-    lgr.info('dissectors:')
+    LGR.debug('list_dissectors()')
+    dissectors = DISSECTOR.dissectors()
+    LGR.info('dissectors:')
     if len(dissectors) > 0:
-        for d in dissectors:
-            lgr.info('\t+ {0}'.format(d))
+        for mime in dissectors:
+            LGR.info('\t+ {0}'.format(mime[0]))
+            for dissector in mime[1]:
+                LGR.info('\t\t+ {0}'.format(dissector))
     else:
-        lgr.error('no dissector registered.')
+        LGR.error('no dissector registered.')
 #-------------------------------------------------------------------------------
 # dissect
 #-------------------------------------------------------------------------------
 def dissect(args):
-    lgr.debug('dissect()')
+    LGR.debug('dissect()')
     if len(args.files) > 0:
         for f in args.files:
-            dissector.dissect(f)
+            DISSECTOR.dissect(f)
     else:
-        lgr.error('give at least one file to dissect.')
+        LGR.error('give at least one file to dissect.')
 #-------------------------------------------------------------------------------
 # ACTIONS
 #-------------------------------------------------------------------------------
@@ -64,25 +66,33 @@ def parse_args():
 #-------------------------------------------------------------------------------
 # main
 #-------------------------------------------------------------------------------
-def main(args):
-    global lgr
-    lgr = get_logger(__name__)
-    load_config(args.config)
+def main():
+    global LGR
+    # parse input arguments
+    args = parse_args()
+    # print license if required
+    if not args.silent:
+        print_license()
+    # configure logging module
+    configure_logging(args.silent, args.verbose, args.debug)
+    # retrieve module logger after logging module has been configured
+    LGR = get_logger(__name__)
+    # load datashark configuration
+    load_config(args)
+    # load dissectors
+    DISSECTOR.load_dissectors()
+    # process specific options
     if args.warranty:
         print_license_warranty()
         return 0
     if args.conditions:
         print_license_conditions()
         return 0
-    if not args.silent:
-        print_license()
+    # execute action
     ACTIONS[args.action](args)
     return 0
 #===============================================================================
 # SCIRPT
 #===============================================================================
 if __name__ == '__main__':
-    args = parse_args()
-    configure_logging(args.silent, args.verbose, args.debug)
-    dissector.load_dissectors()
-    exit(main(args))
+    exit(main())
