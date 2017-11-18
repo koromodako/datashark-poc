@@ -10,6 +10,7 @@ from utils.config               import print_license
 from utils.config               import get_arg_parser
 from utils.config               import print_license_warranty
 from utils.config               import print_license_conditions
+from dissection.container       import Container
 from dissection.dissector       import Dissector
 from utils.helpers.filters      import FSEntryFilter
 from utils.helpers.logging      import get_logger
@@ -22,13 +23,16 @@ LGR = None
 #===============================================================================
 # FUNCTIONS 
 #===============================================================================
+#-------------------------------------------------------------------------------
+# abort
+#-------------------------------------------------------------------------------
 def abort(msg, code=42):
     LGR.error(msg)
     exit(code)
 #-------------------------------------------------------------------------------
-# list_dissectors
+# dissector_list
 #-------------------------------------------------------------------------------
-def list_dissectors(args):
+def dissector_list(args):
     LGR.debug('list_dissectors()')
     dissectors = Dissector().dissectors()
     LGR.info('dissectors:')
@@ -40,9 +44,9 @@ def list_dissectors(args):
     else:
         abort('no dissector registered.')
 #-------------------------------------------------------------------------------
-# dissect
+# dissector_dissect
 #-------------------------------------------------------------------------------
-def dissect(args):
+def dissector_dissect(args):
     LGR.debug('dissect()')
     dissector = Dissector()
     dissector.load_hashdatabases()
@@ -86,13 +90,34 @@ def hdb_merge(args):
     # merge db files
     HashDatabase.merge(fpath, files)
 #-------------------------------------------------------------------------------
-# ACTIONS
+# container_hash
 #-------------------------------------------------------------------------------
+def container_hash(args):
+    for f in args.files:
+        if os.path.isfile(f):
+            LGR.info('{0}: {1}'.format(f, Container.hash(f)))
+        else:
+            LGR.error('{0}: invalid path.')
+#-------------------------------------------------------------------------------
+# container_mimes
+#-------------------------------------------------------------------------------
+def container_mimes(args):
+    for f in args.files:
+        if os.path.isfile(f):
+            mimes = Container.mimes(config('magic_file'), f)
+            LGR.info('{0}:\n\tmime: {1}\n\ttext: {2}'.format(f, mimes[1], mimes[0]))
+        else:
+            LGR.error('{0}: invalid path.')
+#===============================================================================
+# ACTIONS
+#===============================================================================
 ACTIONS = {
-    'list_dissectors': list_dissectors,
-    'dissect': dissect,
-    'hdb_create': hdb_create,
-    'hdb_merge': hdb_merge
+    'dissector.list': dissector_list,
+    'dissector.dissect': dissector_dissect,
+    'hdb.create': hdb_create,
+    'hdb.merge': hdb_merge,
+    'container.hash': container_hash,
+    'container.mimes': container_mimes
 }
 #-------------------------------------------------------------------------------
 # parse_args
@@ -105,6 +130,8 @@ def parse_args():
         help='Affects only hdb_create. Tells it to recurse inside given directories.')
     parser.add_argument('-n', '--num-workers', type=int, 
         help='Number of workers to be used to dissect containers.')
+    parser.add_argument('-m', '--magic-file', type=str, default=None,
+        help='Magic file to be used internally.')
     parser.add_argument('--include-dirs', type=str, default='',
         help='Comma-separated list of patterns.')
     parser.add_argument('--exclude-dirs', type=str, default='',

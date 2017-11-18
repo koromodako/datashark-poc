@@ -51,8 +51,8 @@ class Container(object):
         # container file path
         self.path = path
         # file information
-        self.sha256 = self.__hash()
-        (self.mime_text, self.mime_type) = self.__mimes(magic_file)
+        self.sha256 = Container.hash(path)
+        (self.mime_text, self.mime_type) = Container.mimes(magic_file, path)
         # properties
         self.flagged = False
         self.whitelisted = False
@@ -63,14 +63,29 @@ class Container(object):
         # unexpected dissection results will fill this list of errors
         self.__errors = []
     #---------------------------------------------------------------------------
-    # __hash
+    # exists
     #---------------------------------------------------------------------------
-    def __hash(self):
-        LGR.debug('Container.__hash()')
-        if self.exists():
+    @staticmethod
+    def exists(path):
+        LGR.debug('Container.exists()')
+        return os.path.isfile(path)
+    #---------------------------------------------------------------------------
+    # size
+    #---------------------------------------------------------------------------
+    @staticmethod
+    def size(path):
+        LGR.debug('Container.size()')
+        return os.stat(path).st_size
+    #---------------------------------------------------------------------------
+    # hash
+    #---------------------------------------------------------------------------
+    @staticmethod
+    def hash(path):
+        LGR.debug('Container.hash()')
+        if Container.exists(path):
             h = sha256()
-            sz = self.size()
-            with open(self.path, 'rb') as f:
+            sz = Container.size(path)
+            with open(path, 'rb') as f:
                 while sz > 0:
                     h.update(f.read(Container.BLK_SZ))
                     sz -= Container.BLK_SZ
@@ -79,22 +94,11 @@ class Container(object):
     #---------------------------------------------------------------------------
     # __mimes
     #---------------------------------------------------------------------------
-    def __mimes(self, magic_file):
-        LGR.debug('Container.__mimes()')
-        return (Magic(magic_file=magic_file).from_file(self.path), 
-                Magic(magic_file=magic_file, mime=True).from_file(self.path))
-    #---------------------------------------------------------------------------
-    # exists
-    #---------------------------------------------------------------------------
-    def exists(self):
-        LGR.debug('Container.exists()')
-        return os.path.isfile(self.path)
-    #---------------------------------------------------------------------------
-    # size
-    #---------------------------------------------------------------------------
-    def size(self):
-        LGR.debug('Container.size()')
-        return os.stat(self.path).st_size
+    @staticmethod
+    def mimes(magic_file, path):
+        LGR.debug('Container.mimes()')
+        return (Magic(magic_file=magic_file).from_file(path), 
+                Magic(magic_file=magic_file, mime=True).from_file(path))
     #---------------------------------------------------------------------------
     # virtual_path
     #---------------------------------------------------------------------------
