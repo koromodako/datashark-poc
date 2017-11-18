@@ -34,7 +34,9 @@ def abort(msg, code=42):
 #-------------------------------------------------------------------------------
 def dissector_list(args):
     LGR.debug('list_dissectors()')
-    dissectors = Dissector().dissectors()
+    dissector = Dissector()
+    dissector.load_dissectors()
+    dissectors = dissector.dissectors()
     LGR.info('dissectors:')
     if len(dissectors) > 0:
         for mime in dissectors:
