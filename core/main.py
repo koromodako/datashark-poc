@@ -11,6 +11,7 @@ from utils.config               import get_arg_parser
 from utils.config               import print_license_warranty
 from utils.config               import print_license_conditions
 from dissection.dissector       import Dissector
+from utils.helpers.filters      import FSEntryFilter
 from utils.helpers.logging      import get_logger
 from utils.helpers.logging      import configure_logging
 from dissection.hashdatabase    import HashDatabase
@@ -66,7 +67,8 @@ def hdb_create(args):
         if not os.path.isdir(dpath):
             abort('<{0}> must be an existing directory.'.format(dpath))
     # create database
-    HashDatabase.create(fpath, dirs, args.recursive)
+    HashDatabase.create(fpath, dirs, args.recursive, 
+        args.dir_filter, args.file_filter)
 #-------------------------------------------------------------------------------
 # hdb_merge
 #-------------------------------------------------------------------------------
@@ -103,6 +105,14 @@ def parse_args():
         help='Affects only hdb_create. Tells it to recurse inside given directories.')
     parser.add_argument('-n', '--num-workers', type=int, 
         help='Number of workers to be used to dissect containers.')
+    parser.add_argument('--include-dirs', type=str, default='',
+        help='Comma-separated list of patterns.')
+    parser.add_argument('--exclude-dirs', type=str, default='',
+        help='Comma-separated list of patterns.')
+    parser.add_argument('--include-files', type=str, default='',
+        help='Comma-separated list of patterns.')
+    parser.add_argument('--exclude-files', type=str, default='',
+        help='Comma-separated list of patterns.')
     parser.add_argument('files', nargs='*', help='Files to process.')
     return parser.parse_args()
 #-------------------------------------------------------------------------------
@@ -112,6 +122,8 @@ def main():
     global LGR
     # parse input arguments
     args = parse_args()
+    args.dir_filter = FSEntryFilter(args.include_dirs, args.exclude_dirs)
+    args.file_filter = FSEntryFilter(args.include_files, args.exclude_files)
     # print license if required
     if not args.silent:
         print_license()
