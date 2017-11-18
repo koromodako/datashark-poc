@@ -31,13 +31,48 @@ import os
 from importlib                  import import_module
 from utils.config               import config
 from utils.config               import module_config
+from dissection.container       import Container
 from utils.helpers.logging      import get_logger
-from model.objects.container    import Container
+from dissection.hashdatabase    import HashDatabase
 from utils.threading.workerpool import WorkerPool
 #===============================================================================
 # GLOBAL
 #===============================================================================
 LGR = get_logger(__name__)
+#===============================================================================
+# FUNCITON
+#===============================================================================
+#-------------------------------------------------------------------------------
+# dissect
+#-------------------------------------------------------------------------------
+def dissect(container, dissectors):
+    mods = dissectors.get(container.mime_type, None)
+    if mods is None:
+        LGR.warn('cannot find dissector for: {0}'.format(container.mime_type))
+        container.flagged = True
+        return []
+    for dissector in dissectors:
+        if dissector.can_dissect(container):
+            dissector.dissect(container)
+#-------------------------------------------------------------------------------
+# dissection_routine
+#-------------------------------------------------------------------------------
+def dissection_routine(container, whitelist, blacklist, dissectors):
+        iq = []
+        oq = []
+        # foreach new container resulting of the dissection, add it to the 
+        # dissect queue
+        for new_container in dissect(container, dissectors):
+            container.add_child(new_container)
+            if whitelist.contains(container):
+                new_container.whitelisted = True # skip processing (whitelisted)
+            elif blacklist.contains(container):
+                new_container.flagged = True
+                new_container.blacklisted = True # skip processing (blacklisted)
+            else:
+                iq.append(new_container) # processing needed
+        # return lists
+        return (iq, oq)
 #===============================================================================
 # CLASSES
 #===============================================================================
@@ -57,6 +92,8 @@ class Dissector(object):
     def __init__(self):
         super(Dissector, self).__init__()
         self.__dissectors = {}
+        self.__whitelist = None
+        self.__blacklist = None
     #---------------------------------------------------------------------------
     # __register_dissector
     #---------------------------------------------------------------------------
@@ -102,7 +139,7 @@ class Dissector(object):
             return False
         return True
     #---------------------------------------------------------------------------
-    # dissect
+    # load_dissectors
     #---------------------------------------------------------------------------
     def load_dissectors(self):
         LGR.debug('Dissector.load_dissectors()')
@@ -124,6 +161,15 @@ class Dissector(object):
         LGR.info('dissectors loaded{0}'.format(' (with errors).' if not ok else '.'))
         return ok
     #---------------------------------------------------------------------------
+    # load_hashdatabases
+    #---------------------------------------------------------------------------
+    def load_hashdatabases(self):
+        LGR.debug('Dissector.load_hashdatabases()')
+        LGR.info('loading whitelist database...')
+        self.__whitelist = HashDatabase('whitelist', config('whitelist'))
+        LGR.info('loading blacklist database...')
+        self.__blacklist = HashDatabase('blacklist', config('blacklist'))
+    #---------------------------------------------------------------------------
     # dissectors
     #---------------------------------------------------------------------------
     def dissectors(self):
@@ -140,6 +186,14 @@ class Dissector(object):
     #---------------------------------------------------------------------------
     def dissect(self, path, num_threads=1):
         LGR.debug('Dissector.dissect()')
+        LGR.info('starting dissection processes...')
         container = Container(path)
-        pool = WorkerPool(config('num_workers'), self.__dissectors)
-        pool.process([container]) # will hang until container has been fully processed.
+        kwargs = {
+            'whitelist': self.__whitelist,
+            'blacklist': self.__blacklist,
+            'dissectors': self.__dissectors 
+        }
+        pool = WorkerPool(config('num_workers', default=1))
+        pool.map(dissection_routine, kwargs, tasks=[container])
+        LGR.info('dissection done.')
+        return container

@@ -24,26 +24,39 @@
 #===============================================================================
 # IMPORTS
 #===============================================================================
-import multiprocessing as mp
+import multiprocessing       as mp
+from utils.helpers.logging   import get_logger
+#===============================================================================
+# GLOBALS
+#===============================================================================
+LGR = get_logger(__name__)
 #===============================================================================
 # FUNCTIONS
 #===============================================================================
-def dissect(container, dissectors):
-    for dissector in dissectors:
-        if dissector.can_dissect(container):
-            dissector.dissect(container)
-
-def worker_routine(queue, dissectors):
+#-------------------------------------------------------------------------------
+# worker_routine
+#-------------------------------------------------------------------------------
+def worker_routine(iqueue, oqueue, routine, kwargs):
     while True:
-        container = queue.get()
-        # if next container is None it means EXIT NOW
-        if container is None:
+        # take next available task
+        LGR.debug('retrieving task...')
+        task = iqueue.get()
+        # if next task is None it means EXIT NOW
+        if task is None:
+            LGR.debug('process exiting!')
+            iqueue.task_done() # validate None task
             break
-        # foreach new container resulting of the dissection, add it to the 
-        # dissect queue
-        for new_container in dissect(container, dissectors):
-            queue.put(new_container)
-        queue.task_done()
+        # perform routine on task
+        LGR.debug('calling routine...')
+        (iq, oq) = routine(task, **kwargs)
+        # re-inject results if needed
+        for e in iq:
+            iqueue.put(e)
+        for e in oq:
+            oqueue.put(e) 
+        # task has been processed
+        iqueue.task_done()
+        LGR.debug('task done.')
 #===============================================================================
 # CLASSES
 #===============================================================================
@@ -51,30 +64,44 @@ def worker_routine(queue, dissectors):
 # WorkerPool
 #-------------------------------------------------------------------------------
 class WorkerPool(object):
-    def __init__(self, num_workers, dissectors):
+    def __init__(self, num_workers):
         super(WorkerPool, self).__init__()
         self.num_workers = num_workers
-        self.dissectors = dissectors
         self.workers = []
-        self.queue = mp.Queue()
+        self.iqueue = mp.JoinableQueue()
+        self.oqueue = mp.Queue()
     #---------------------------------------------------------------------------
     # process
     #---------------------------------------------------------------------------
-    def process(self, containers):
-        # add given containers to lifo
-        for container in containers:
-            self.queue.put(container)
+    def map(self, routine, kwargs, tasks):
+        # add tasks to fifo
+        LGR.debug('adding tasks to input queue...')
+        for task in tasks:
+            self.iqueue.put(task)
         # create as much workers as needed
+        LGR.debug('creating {0} workers...'.format(self.num_workers))
         for i in range(self.num_workers):
             worker = mp.Process(
                 target=worker_routine, 
-                args=(self.queue, self.dissectors))
+                args=(self.iqueue, self.oqueue, routine, kwargs))
             worker.start()
             self.workers.append(worker)
-        # wait for the lifo to be empty
-        self.queue.join()
+        # wait for the fifo to be empty
+        LGR.debug('waiting for iqueue to be empty...')
+        self.iqueue.join()
         # stop all workers
+        LGR.debug('stoping processes...')
         for i in range(self.num_workers):
-            self.queue.put(None)
-        for worker in self.workers:
-            worker.join()
+            self.iqueue.put(None)
+        # fill results array
+        LGR.debug('consume results...')
+        results = []
+        while not self.oqueue.empty():
+            results.append(self.oqueue.get())
+        # wait for all workers to terminate
+        for i in range(len(self.workers)):
+            LGR.debug('waiting worker n°{0} to terminate...'.format(i))
+            self.workers[i].join()
+        self.workers = []
+        # finally returns all results
+        return results

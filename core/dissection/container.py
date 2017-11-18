@@ -48,12 +48,20 @@ class Container(object):
     #---------------------------------------------------------------------------
     def __init__(self, path, magic_file=None):
         super(Container, self).__init__()
+        # container file path
         self.path = path
-        self.mime_text = Magic(magic_file=magic_file).from_file(path)
-        self.mime_type = Magic(magic_file=magic_file, mime=True).from_file(path)
+        # file information
         self.sha256 = self.__hash()
-        self.dissected = False
-        self.children = []
+        (self.mime_text, self.mime_type) = self.__mimes(magic_file)
+        # properties
+        self.flagged = False
+        self.whitelisted = False
+        self.blacklisted = False
+        # container hierarchy
+        self.__parent = None
+        self.__children = []
+        # unexpected dissection results will fill this list of errors
+        self.__errors = []
     #---------------------------------------------------------------------------
     # __hash
     #---------------------------------------------------------------------------
@@ -66,22 +74,14 @@ class Container(object):
                 while sz > 0:
                     h.update(f.read(Container.BLK_SZ))
                     sz -= Container.BLK_SZ
-            return h.digest()
+            return h.digest().hex()
     #---------------------------------------------------------------------------
-    # __children_dissected
+    # __mimes
     #---------------------------------------------------------------------------
-    def __children_dissected(self):
-        LGR.debug('Container.__children_dissected()')
-        for child in self.children:
-            if not child.dissected:
-                return False
-        return True
-    #---------------------------------------------------------------------------
-    # dissection_pending
-    #---------------------------------------------------------------------------
-    def dissection_pending(self):
-        LGR.debug('Container.dissection_pending()')
-        return (self.dissected and self.__children_dissected())
+    def __mimes(self, magic_file):
+        LGR.debug('Container.__mimes()')
+        return (Magic(magic_file=magic_file).from_file(self.path), 
+                Magic(magic_file=magic_file, mime=True).from_file(self.path))
     #---------------------------------------------------------------------------
     # exists
     #---------------------------------------------------------------------------
@@ -94,3 +94,21 @@ class Container(object):
     def size(self):
         LGR.debug('Container.size()')
         return os.stat(self.path).st_size
+    #---------------------------------------------------------------------------
+    # virtual_path
+    #---------------------------------------------------------------------------
+    def virtual_path(self):
+        LGR.debug('Container.virtual_path()')
+        path = []
+        parent = self.__parent
+        while parent is not None:
+            path.insert(0, parent.namesubsection)
+            parent = parent.__parent
+        return os.path.join(path)
+    #---------------------------------------------------------------------------
+    # add_child
+    #---------------------------------------------------------------------------
+    def add_child(container):
+        LGR.debug('Container.add_child()')
+        container.__parent = self
+        self.__children.append(container)

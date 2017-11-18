@@ -24,9 +24,9 @@
 #===============================================================================
 # IMPORTS
 #===============================================================================
-from utils.helpers.cli          import CLI
-from utils.helpers.logging      import get_logger
-from model.objects.container    import Container 
+from utils.helpers.cli      import CLI
+from dissection.container   import Container 
+from utils.helpers.logging  import get_logger
 #===============================================================================
 # GLOBAL
 #===============================================================================

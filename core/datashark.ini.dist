@@ -1,2 +1,5 @@
 [datashark]
+magic_file=
+whitelist=whitelist.json
+blacklist=blacklist.json
 num_workers=4

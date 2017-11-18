@@ -35,8 +35,8 @@ from utils.helpers.ms   import assert_ms_windows
 #-------------------------------------------------------------------------------
 # CONFIGURATION
 #-------------------------------------------------------------------------------
-FMT = '(%(asctime)s){%(name)s}[%(levelname)s] - %(message)s'
-STREAM_FMT = '[%(levelname)s] - %(message)s'
+FMT = '(%(asctime)s)[%(levelname)s]{%(process)d:%(module)s} - %(message)s'
+STREAM_FMT = '[%(levelname)s]{%(process)d:%(module)s} - %(message)s'
 DEBUG = False
 VERBOSE = False
 COLORED = True

@@ -133,24 +133,25 @@ def config(option=None, default=None):
     # 1 - try command line option
     if option in dir(ARGS):
         val = getattr(ARGS, option)
-        lgr.debug('option value from command line arguments: {0}={1}'.format(
-            option, val))
-        return val
+        if val is not None:
+            #LGR.debug('option value from command line arguments: {0}={1}'.format(
+            #    option, val))
+            return val
     # 2 - try configuration file option
     val = CONFIG.get(PROG_NAME, option,fallback=None)
     if val is not None:
-        lgr.debug('option value from configuration file: {0}={1}'.format(
-            option, val))
+        #LGR.debug('option value from configuration file: {0}={1}'.format(
+        #    option, val))
         return val
     # 3 - try environment variable
     envar = '{0}_{1}'.format(PROG_NAME.upper(), option.upper())
     val = os.getenv(envar)
     if val is not None:
-        lgr.debug('option value from environment variable: {0}={1}'.format(
-            envar, val))
+        #LGR.debug('option value from environment variable: {0}={1}'.format(
+        #    envar, val))
         return val
     # 4 - finally return default argument
-    lgr.debug('default: {0}={1}'.format(option, default))
+    #LGR.debug('default: {0}={1}'.format(option, default))
     return default
 #-------------------------------------------------------------------------------
 # module_config
