@@ -48,14 +48,19 @@ def worker_routine(iqueue, oqueue, routine, kwargs):
             break
         # perform routine on task
         LGR.debug('calling routine...')
-        (iq, oq) = routine(task, **kwargs)
-        # re-inject results if needed
-        for e in iq:
-            iqueue.put(e)
-        for e in oq:
-            oqueue.put(e) 
-        # task has been processed
-        iqueue.task_done()
+        try:
+            (iq, oq) = routine(task, **kwargs)
+        except Exception as e:
+            LGR.exception('an exception occured in worker internal routine.')
+        else:
+            # re-inject results if needed
+            for e in iq:
+                iqueue.put(e)
+            for e in oq:
+                oqueue.put(e) 
+        finally:
+            # task has been processed
+            iqueue.task_done()
         LGR.debug('task done.')
 #===============================================================================
 # CLASSES

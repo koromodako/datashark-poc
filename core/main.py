@@ -143,7 +143,7 @@ def main():
         print_license_conditions()
         return 0
     # execute action
-    LGR.info('running action: {0}'.format(args.action))
+    LGR.debug('running action: {0}'.format(args.action))
     ACTIONS[args.action](args)
     return 0
 #===============================================================================

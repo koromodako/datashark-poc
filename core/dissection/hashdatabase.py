@@ -24,6 +24,7 @@
 #===============================================================================
 # IMPORTS
 #===============================================================================
+import os
 from utils.config               import config
 from utils.helpers.json         import json_load
 from utils.helpers.json         import json_dump
@@ -64,10 +65,12 @@ class HashDatabase(object):
     #---------------------------------------------------------------------------
     def __load_db(self):
         # check if path is valid
-        if self.fpath is None and os.path.isfile(self.fpath):
+        if self.fpath is None or not os.path.isfile(self.fpath):
+            LGR.warning('cannot load <{0}> hash database, invalid path: {1}'.format(
+                self.name, self.fpath))
             return {}
         # read database from file
-        with open(self.fpath, r) as f:
+        with open(self.fpath, 'r') as f:
             dat = json_load(f)
         # set valid and return data
         self.valid = True
@@ -83,7 +86,6 @@ class HashDatabase(object):
     #---------------------------------------------------------------------------
     @staticmethod
     def create(path, dirs, recursive, dir_filter, file_filter):
-        import os
         # scan for files iterating over directories (recursively if required)
         LGR.info('scanning for files...')
         fpaths = []
@@ -121,7 +123,6 @@ class HashDatabase(object):
     #-----------------------------------------------------------------------
     @staticmethod
     def merge(fpath, files):
-        import os
         # merging files
         LGR.info('merging databases...')
         db = {}

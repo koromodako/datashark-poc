@@ -51,7 +51,7 @@ def dissect(container, dissectors):
         LGR.warn('cannot find dissector for: {0}'.format(container.mime_type))
         container.flagged = True
         return []
-    for dissector in dissectors:
+    for dissector in mods:
         if dissector.can_dissect(container):
             dissector.dissect(container)
 #-------------------------------------------------------------------------------
