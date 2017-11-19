@@ -1,5 +1,5 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#    file: filters.py
+#    file: filtering.py
 #    date: 2017-11-18
 #  author: paul.dautry
 # purpose:

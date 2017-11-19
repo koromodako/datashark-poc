@@ -128,8 +128,7 @@ class Dissector(object):
             dissector = import_module(import_path)
             dissector.name = import_path.split('.')[-1]
         except Exception as e:
-            LGR.error('failed to import: {0}'.format(import_path))
-            LGR.error('error: {0}'.format(e))
+            LGR.exception('failed to import: {0}'.format(import_path))
             return False
         if not self.__register_dissector(dissector):
             LGR.warning('failed to load dissector, see errors above.')
@@ -137,6 +136,7 @@ class Dissector(object):
         if not self.__configure_dissector(dissector):
             LGR.warning('failed to configure dissector, see errors above.')
             return False
+        LGR.info('<{0}> imported successfully.'.format(import_path))
         return True
     #---------------------------------------------------------------------------
     # load_dissectors
@@ -147,17 +147,20 @@ class Dissector(object):
         ok = True
         script_path = os.path.dirname(__file__)
         search_path = os.path.join(script_path, 'dissectors')
-        rel_import_path = search_path.split(os.sep)[-2:]
         LGR.debug('dissectors search_path: {0}'.format(search_path))
         for root, dirs, files in os.walk(search_path):
             rel_root = root.replace(search_path, '')[1:]
             for f in files:
                 if f.endswith('.py'):
+                    rel_import_path = search_path.split(os.sep)[-2:]
                     rel_import_path += rel_root.split(os.sep)
                     rel_import_path.append(f[:-3])
                     import_path = '.'.join(rel_import_path)
                     if not self.__import_dissector(import_path):
                         ok = False
+                        if not config('skip_failing_import', False):
+                            LGR.error('dissector import failure: see error above.')
+                            exit(1)
         LGR.info('dissectors loaded{0}'.format(' (with errors).' if not ok else '.'))
         return ok
     #---------------------------------------------------------------------------

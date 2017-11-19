@@ -44,7 +44,7 @@ LGR = get_logger(__name__)
 def hashing_routine(fpath):
     LGR.info('processing file: {0}'.format(fpath))
     container = Container(fpath)
-    return ([], [(container.sha256, container.path)])
+    return ([], [(container.hashed, container.path)])
 #===============================================================================
 # CLASSES
 #===============================================================================
@@ -79,7 +79,7 @@ class HashDatabase(object):
     # contains
     #---------------------------------------------------------------------------
     def contains(self, container):
-        return (self.valid and self.db.get(container.sha256) is not None)
+        return (self.valid and self.db.get(container.hashed) is not None)
     #---------------------------------------------------------------------------
     # create
     #   /!\ assumes caller will check input parameters /!\

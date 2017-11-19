@@ -12,9 +12,9 @@ from utils.config               import print_license_warranty
 from utils.config               import print_license_conditions
 from dissection.container       import Container
 from dissection.dissector       import Dissector
-from utils.helpers.filters      import FSEntryFilter
 from utils.helpers.logging      import get_logger
 from utils.helpers.logging      import configure_logging
+from utils.helpers.filtering    import FSEntryFilter
 from dissection.hashdatabase    import HashDatabase
 #===============================================================================
 # GLOBALS
@@ -142,6 +142,11 @@ def parse_args():
         help='Comma-separated list of patterns.')
     parser.add_argument('--exclude-files', type=str, default='',
         help='Comma-separated list of patterns.')
+    # optional processing
+    parser.add_argument('--skip-failing-import', action='store_true', 
+        help='Ignore dissectors that failed to be imported.')
+    parser.add_argument('--skip-hash', action='store_true', 
+        help='Do not hash containers. Warning: using this option prevents the use of white/blacklists.')
     parser.add_argument('files', nargs='*', help='Files to process.')
     return parser.parse_args()
 #-------------------------------------------------------------------------------

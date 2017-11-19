@@ -1,6 +1,6 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#    file: octet_stream_dissector.py
-#    date: 2017-11-11
+#    file: qed_dissector.py
+#    date: 2017-11-18
 #  author: paul.dautry
 # purpose:
 #   
@@ -34,11 +34,6 @@ from utils.helpers.logging  import get_logger
 # GLOBALS / CONFIG
 #===============================================================================
 LGR = get_logger(__name__)
-QEMU_IMG = 'qemu-img'
-#===============================================================================
-# CLASSES
-#===============================================================================
-
 #===============================================================================
 # FUNCTIONS
 #===============================================================================
@@ -73,9 +68,7 @@ def configure(config):
 #-------------------------------------------------------------------------------
 def can_dissect(container):
     LGR.debug('can_dissect()')
-    return CLI.look_for_commands([
-        QEMU_IMG
-    ])
+    raise NotImplementedError
 #-------------------------------------------------------------------------------
 # dissect
 #   /!\ public mandatory function that the module must define /!\

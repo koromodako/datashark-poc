@@ -25,8 +25,9 @@
 # IMPORTS
 #===============================================================================
 import os
+import hashlib
 from magic                  import Magic
-from hashlib                import sha256
+from utils.config           import config
 from utils.helpers.logging  import get_logger
 #===============================================================================
 # GLOBAL
@@ -51,7 +52,9 @@ class Container(object):
         # container file path
         self.path = path
         # file information
-        self.sha256 = Container.hash(path)
+        self.hashed = ''
+        if not config('skip_hash', False):
+            self.hashed = Container.hash(path)
         (self.mime_text, self.mime_type) = Container.mimes(magic_file, path)
         # properties
         self.flagged = False
@@ -83,9 +86,12 @@ class Container(object):
     def hash(path):
         LGR.debug('Container.hash()')
         if Container.exists(path):
-            h = sha256()
+            hash_f = config('hash_func', 'sha256')
+            h = hashlib.new(hash_f)
             sz = Container.size(path)
             with open(path, 'rb') as f:
+                LGR.info('computing <{0}> {1}... please wait...'.format(
+                    path, hash_f))
                 while sz > 0:
                     h.update(f.read(Container.BLK_SZ))
                     sz -= Container.BLK_SZ
