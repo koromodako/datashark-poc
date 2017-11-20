@@ -1,5 +1,5 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#    file: vmdk_dissector.py
+#    file: vdi_dissector.py
 #    date: 2017-11-18
 #  author: paul.dautry
 # purpose:
@@ -25,15 +25,41 @@
 # IMPORTS
 #===============================================================================
 from utils.helpers.cli      import CLI
-from dissection.container   import Container 
+from dissection.container   import Container
+from dissection.structure   import StructSpecif
+from dissection.structure   import StructFactory
 from utils.helpers.logging  import get_logger
-#===============================================================================
-# GLOBAL
-#===============================================================================
 #===============================================================================
 # GLOBALS / CONFIG
 #===============================================================================
 LGR = get_logger(__name__)
+StructFactory.register_structure(StructSpecif('VDIHeader', [
+    StructSpecif.member('magic', 'ba:0x40'),
+    StructSpecif.member('signature', 'ba:0x04'),
+    StructSpecif.member('vmajor', '<H'),
+    StructSpecif.member('vminor', '<H'),
+    StructSpecif.member('hdr_sz', '<I'),
+    StructSpecif.member('img_type', '<I'),
+    StructSpecif.member('img_flags', '<I'),
+    StructSpecif.member('img_desc', 'ba:0x100'),
+    StructSpecif.member('oft_blk', '<I'),
+    StructSpecif.member('oft_dat', '<I'),
+    StructSpecif.member('num_cylinders', '<I'),
+    StructSpecif.member('num_heads', '<I'),
+    StructSpecif.member('num_sectors', '<I'),
+    StructSpecif.member('sector_sz', '<I'),
+    StructSpecif.member('pad0','<I'),
+    StructSpecif.member('disk_sz', '<Q'),
+    StructSpecif.member('blk_sz', '<I'),
+    StructSpecif.member('blk_extra_dat', '<I'),
+    StructSpecif.member('num_blk_in_hdd', '<I'),
+    StructSpecif.member('num_blk_allocated', '<I'),
+    StructSpecif.member('uuid_vdi', 'ba:0x10'),
+    StructSpecif.member('uuid_last_snap', 'ba:0x10'),
+    StructSpecif.member('uuid_link', 'ba:0x10'),
+    StructSpecif.member('uuid_parent', 'ba:0x10'),
+    StructSpecif.member('pad1', 'ba:0x38')
+]))
 #===============================================================================
 # FUNCTIONS
 #===============================================================================
@@ -68,7 +94,7 @@ def configure(config):
 #-------------------------------------------------------------------------------
 def can_dissect(container):
     LGR.debug('can_dissect()')
-    raise NotImplementedError
+    return ('VirtualBox Disk Image' in container.mime_text)
 #-------------------------------------------------------------------------------
 # dissect
 #   /!\ public mandatory function that the module must define /!\
@@ -79,5 +105,9 @@ def can_dissect(container):
 #-------------------------------------------------------------------------------
 def dissect(container):
     LGR.debug('dissect()')
-    #return []
+    with open(container.path, 'rb') as f:
+        vdi_header = StructFactory.obj_from_file('VDIHeader', f)
+        LGR.info(StructFactory.obj_to_str(vdi_header))
+    # TODO : implement raw disk extraction
     raise NotImplementedError
+    return []

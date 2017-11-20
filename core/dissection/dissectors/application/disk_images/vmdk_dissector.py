@@ -1,5 +1,5 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#    file: vdi_dissector.py
+#    file: vmdk_dissector.py
 #    date: 2017-11-18
 #  author: paul.dautry
 # purpose:
@@ -33,33 +33,69 @@ from utils.helpers.logging  import get_logger
 # GLOBALS / CONFIG
 #===============================================================================
 LGR = get_logger(__name__)
-StructFactory.register_structure(StructSpecif('VDIHeader', [
-    StructSpecif.member('magic', 'ba:0x40'),
-    StructSpecif.member('signature', 'ba:0x04'),
-    StructSpecif.member('vmajor', '<H'),
-    StructSpecif.member('vminor', '<H'),
-    StructSpecif.member('hdr_sz', '<I'),
-    StructSpecif.member('img_type', '<I'),
-    StructSpecif.member('img_flags', '<I'),
-    StructSpecif.member('img_desc', 'ba:0x100'),
-    StructSpecif.member('oft_blk', '<I'),
-    StructSpecif.member('oft_dat', '<I'),
-    StructSpecif.member('num_cylinders', '<I'),
-    StructSpecif.member('num_heads', '<I'),
-    StructSpecif.member('num_sectors', '<I'),
-    StructSpecif.member('sector_sz', '<I'),
-    StructSpecif.member('pad0','<I'),
-    StructSpecif.member('disk_sz', '<Q'),
-    StructSpecif.member('blk_sz', '<I'),
-    StructSpecif.member('blk_extra_dat', '<I'),
-    StructSpecif.member('num_blk_in_hdd', '<I'),
-    StructSpecif.member('num_blk_allocated', '<I'),
-    StructSpecif.member('uuid_vdi', 'ba:0x10'),
-    StructSpecif.member('uuid_last_snap', 'ba:0x10'),
-    StructSpecif.member('uuid_link', 'ba:0x10'),
-    StructSpecif.member('uuid_parent', 'ba:0x10'),
-    StructSpecif.member('pad1', 'ba:0x38')
+StructFactory.register_structure(StructSpecif('SparseExtentHeader', [
+    StructSpecif.member('magicNumber', 'ba:4'),
+    StructSpecif.member('version', '<I'),
+    StructSpecif.member('flags', '<I'),
+    StructSpecif.member('capacity', '<Q'),
+    StructSpecif.member('grainSize', '<Q'),
+    StructSpecif.member('descriptorOffset', '<Q'),
+    StructSpecif.member('descriptorSize', '<Q'),
+    StructSpecif.member('numGTEsPerGT', '<I'),
+    StructSpecif.member('rgdOffset', '<Q'),
+    StructSpecif.member('gdOffset', '<Q'),
+    StructSpecif.member('overHead', '<Q'),
+    StructSpecif.member('uncleanShutdown', 'ba:1'),
+    StructSpecif.member('singleEndLineChar', 'ba:1'),
+    StructSpecif.member('nonEndLineChar', 'ba:1'),
+    StructSpecif.member('doubleEndLineChar1', 'ba:1'),
+    StructSpecif.member('doubleEndLineChar2', 'ba:1'),
+    StructSpecif.member('compressAlgorithm', '<H'),
+    StructSpecif.member('pad', 'ba:443')
 ]))
+StructFactory.register_structure(StructSpecif('COWDisk_Header', [
+    StructSpecif.member('magicNumber', '<I'),
+    StructSpecif.member('version', '<I'),
+    StructSpecif.member('flags', '<I'),
+    StructSpecif.member('numSectors', '<I'),
+    StructSpecif.member('grainSize', '<I'),
+    StructSpecif.member('gdOffset', '<I'),
+    StructSpecif.member('numGDEntries', '<I'),
+    StructSpecif.member('freeSector', '<I'),
+    StructSpecif.member('parentFileName', 'ba:1024'), #define COWDISK_MAX_PARENT_FILELEN 1024
+    StructSpecif.member('parentGeneration', '<I'),
+    StructSpecif.member('generation', '<I'),
+    StructSpecif.member('name', 'ba:60'), #define COWDISK_MAX_NAME_LEN 60
+    StructSpecif.member('description', 'ba:512'), #define COWDISK_MAX_DESC_LEN 512
+    StructSpecif.member('savedGeneration', '<I'),
+    StructSpecif.member('reserved', 'ba:8'),
+    StructSpecif.member('uncleanShutdown', '<I'),
+    StructSpecif.member('padding', 'ba:396')
+]))
+StructFactory.register_structure(StructSpecif('Marker', [
+    StructSpecif.member('val', '<Q'),
+    StructSpecif.member('size', '<I'),
+    StructSpecif.member('type', '<I')
+]))
+StructFactory.register_structure(StructSpecif('GrainMarker', [
+    StructSpecif.member('lba', '<Q'),
+    StructSpecif.member('size', '<I'),
+    StructSpecif.member('data', '<B')
+]))
+StructFactory.register_structure(StructSpecif('EOSMarker', [
+    StructSpecif.member('val', '<Q'),
+    StructSpecif.member('size', '<I'),
+    StructSpecif.member('type', '<I'),
+    StructSpecif.member('pad', 'ba:496')
+]))
+StructFactory.register_structure(StructSpecif('MetaDataMarker', [
+    StructSpecif.member('numSectors', '<Q'),
+    StructSpecif.member('size', '<I'),
+    StructSpecif.member('type', '<I'),
+    StructSpecif.member('pad', 'ba:496'),
+    StructSpecif.member('metadata', '<B')
+]))
+
 #===============================================================================
 # FUNCTIONS
 #===============================================================================
@@ -94,7 +130,7 @@ def configure(config):
 #-------------------------------------------------------------------------------
 def can_dissect(container):
     LGR.debug('can_dissect()')
-    return ('VirtualBox Disk Image' in container.mime_text)
+    return ('VMware4 disk image' in container.mime_text)
 #-------------------------------------------------------------------------------
 # dissect
 #   /!\ public mandatory function that the module must define /!\
@@ -106,6 +142,8 @@ def can_dissect(container):
 def dissect(container):
     LGR.debug('dissect()')
     with open(container.path, 'rb') as f:
-        vdi_header = StructFactory.obj_from_file('VDIHeader', f)
-        LGR.info(StructFactory.obj_to_str(vdi_header))
+        vmdk_header = StructFactory.obj_from_file('SparseExtentHeader', f)
+        LGR.info(StructFactory.obj_to_str(vmdk_header))
+    # TODO : implement raw disk extraction
+    raise NotImplementedError
     return []
