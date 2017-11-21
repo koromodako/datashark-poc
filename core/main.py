@@ -10,124 +10,34 @@ from utils.config               import print_license
 from utils.config               import get_arg_parser
 from utils.config               import print_license_warranty
 from utils.config               import print_license_conditions
-from dissection.container       import Container
-from dissection.dissector       import Dissector
+from dissection.container       import ContainerActionGroup
+from dissection.dissection      import DissectionActionGroup
 from utils.helpers.logging      import get_logger
 from utils.helpers.logging      import configure_logging
 from utils.helpers.filtering    import FSEntryFilter
-from dissection.hashdatabase    import HashDatabase
+from dissection.hashdatabase    import HashDatabaseActionGroup
+from utils.helpers.action_group import ActionGroup
 #===============================================================================
 # GLOBALS
 #===============================================================================
 LGR = None
+DISSECTION_ACT_GRP = DissectionActionGroup()
+HASHDB_ACT_GRP = HashDatabaseActionGroup()
+CONTAINER_ACT_GRP = ContainerActionGroup()
+ACTIONS = ActionGroup('datashark', {
+    DISSECTION_ACT_GRP.name: DISSECTION_ACT_GRP,
+    HASHDB_ACT_GRP.name: HASHDB_ACT_GRP,
+    CONTAINER_ACT_GRP.name: CONTAINER_ACT_GRP
+})
 #===============================================================================
 # FUNCTIONS 
 #===============================================================================
-#-------------------------------------------------------------------------------
-# abort
-#-------------------------------------------------------------------------------
-def abort(msg, code=42):
-    LGR.error(msg)
-    exit(code)
-#-------------------------------------------------------------------------------
-# dissector_list
-#-------------------------------------------------------------------------------
-def dissector_list(args):
-    LGR.debug('list_dissectors()')
-    dissector = Dissector()
-    dissector.load_dissectors()
-    dissectors = dissector.dissectors()
-    LGR.info('dissectors:')
-    if len(dissectors) > 0:
-        for mime in dissectors:
-            LGR.info('\t+ {0}'.format(mime[0]))
-            for dissector in mime[1]:
-                LGR.info('\t\t+ {0}'.format(dissector))
-    else:
-        abort('no dissector registered.')
-#-------------------------------------------------------------------------------
-# dissector_dissect
-#-------------------------------------------------------------------------------
-def dissector_dissect(args):
-    LGR.debug('dissect()')
-    dissector = Dissector()
-    dissector.load_hashdatabases()
-    dissector.load_dissectors()
-    if len(args.files) > 0:
-        for f in args.files:
-            dissector.dissect(f)
-    else:
-        abort('give at least one file to dissect.')
-#-------------------------------------------------------------------------------
-# hdb_create
-#-------------------------------------------------------------------------------
-def hdb_create(args):
-    # check arguments
-    if len(args.files) < 2:
-        abort('missing arguments, hdb_create expects args: output.json dir [dir ...]')
-    fpath = args.files[0]
-    dirs = args.files[1:]
-    if os.path.isdir(fpath):
-        abort('<{0}> is an existing directory.'.format(fpath))
-    for dpath in dirs:
-        if not os.path.isdir(dpath):
-            abort('<{0}> must be an existing directory.'.format(dpath))
-    # create database
-    HashDatabase.create(fpath, dirs, args.recursive, 
-        args.dir_filter, args.file_filter)
-#-------------------------------------------------------------------------------
-# hdb_merge
-#-------------------------------------------------------------------------------
-def hdb_merge(args):
-    # check arguments
-    if len(args.files) < 2:
-        abort('missing arguments, hdb_merge expects args: output.json db.part1.json db.part2.json ... db.partN.json')
-    fpath = args.files[0]
-    files = args.files[1:]
-    if os.path.isdir(fpath):
-        abort('<{0}> is an existing directory.'.format(fpath))
-    for f in files:
-        if not os.path.isfile(f):
-            abort('<{0}> must be an existing file.'.format(f))
-    # merge db files
-    HashDatabase.merge(fpath, files)
-#-------------------------------------------------------------------------------
-# container_hash
-#-------------------------------------------------------------------------------
-def container_hash(args):
-    for f in args.files:
-        if os.path.isfile(f):
-            LGR.info('{0}: {1}'.format(f, Container.hash(f)))
-        else:
-            LGR.error('{0}: invalid path.')
-#-------------------------------------------------------------------------------
-# container_mimes
-#-------------------------------------------------------------------------------
-def container_mimes(args):
-    for f in args.files:
-        if os.path.isfile(f):
-            mimes = Container.mimes(config('magic_file'), f)
-            LGR.info('{0}:\n\tmime: {1}\n\ttext: {2}'.format(f, mimes[1], mimes[0]))
-        else:
-            LGR.error('{0}: invalid path.')
-#===============================================================================
-# ACTIONS
-#===============================================================================
-ACTIONS = {
-    'dissector.list': dissector_list,
-    'dissector.dissect': dissector_dissect,
-    'hdb.create': hdb_create,
-    'hdb.merge': hdb_merge,
-    'container.hash': container_hash,
-    'container.mimes': container_mimes
-}
 #-------------------------------------------------------------------------------
 # parse_args
 #-------------------------------------------------------------------------------
 def parse_args():
     parser = get_arg_parser()
-    parser.add_argument('action', choices=list(ACTIONS.keys()), 
-        help='Action to perform.')
+    parser.add_argument('action', type=str, help='Action to perform.')
     parser.add_argument('-r', '--recursive', action='store_true', 
         help='Affects only hdb_create. Tells it to recurse inside given directories.')
     parser.add_argument('-n', '--num-workers', type=int, 
@@ -178,7 +88,7 @@ def main():
         return 0
     # execute action
     LGR.debug('running action: {0}'.format(args.action))
-    ACTIONS[args.action](args)
+    ACTIONS.perform_action(args.action.split(ActionGroup.SEP), args)
     return 0
 #===============================================================================
 # SCIRPT

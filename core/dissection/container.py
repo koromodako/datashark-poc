@@ -26,9 +26,10 @@
 #===============================================================================
 import os
 import hashlib
-from magic                  import Magic
-from utils.config           import config
-from utils.helpers.logging  import get_logger
+from magic                      import Magic
+from utils.config               import config
+from utils.helpers.logging      import get_logger
+from utils.helpers.action_group import ActionGroup
 #===============================================================================
 # GLOBAL
 #===============================================================================
@@ -123,3 +124,42 @@ class Container(object):
         LGR.debug('Container.add_child()')
         container.__parent = self
         self.__children.append(container)
+#-------------------------------------------------------------------------------
+# ContainerActionGroup
+#-------------------------------------------------------------------------------
+class ContainerActionGroup(ActionGroup):
+    #---------------------------------------------------------------------------
+    # __init__
+    #---------------------------------------------------------------------------
+    def __init__(self):
+        super(ContainerActionGroup, self).__init__('container', {
+            'hash': ActionGroup.action(ContainerActionGroup.hash, "gives container's hash value."),
+            'mimes': ActionGroup.action(ContainerActionGroup.mimes, "gives container's mime type and text.")
+        })
+    #---------------------------------------------------------------------------
+    # hash
+    #---------------------------------------------------------------------------
+    @staticmethod
+    def hash(keywords, args):
+        if len(args.files) > 0:
+            for f in args.files:
+                if os.path.isfile(f):
+                    LGR.info('{0}: {1}'.format(f, Container.hash(f)))
+                else:
+                    LGR.error('{0}: invalid path.')
+        else:
+            LGR.error('this action expects at least one input file.')
+    #---------------------------------------------------------------------------
+    # mimes
+    #---------------------------------------------------------------------------
+    @staticmethod
+    def mimes(keywords, args):
+        if len(args.files) > 0:
+            for f in args.files:
+                if os.path.isfile(f):
+                    mimes = Container.mimes(config('magic_file'), f)
+                    LGR.info('{0}:\n\tmime: {1}\n\ttext: {2}'.format(f, mimes[1], mimes[0]))
+                else:
+                    LGR.error('{0}: invalid path.')
+        else:
+            LGR.error('this action expects at least one input file.')

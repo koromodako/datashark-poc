@@ -1,7 +1,5 @@
-#!/usr/bin/env <PROG>
-# -!- encoding:utf8 -!-
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#    file: dissector.py
+#    file: dissection.py
 #    date: 2017-11-12
 #  author: paul.dautry
 # purpose:
@@ -34,13 +32,14 @@ from utils.config               import module_config
 from dissection.container       import Container
 from utils.helpers.logging      import get_logger
 from dissection.hashdatabase    import HashDatabase
+from utils.helpers.action_group import ActionGroup
 from utils.threading.workerpool import WorkerPool
 #===============================================================================
 # GLOBAL
 #===============================================================================
 LGR = get_logger(__name__)
 #===============================================================================
-# FUNCITON
+# FUNCTIONS
 #===============================================================================
 #-------------------------------------------------------------------------------
 # dissect
@@ -77,47 +76,48 @@ def dissection_routine(container, whitelist, blacklist, dissectors):
 # CLASSES
 #===============================================================================
 #-------------------------------------------------------------------------------
-# Dissector
+# Dissection
 #-------------------------------------------------------------------------------
-class Dissector(object):
+class Dissection(object):
     MANDATORY_FUNCS = set([
         'mimes',
         'dissect',
         'can_dissect',
-        'configure'
+        'configure',
+        'action_group'
     ])
     #---------------------------------------------------------------------------
     # __init__
     #---------------------------------------------------------------------------
     def __init__(self):
-        super(Dissector, self).__init__()
-        self.__dissectors = {}
+        super(Dissection, self).__init__()
+        self._dissectors = {}
         self.__whitelist = None
         self.__blacklist = None
     #---------------------------------------------------------------------------
     # __register_dissector
     #---------------------------------------------------------------------------
     def __configure_dissector(self, dissector):
-        LGR.debug('Dissector.__configure_dissector()')
+        LGR.debug('Dissection.__configure_dissector()')
         conf = module_config(dissector.name)
         return dissector.configure(conf)
     #---------------------------------------------------------------------------
     # __register_dissector
     #---------------------------------------------------------------------------
     def __register_dissector(self, dissector):
-        LGR.debug('Dissector.__register_dissector()')
+        LGR.debug('Dissection.__register_dissector()')
         mod_funcs = set(dir(dissector))
-        missing_funcs = mod_funcs.intersection(Dissector.MANDATORY_FUNCS)
-        missing_funcs = list(missing_funcs.symmetric_difference(Dissector.MANDATORY_FUNCS))
+        missing_funcs = mod_funcs.intersection(Dissection.MANDATORY_FUNCS)
+        missing_funcs = list(missing_funcs.symmetric_difference(Dissection.MANDATORY_FUNCS))
         if len(missing_funcs) > 0:
             LGR.error("""failed to add:
     {0}
     >>> details: missing mandatory functions ({1}).""".format(dissector, missing_funcs))
             return False
         for mime in dissector.mimes():
-            if self.__dissectors.get(mime, None) is None:
-                self.__dissectors[mime] = []
-            self.__dissectors[mime].append(dissector)
+            if self._dissectors.get(mime, None) is None:
+                self._dissectors[mime] = []
+            self._dissectors[mime].append(dissector)
         return True
     #---------------------------------------------------------------------------
     # __import_dissector
@@ -142,7 +142,7 @@ class Dissector(object):
     # load_dissectors
     #---------------------------------------------------------------------------
     def load_dissectors(self):
-        LGR.debug('Dissector.load_dissectors()')
+        LGR.debug('Dissection.load_dissectors()')
         LGR.info('loading dissectors...')
         ok = True
         script_path = os.path.dirname(__file__)
@@ -167,7 +167,7 @@ class Dissector(object):
     # load_hashdatabases
     #---------------------------------------------------------------------------
     def load_hashdatabases(self):
-        LGR.debug('Dissector.load_hashdatabases()')
+        LGR.debug('Dissection.load_hashdatabases()')
         LGR.info('loading whitelist database...')
         self.__whitelist = HashDatabase('whitelist', config('whitelist'))
         LGR.info('loading blacklist database...')
@@ -176,11 +176,11 @@ class Dissector(object):
     # dissectors
     #---------------------------------------------------------------------------
     def dissectors(self):
-        LGR.debug('Dissector.dissectors()')
+        LGR.debug('Dissection.dissectors()')
         dissectors = []
-        for mime in sorted(list(self.__dissectors.keys())):
+        for mime in sorted(list(self._dissectors.keys())):
             mime_dissectors = []
-            for dissector in self.__dissectors[mime]:
+            for dissector in self._dissectors[mime]:
                 mime_dissectors.append(dissector.name)
             dissectors.append([mime, sorted(mime_dissectors)])
         return dissectors
@@ -188,15 +188,80 @@ class Dissector(object):
     # dissect
     #---------------------------------------------------------------------------
     def dissect(self, path, num_threads=1):
-        LGR.debug('Dissector.dissect()')
+        LGR.debug('Dissection.dissect()')
         LGR.info('starting dissection processes...')
         container = Container(path)
         kwargs = {
             'whitelist': self.__whitelist,
             'blacklist': self.__blacklist,
-            'dissectors': self.__dissectors 
+            'dissectors': self._dissectors 
         }
         pool = WorkerPool(config('num_workers', default=1))
         pool.map(dissection_routine, kwargs, tasks=[container])
         LGR.info('dissection done.')
         return container
+#-------------------------------------------------------------------------------
+# DissectionActionGroup
+#-------------------------------------------------------------------------------
+class DissectionActionGroup(ActionGroup):
+    #---------------------------------------------------------------------------
+    # __init__
+    #---------------------------------------------------------------------------
+    def __init__(self):
+        super(DissectionActionGroup, self).__init__('dissection', {
+            'dissectors': ActionGroup.action(DissectionActionGroup.dissectors, 'list dissectors.'),
+            'dissector': ActionGroup.action(DissectionActionGroup.dissector, 'forward actions to given dissector.'),
+            'dissect': ActionGroup.action(DissectionActionGroup.dissect, 'dissect given container.')
+        })
+    #---------------------------------------------------------------------------
+    # dissectors
+    #---------------------------------------------------------------------------
+    @staticmethod
+    def dissectors(keywords, args):
+        LGR.debug('DissectionActionGroup.dissectors()')
+        dissection = Dissection()
+        dissection.load_dissectors()
+        dissectors = dissection.dissectors()
+        LGR.info('dissectors:')
+        if len(dissectors) > 0:
+            for mime in dissectors:
+                LGR.info('\t+ {0}'.format(mime[0]))
+                for dissector in mime[1]:
+                    LGR.info('\t\t+ {0}'.format(dissector))
+        else:
+            LGR.error('no dissector registered.')
+    #---------------------------------------------------------------------------
+    # dissector
+    #---------------------------------------------------------------------------
+    @staticmethod
+    def dissector(keywords, args):
+        LGR.debug('DissectionActionGroup.dissector()')
+        # check args
+        if len(keywords) > 0:
+            # create a dissection and load dissectors
+            dissection = Dissection()
+            dissection.load_dissectors()
+            # create action group mapping
+            actions = {}
+            for dissectors in dissection._dissectors.values():
+                for dissector in dissectors:
+                    act_grp = dissector.action_group()
+                    actions[act_grp.name] = act_grp
+            # create action group to perform action
+            ActionGroup('dissector', actions).perform_action(keywords, args)
+        else:
+            LGR.error('missing keyword.')
+    #---------------------------------------------------------------------------
+    # dissect
+    #---------------------------------------------------------------------------
+    @staticmethod
+    def dissect(keywords, args):
+        LGR.debug('DissectionActionGroup.dissect()')
+        dissection = Dissection()
+        dissection.load_dissectors()
+        dissection.load_hashdatabases()
+        if len(args.files) > 0:
+            for f in args.files:
+                dissection.dissect(f)
+        else:
+            LGR.error('give at least one file to dissect.')

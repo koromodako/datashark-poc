@@ -1,5 +1,5 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#    file: vdi_dissector.py
+#    file: vdi.py
 #    date: 2017-11-18
 #  author: paul.dautry
 # purpose:
@@ -24,11 +24,11 @@
 #===============================================================================
 # IMPORTS
 #===============================================================================
-from utils.helpers.cli      import CLI
-from dissection.container   import Container
-from dissection.structure   import StructSpecif
-from dissection.structure   import StructFactory
-from utils.helpers.logging  import get_logger
+from dissection.container       import Container
+from dissection.structure       import StructSpecif
+from dissection.structure       import StructFactory
+from utils.helpers.logging      import get_logger
+from utils.helpers.action_group import ActionGroup
 #===============================================================================
 # GLOBALS / CONFIG
 #===============================================================================
@@ -111,3 +111,10 @@ def dissect(container):
     # TODO : implement raw disk extraction
     raise NotImplementedError
     return []
+#-------------------------------------------------------------------------------
+# action_group()
+#   /!\ public mandatory function that the module must define /!\
+#   \brief returns module action group
+#-------------------------------------------------------------------------------
+def action_group():
+    return ActionGroup('vdi', {})

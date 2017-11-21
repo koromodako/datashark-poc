@@ -1,6 +1,6 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#    file: qcom_dissector.py
-#    date: 2017-11-18
+#    file: ${DISSECTOR_NAME}.py
+#    date: 2017-11-11
 #  author: paul.dautry
 # purpose:
 #   
@@ -24,16 +24,13 @@
 #===============================================================================
 # IMPORTS
 #===============================================================================
-from utils.helpers.cli      import CLI
-from dissection.container   import Container 
-from utils.helpers.logging  import get_logger
+from dissection.container       import Container
+from utils.helpers.logging      import get_logger
+from utils.helpers.action_group import ActionGroup
 #===============================================================================
 # GLOBAL
 #===============================================================================
-#===============================================================================
-# GLOBALS / CONFIG
-#===============================================================================
-LGR = get_logger(__name__)
+lgr = get_logger(__name__)
 #===============================================================================
 # FUNCTIONS
 #===============================================================================
@@ -44,7 +41,8 @@ LGR = get_logger(__name__)
 #   \return [list(str)]
 #-------------------------------------------------------------------------------
 def mimes():
-    LGR.debug('mimes()')
+    lgr.debug('mimes()')
+    raise NotImplementedError
     return [
         'application/octet-stream'
     ]
@@ -55,9 +53,10 @@ def mimes():
 #   \param [list(tuple(option, value))] config
 #       configuration taken from Datashark's INI file if found.
 #       config might be None or empty.
+#   \return [bool]
 #-------------------------------------------------------------------------------
 def configure(config):
-    LGR.debug('configure()')
+    lgr.debug('configure()')
     return True
 #-------------------------------------------------------------------------------
 # can_dissect
@@ -67,17 +66,24 @@ def configure(config):
 #   \return [bool]
 #-------------------------------------------------------------------------------
 def can_dissect(container):
-    LGR.debug('can_dissect()')
+    lgr.debug('can_dissect()')
     raise NotImplementedError
+    return True
 #-------------------------------------------------------------------------------
 # dissect
 #   /!\ public mandatory function that the module must define /!\
 #   \brief realize the dissection of the container and returns a list of 
 #          containers found in the dissected container
-#   \param 
 #   \return [list(Container)]
 #-------------------------------------------------------------------------------
 def dissect(container):
-    LGR.debug('dissect()')
-    #return []
+    lgr.debug('dissect()')
     raise NotImplementedError
+    return []
+#-------------------------------------------------------------------------------
+# action_group()
+#   /!\ public mandatory function that the module must define /!\
+#   \brief returns module action group
+#-------------------------------------------------------------------------------
+def action_group():
+    return ActionGroup('${DISSECTOR_NAME}', {})

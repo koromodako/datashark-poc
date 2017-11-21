@@ -1,5 +1,5 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#    file: vhd_dissector.py
+#    file: vhd.py
 #    date: 2017-11-18
 #  author: paul.dautry
 # purpose:
@@ -24,9 +24,9 @@
 #===============================================================================
 # IMPORTS
 #===============================================================================
-from utils.helpers.cli      import CLI
-from dissection.container   import Container 
-from utils.helpers.logging  import get_logger
+from dissection.container       import Container 
+from utils.helpers.logging      import get_logger
+from utils.helpers.action_group import ActionGroup
 #===============================================================================
 # GLOBAL
 #===============================================================================
@@ -81,3 +81,10 @@ def dissect(container):
     LGR.debug('dissect()')
     #return []
     raise NotImplementedError
+#-------------------------------------------------------------------------------
+# action_group()
+#   /!\ public mandatory function that the module must define /!\
+#   \brief returns module action group
+#-------------------------------------------------------------------------------
+def action_group():
+    return ActionGroup('vhd', {})
