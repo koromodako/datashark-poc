@@ -1,5 +1,5 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#    file: qcom.py
+#    file: qcow.py
 #    date: 2017-11-18
 #  author: paul.dautry
 # purpose:
@@ -87,4 +87,4 @@ def dissect(container):
 #   \brief returns module action group
 #-------------------------------------------------------------------------------
 def action_group():
-    return ActionGroup('qcom', {})
+    return ActionGroup('qcow', {})
