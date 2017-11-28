@@ -26,14 +26,16 @@
 # IMPORTS
 #===============================================================================
 import os
-from importlib                  import import_module
-from utils.config               import config
-from utils.config               import module_config
-from dissection.container       import Container
-from utils.helpers.logging      import get_logger
-from dissection.hashdatabase    import HashDatabase
-from utils.helpers.action_group import ActionGroup
-from utils.threading.workerpool import WorkerPool
+from importlib                      import import_module
+from utils.config                   import config
+from utils.config                   import module_config
+from utils.config                   import section_config
+from dissection.container           import Container
+from utils.helpers.logging          import get_logger
+from dissection.hashdatabase        import HashDatabase
+from utils.helpers.action_group     import ActionGroup
+from utils.threading.workerpool     import WorkerPool
+from dissection.dissectiondatabase  import DissectionDatabase
 #===============================================================================
 # GLOBAL
 #===============================================================================
@@ -68,19 +70,22 @@ def dissection_routine(container, whitelist, blacklist, dissectors):
         # dissect queue
         for new_container in dissect(container, dissectors):
             #
-            container.add_child(new_container)
+            new_container.set_parent(container)
             #    
             if whitelist.contains(container):
                 LGR.info('matching whitelisted container. skipping!')
                 new_container.whitelisted = True 
+                DissectionDatabase.persist_container(new_container)
                 continue # skip processing (whitelisted)
             elif blacklist.contains(container):
                 LGR.warn('matching blacklisted container. flagged!')
                 new_container.flagged = True
                 new_container.blacklisted = True
+                DissectionDatabase.persist_container(new_container)
                 continue # skip processing (blacklisted)
             else:
                 iq.append(new_container) # processing needed
+        DissectionDatabase.persist_container(container)
         # return lists
         return (iq, oq)
 #===============================================================================
@@ -150,6 +155,16 @@ class Dissection(object):
         LGR.info('<{}> imported successfully.'.format(import_path))
         return True
     #---------------------------------------------------------------------------
+    # __init_dissection_db
+    #---------------------------------------------------------------------------
+    def __init_dissection_db(self):
+        return DissectionDatabase.init(section_config('dissectiondb'))
+    #---------------------------------------------------------------------------
+    # __term_dissection_db
+    #---------------------------------------------------------------------------
+    def __term_dissection_db(self):
+        DissectionDatabase.term()
+    #---------------------------------------------------------------------------
     # load_dissectors
     #---------------------------------------------------------------------------
     def load_dissectors(self):
@@ -200,6 +215,8 @@ class Dissection(object):
     #---------------------------------------------------------------------------
     def dissect(self, path, num_threads=1):
         LGR.debug('Dissection.dissect()')
+        if not self.__init_dissection_db():
+            return False
         LGR.info('starting dissection processes...')
         container = Container(path, os.path.basename(path))
         kwargs = {
@@ -210,7 +227,8 @@ class Dissection(object):
         pool = WorkerPool(config('num_workers', default=1))
         pool.map(dissection_routine, kwargs, tasks=[container])
         LGR.info('dissection done.')
-        return container
+        self.__term_dissection_db()
+        return True
 #-------------------------------------------------------------------------------
 # DissectionActionGroup
 #-------------------------------------------------------------------------------
@@ -220,12 +238,12 @@ class DissectionActionGroup(ActionGroup):
     #---------------------------------------------------------------------------
     def __init__(self):
         super(DissectionActionGroup, self).__init__('dissection', {
-            'dissectors': ActionGroup.action(DissectionActionGroup.dissectors, 
-                'list dissectors.'),
+            'list': ActionGroup.action(DissectionActionGroup.dissectors, 
+                "list dissectors."),
             'dissector': ActionGroup.action(DissectionActionGroup.dissector, 
-                'forward actions to given dissector.'),
+                "forward actions to given dissector."),
             'dissect': ActionGroup.action(DissectionActionGroup.dissect, 
-                'dissect given container.')
+                "dissect given container.")
         })
     #---------------------------------------------------------------------------
     # dissectors

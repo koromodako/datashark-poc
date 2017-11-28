@@ -1,0 +1,23 @@
+{
+	"datashark": {
+		"magic_file": null,
+		"whitelist": "whitelist.json",
+		"blacklist": "blacklist.json",
+		"num_workers": 2,
+		"include_files": [],
+		"exclude_files": [],
+		"include_dirs": [],
+		"exclude_dirs": []
+	},
+	"dissectiondb": {
+		"mode": "json"
+	},
+	"modules": {
+		"qcow": {},
+		"qcow2": {},
+		"qed": {},
+		"vdi": {},
+		"vhd": {},
+		"vmdk": {}
+	}
+}

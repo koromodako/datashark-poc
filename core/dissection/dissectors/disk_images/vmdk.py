@@ -276,6 +276,8 @@ def action_group():
     #---------------------------------------------------------------------------
     def __action_header(keywords, args):
         for f in args.files:
+            if not os.path.isfile(f):
+                continue
             with open(f, 'rb') as fp:
                 hdr = __find_header(fp)
                 if hdr is None:
@@ -287,6 +289,8 @@ def action_group():
     #---------------------------------------------------------------------------
     def __action_descfile(keywords, args):
         for f in args.files:
+            if not os.path.isfile(f):
+                continue
             with open(f, 'rb') as fp:
                 hdr = __find_header(fp)
                 if hdr is None:

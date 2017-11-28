@@ -29,6 +29,7 @@ import hashlib
 from magic                      import Magic
 from utils.config               import tmpdir
 from utils.config               import config
+from utils.helpers.crypto       import randstr
 from utils.helpers.logging      import get_logger
 from utils.helpers.action_group import ActionGroup
 #===============================================================================
@@ -46,39 +47,6 @@ LGR = get_logger(__name__)
 #-------------------------------------------------------------------------------
 class Container(object):
     BLK_SZ = 8192
-    #---------------------------------------------------------------------------
-    # Container
-    #---------------------------------------------------------------------------
-    def __init__(self, path, realname, magic_file=None):
-        super(Container, self).__init__()
-        # container file path
-        self.path = path
-        self.realname = realname
-        self.tmpd = self.__tmpd()
-        # file information
-        self.hashed = ''
-        if not config('skip_hash', False):
-            self.hashed = Container.hash(path)
-        (self.mime_text, self.mime_type) = Container.mimes(magic_file, path)
-        # properties
-        self.flagged = False
-        self.whitelisted = False
-        self.blacklisted = False
-        # container hierarchy
-        self.__parent = None
-        self.__children = []
-        # unexpected dissection results will fill this list of errors
-        self.__errors = []
-    #---------------------------------------------------------------------------
-    # __tmpd
-    #---------------------------------------------------------------------------
-    def __tmpd(self):
-        md5 = hashlib.new('md5')
-        md5.update(self.path.encode('utf-8'))
-        tmpd = 'ds-{}-{}'.format(md5.digest().hex(), os.urandom(4).hex())
-        path = os.path.join(tmpdir(), tmpd)
-        os.makedirs(path, exist_ok=True)
-        return path
     #---------------------------------------------------------------------------
     # exists
     #---------------------------------------------------------------------------
@@ -120,6 +88,44 @@ class Container(object):
         return (Magic(magic_file=magic_file).from_file(path), 
                 Magic(magic_file=magic_file, mime=True).from_file(path))
     #---------------------------------------------------------------------------
+    # __init__
+    #---------------------------------------------------------------------------
+    def __init__(self, path, realname, magic_file=None):
+        super(Container, self).__init__()
+        # container file path
+        self.path = path
+        self.realname = realname
+        self.tmpd = self.__tmpd()
+        # file information
+        self.hashed = ''
+        if not config('skip_hash', False):
+            self.hashed = Container.hash(path)
+        (self.mime_text, self.mime_type) = Container.mimes(magic_file, path)
+        # properties
+        self.flagged = False
+        self.whitelisted = False
+        self.blacklisted = False
+        # container hierarchy
+        self.parent = None
+        # unexpected dissection results will fill this list of errors
+        self.__errors = []
+    #---------------------------------------------------------------------------
+    # __tmpd
+    #---------------------------------------------------------------------------
+    def __tmpd(self):
+        md5 = hashlib.new('md5')
+        md5.update(self.path.encode('utf-8'))
+        tmpd = 'ds-{}-{}'.format(md5.digest().hex(), randstr(4))
+        path = os.path.join(tmpdir(), tmpd)
+        os.makedirs(path, exist_ok=True)
+        return path
+    #---------------------------------------------------------------------------
+    # add_child
+    #---------------------------------------------------------------------------
+    def set_parent(self, container):
+        LGR.debug('Container.add_child()')
+        self.parent = container.realname
+    #---------------------------------------------------------------------------
     # wdir
     #---------------------------------------------------------------------------
     def wdir(self):
@@ -137,13 +143,6 @@ class Container(object):
             parent = parent.__parent
         return os.path.join(*path)
     #---------------------------------------------------------------------------
-    # add_child
-    #---------------------------------------------------------------------------
-    def add_child(self, container):
-        LGR.debug('Container.add_child()')
-        container.__parent = self
-        self.__children.append(container)
-    #---------------------------------------------------------------------------
     # ifileptr
     #---------------------------------------------------------------------------
     def ifileptr(self):
@@ -152,7 +151,7 @@ class Container(object):
     # ofileptr
     #---------------------------------------------------------------------------
     def ofileptr(self, suffix='ds'):
-        oname = '{}.{}'.format(os.urandom(4).hex(), suffix)
+        oname = '{}.{}'.format(randstr(4), suffix)
         opath = os.path.join(self.tmpd, oname)
         return open(opath, 'wb')
 #-------------------------------------------------------------------------------
@@ -164,8 +163,10 @@ class ContainerActionGroup(ActionGroup):
     #---------------------------------------------------------------------------
     def __init__(self):
         super(ContainerActionGroup, self).__init__('container', {
-            'hash': ActionGroup.action(ContainerActionGroup.hash, "gives container's hash value."),
-            'mimes': ActionGroup.action(ContainerActionGroup.mimes, "gives container's mime type and text.")
+            'hash': ActionGroup.action(ContainerActionGroup.hash, 
+                "gives container's hash value."),
+            'mimes': ActionGroup.action(ContainerActionGroup.mimes, 
+                "gives container's mime type and text.")
         })
     #---------------------------------------------------------------------------
     # hash

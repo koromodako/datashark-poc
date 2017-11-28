@@ -23,16 +23,25 @@
 #-------------------------------------------------------------------------------
 # IMPORTS
 #===============================================================================
-import os.path
-from tempfile       import gettempdir
-from argparse       import ArgumentParser
-from configparser   import ConfigParser
+import os
+import json
+from tempfile                   import gettempdir
+from argparse                   import ArgumentParser
+from utils.helpers.configobj    import ConfigObj
 #===============================================================================
 # CONFIGURATION
 #===============================================================================
 ARGS = None # do not edit this value
 CONFIG = None # do not edit this value
+#
 PROG_NAME = 'datashark'
+#
+VERS_MAJOR = 0
+VERS_MINOR = 0
+VERS_FIX = 0
+VERS_TAG = 'dev'
+PROG_VERSION = '{}.{}.{}{}'.format(VERS_MAJOR, VERS_MINOR, VERS_FIX, VERS_TAG)
+#
 LICENSE = """
 Datashark  Copyright (C) 2017  Paul Dautry
 This program comes with ABSOLUTELY NO WARRANTY; for details use command `--warranty'.
@@ -69,19 +78,27 @@ def prog_prompt(lvl):
 #-------------------------------------------------------------------------------
 def get_arg_parser():
     parser = ArgumentParser()
-    parser.add_argument('-v', '--verbose', action='store_true', 
-        help='Make output more verbose.')
-    parser.add_argument('-s', '--silent', action='store_true', 
-        help='Do not output anything. A log will be produced anyway.')
-    parser.add_argument('-d', '--debug', action='store_true', 
-        help='Start in debug mode.')
+    parser.add_argument('-v', '--version', action='store_true', 
+        help='Show program version.')
     parser.add_argument('--warranty', action='store_true', 
         help='Prints license warranty then exits.')
     parser.add_argument('--conditions', action='store_true', 
         help='Prints license conditions then exits.')
+    parser.add_argument('--verbose', action='store_true', 
+        help='Increase program verbosity.')
+    parser.add_argument('-s', '--silent', action='store_true', 
+        help='Do not output anything. A log will be produced anyway.')
+    parser.add_argument('-d', '--debug', action='store_true', 
+        help='Start in debug mode.')
     parser.add_argument('-c', '--config', nargs=1, 
         help='Specify a configuration file.')
     return parser
+#-------------------------------------------------------------------------------
+# print_license
+#
+#-------------------------------------------------------------------------------
+def print_version():
+    print(PROG_VERSION)
 #-------------------------------------------------------------------------------
 # print_license
 #
@@ -108,16 +125,25 @@ def load_config(args):
     global ARGS
     global CONFIG
     ARGS = args
-    CONFIG = ConfigParser()
+    conf_fname = '{}.conf'.format(PROG_NAME)
+    conf_path = os.path.join(PROG_NAME, conf_fname)
     config_files = [
-        '{}.ini'.format(PROG_NAME),
-        os.path.expanduser('~/{}.ini'.format(PROG_NAME)),
-        '/etc/{progname}/{progname}.ini'.format(progname=PROG_NAME)
+        conf_fname,
+        os.path.expanduser('~/.config/{}'.format(conf_path)),
+        '/etc/{}'.format(conf_path)
     ]
+    #
     if 'config' in dir(ARGS):
         if ARGS.config is not None:
-            config_files.append(ARGS.config)
-    CONFIG.read(config_files, encoding='utf-8')
+            config_files.insert(0, ARGS.config)
+    #
+    for config_file in config_files:
+        if os.path.isfile(config_file):
+            with open(config_file, 'r') as f:
+                CONFIG = ConfigObj(json.load(f))
+            return config_file
+    #
+    return None
 #-------------------------------------------------------------------------------
 # __progdir
 #-------------------------------------------------------------------------------
@@ -151,11 +177,14 @@ def config(option=None, default=None):
             #    option, val))
             return val
     # 2 - try configuration file option
-    val = CONFIG.get(PROG_NAME, option,fallback=None)
-    if val is not None:
-        #LGR.debug('option value from configuration file: {}={}'.format(
-        #    option, val))
-        return val
+    if CONFIG is not None:
+        val = CONFIG.get(PROG_NAME, None)
+        if val is not None:
+            val = val.get(option, None)
+        if val is not None:
+            #LGR.debug('option value from configuration file: {}={}'.format(
+            #    option, val))
+            return val
     # 3 - try environment variable
     envar = '{}_{}'.format(PROG_NAME.upper(), option.upper())
     val = os.getenv(envar)
@@ -167,21 +196,25 @@ def config(option=None, default=None):
     #LGR.debug('default: {}={}'.format(option, default))
     return default
 #-------------------------------------------------------------------------------
+#  section_config
+#-------------------------------------------------------------------------------
+def section_config(section):
+    return CONFIG.get(section)
+#-------------------------------------------------------------------------------
 # module_config
 #   \brief 
 #-------------------------------------------------------------------------------
-def module_config(module, default=[]):
-    #---------------------------------------------------------------------------
-    # ModuleConfig
-    #   \brief 
-    #---------------------------------------------------------------------------
-    class ModuleConfig:
-        def has(self, member):
-            return (member in dir(self))
-    # create and fill config or return None
-    conf = ModuleConfig()
-    if CONFIG.has_section(module):
-        for option, val in CONFIG.items(section):
-            setattr(conf, option, val)
-        return conf
-    return None
+def module_config(module, default=None):
+    # check if CONFIG is set
+    if CONFIG is None:
+        return default
+    #
+    mods_conf = section_config('modules')
+    if mods_conf is None:
+        return default
+    #
+    mod_conf = mods_conf.get(module, None)
+    if mod_conf is None:
+        return default
+    #
+    return mod_conf
