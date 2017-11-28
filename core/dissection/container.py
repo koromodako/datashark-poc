@@ -27,6 +27,7 @@
 import os
 import hashlib
 from magic                      import Magic
+from utils.config               import tmpdir
 from utils.config               import config
 from utils.helpers.logging      import get_logger
 from utils.helpers.action_group import ActionGroup
@@ -48,10 +49,12 @@ class Container(object):
     #---------------------------------------------------------------------------
     # Container
     #---------------------------------------------------------------------------
-    def __init__(self, path, magic_file=None):
+    def __init__(self, path, realname, magic_file=None):
         super(Container, self).__init__()
         # container file path
         self.path = path
+        self.realname = realname
+        self.tmpd = self.__tmpd()
         # file information
         self.hashed = ''
         if not config('skip_hash', False):
@@ -66,6 +69,16 @@ class Container(object):
         self.__children = []
         # unexpected dissection results will fill this list of errors
         self.__errors = []
+    #---------------------------------------------------------------------------
+    # __tmpd
+    #---------------------------------------------------------------------------
+    def __tmpd(self):
+        md5 = hashlib.new('md5')
+        md5.update(self.path.encode('utf-8'))
+        tmpd = 'ds-{}-{}'.format(md5.digest().hex(), os.urandom(4).hex())
+        path = os.path.join(tmpdir(), tmpd)
+        os.makedirs(path, exist_ok=True)
+        return path
     #---------------------------------------------------------------------------
     # exists
     #---------------------------------------------------------------------------
@@ -91,7 +104,7 @@ class Container(object):
             h = hashlib.new(hash_f)
             sz = Container.size(path)
             with open(path, 'rb') as f:
-                LGR.info('computing <{0}> {1}... please wait...'.format(
+                LGR.info('computing <{}> {}... please wait...'.format(
                     path, hash_f))
                 while sz > 0:
                     h.update(f.read(Container.BLK_SZ))
@@ -107,6 +120,12 @@ class Container(object):
         return (Magic(magic_file=magic_file).from_file(path), 
                 Magic(magic_file=magic_file, mime=True).from_file(path))
     #---------------------------------------------------------------------------
+    # wdir
+    #---------------------------------------------------------------------------
+    def wdir(self):
+        LGR.debug('Container.wdir()')
+        return os.path.dirname(self.path)
+    #---------------------------------------------------------------------------
     # virtual_path
     #---------------------------------------------------------------------------
     def virtual_path(self):
@@ -114,16 +133,28 @@ class Container(object):
         path = []
         parent = self.__parent
         while parent is not None:
-            path.insert(0, parent.namesubsection)
+            path.insert(0, parent.realname)
             parent = parent.__parent
-        return os.path.join(path)
+        return os.path.join(*path)
     #---------------------------------------------------------------------------
     # add_child
     #---------------------------------------------------------------------------
-    def add_child(container):
+    def add_child(self, container):
         LGR.debug('Container.add_child()')
         container.__parent = self
         self.__children.append(container)
+    #---------------------------------------------------------------------------
+    # ifileptr
+    #---------------------------------------------------------------------------
+    def ifileptr(self):
+        return open(self.path, 'rb')
+    #---------------------------------------------------------------------------
+    # ofileptr
+    #---------------------------------------------------------------------------
+    def ofileptr(self, suffix='ds'):
+        oname = '{}.{}'.format(os.urandom(4).hex(), suffix)
+        opath = os.path.join(self.tmpd, oname)
+        return open(opath, 'wb')
 #-------------------------------------------------------------------------------
 # ContainerActionGroup
 #-------------------------------------------------------------------------------
@@ -144,9 +175,9 @@ class ContainerActionGroup(ActionGroup):
         if len(args.files) > 0:
             for f in args.files:
                 if os.path.isfile(f):
-                    LGR.info('{0}: {1}'.format(f, Container.hash(f)))
+                    LGR.info('{}: {}'.format(f, Container.hash(f)))
                 else:
-                    LGR.error('{0}: invalid path.')
+                    LGR.error('{}: invalid path.'.format(f))
         else:
             LGR.error('this action expects at least one input file.')
     #---------------------------------------------------------------------------
@@ -158,8 +189,10 @@ class ContainerActionGroup(ActionGroup):
             for f in args.files:
                 if os.path.isfile(f):
                     mimes = Container.mimes(config('magic_file'), f)
-                    LGR.info('{0}:\n\tmime: {1}\n\ttext: {2}'.format(f, mimes[1], mimes[0]))
+                    LGR.info('{}:\n'
+                             '\tmime: {}\n'
+                             '\ttext: {}'.format(f, mimes[1], mimes[0]))
                 else:
-                    LGR.error('{0}: invalid path.')
+                    LGR.error('{}: invalid path.'.format(f))
         else:
             LGR.error('this action expects at least one input file.')

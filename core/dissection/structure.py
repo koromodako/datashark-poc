@@ -73,10 +73,18 @@ LGR = get_logger(__name__)
 #---------------------------------------------------------------------------
 class Struct(object):
     K_OBJ_TYPE = 'obj_type'
-
-    def __init__(self, obj_type):
+    K_OBJ_SIZE = 'obj_size'
+    RESERVED = [
+        K_OBJ_TYPE,
+        K_OBJ_SIZE
+    ]
+    #---------------------------------------------------------------------------
+    # __init__
+    #---------------------------------------------------------------------------
+    def __init__(self, obj_type, obj_size):
         super(Struct, self).__init__()
         setattr(self, Struct.K_OBJ_TYPE, obj_type)
+        setattr(self, Struct.K_OBJ_SIZE, obj_size)
 #-------------------------------------------------------------------------------
 # StructSpecif
 #-------------------------------------------------------------------------------
@@ -112,17 +120,16 @@ class StructSpecif(object):
         for member in self.members:
             having = set(member.keys()).intersection(StructSpecif.EXPECTED_KEYS) 
             if len(having) != len(StructSpecif.EXPECTED_KEYS):
-                LGR.error("struct member's specs must have these keys: {0}".format(
+                LGR.error("struct member's specs must have these keys: {}".format(
                     StructSpecif.EXPECTED_KEYS))
                 return False
             name = member[StructSpecif.K_NAME]
             if not isinstance(name, str) or StructSpecif.RE_NAME.match(name) is None:
-                LGR.error("struct member's name must be a string matching regexp: {0}".format(
+                LGR.error("struct member's name must be a string matching regexp: {}".format(
                     StructSpecif.RE_NAME.pattern))
                 return False
-            if name == Struct.K_OBJ_TYPE:
-                LGR.error("struct member's name <{0}> is reserved.".format(
-                    Struct.K_OBJ_TYPE))
+            if name in Struct.RESERVED:
+                LGR.error("struct member's name <{}> is reserved.".format(name))
                 return False
             if not isinstance(member[StructSpecif.K_FMT], str):
                 LGR.error("struct member's format must be a string.")
@@ -156,7 +163,7 @@ class StructFactory:
     def obj_exists(obj_type, log=False):
         s = StructFactory.STRUCTS.get(obj_type, None)
         if log and s is None:
-            LGR.error('object <{0}> has not been registered!'.format(obj_type))
+            LGR.error('object <{}> has not been registered!'.format(obj_type))
         return (s is not None)
     #---------------------------------------------------------------------------
     # obj_size
@@ -207,7 +214,7 @@ class StructFactory:
                 LGR.error('size computation error.')
                 return False
             if s.name in list(StructFactory.STRUCTS.keys()):
-                LGR.error('structure with the same name (<{0}>) already registered.'.format(
+                LGR.error('structure with the same name (<{}>) already registered.'.format(
                     s.name))
                 return False
             StructFactory.STRUCTS[s.name] = {
@@ -230,7 +237,7 @@ class StructFactory:
             return None
         sz = 0
         s = StructFactory.STRUCTS[obj_type]
-        obj = Struct(obj_type)
+        obj = Struct(obj_type, -1)
         for member in s[StructFactory.K_MEMBERS]:
             fmt = member[StructSpecif.K_FMT]
             rsz = StructFactory.__member_size(member)
@@ -245,6 +252,7 @@ class StructFactory:
                 value = struct.unpack(fmt, dat[sz:sz+rsz])[0]
             sz += rsz
             setattr(obj, member[StructSpecif.K_NAME], value)
+        setattr(obj, Struct.K_OBJ_SIZE, sz)
         return obj
     #---------------------------------------------------------------------------
     # obj_from_file
@@ -266,12 +274,13 @@ class StructFactory:
             return None
         members = vars(obj)
         obj_type = members.pop(Struct.K_OBJ_TYPE)
-        s = '\n{0}:'.format(obj_type)
+        obj_size = members.pop(Struct.K_OBJ_SIZE)
+        s = '\n{}:'.format(obj_type)
         for key, value in members.items():
             if isinstance(value, Struct):
                 s += StructFactory.obj_to_str(value).replace('\n', '\n\t')
             else:
-                s += '\n\t+ {0}: {1}'.format(key, value)
+                s += '\n\t+ {}: {}'.format(key, value)
         return s
 
 

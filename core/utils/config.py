@@ -62,7 +62,7 @@ See LICENSE file for details.
 #
 #-------------------------------------------------------------------------------
 def prog_prompt(lvl):
-    return '({0})[{1}]> '.format(PROG_NAME, lvl)
+    return '({})[{}]> '.format(PROG_NAME, lvl)
 #-------------------------------------------------------------------------------
 # get_arg_parser
 #
@@ -110,8 +110,8 @@ def load_config(args):
     ARGS = args
     CONFIG = ConfigParser()
     config_files = [
-        '{0}.ini'.format(PROG_NAME),
-        os.path.expanduser('~/{0}.ini'.format(PROG_NAME)),
+        '{}.ini'.format(PROG_NAME),
+        os.path.expanduser('~/{}.ini'.format(PROG_NAME)),
         '/etc/{progname}/{progname}.ini'.format(progname=PROG_NAME)
     ]
     if 'config' in dir(ARGS):
@@ -119,11 +119,24 @@ def load_config(args):
             config_files.append(ARGS.config)
     CONFIG.read(config_files, encoding='utf-8')
 #-------------------------------------------------------------------------------
+# __progdir
+#-------------------------------------------------------------------------------
+def __progdir(dirname):
+    path = os.path.join(gettempdir(), PROG_NAME, dirname)
+    os.makedirs(path, exist_ok=True)
+    return path
+#-------------------------------------------------------------------------------
 # logsdir
 #   \brief returns application logs directory
 #-------------------------------------------------------------------------------
 def logsdir():
-    return os.path.join(gettempdir(), PROG_NAME, 'logs')
+    return __progdir('logs')
+#-------------------------------------------------------------------------------
+# tmpdir
+#   \brief returns application temporary files directory
+#-------------------------------------------------------------------------------
+def tmpdir():
+    return __progdir('tmp')
 #-------------------------------------------------------------------------------
 # config
 #   \brief returns application configuration value
@@ -134,24 +147,24 @@ def config(option=None, default=None):
     if option in dir(ARGS):
         val = getattr(ARGS, option)
         if val is not None:
-            #LGR.debug('option value from command line arguments: {0}={1}'.format(
+            #LGR.debug('option value from command line arguments: {}={}'.format(
             #    option, val))
             return val
     # 2 - try configuration file option
     val = CONFIG.get(PROG_NAME, option,fallback=None)
     if val is not None:
-        #LGR.debug('option value from configuration file: {0}={1}'.format(
+        #LGR.debug('option value from configuration file: {}={}'.format(
         #    option, val))
         return val
     # 3 - try environment variable
-    envar = '{0}_{1}'.format(PROG_NAME.upper(), option.upper())
+    envar = '{}_{}'.format(PROG_NAME.upper(), option.upper())
     val = os.getenv(envar)
     if val is not None:
-        #LGR.debug('option value from environment variable: {0}={1}'.format(
+        #LGR.debug('option value from environment variable: {}={}'.format(
         #    envar, val))
         return val
     # 4 - finally return default argument
-    #LGR.debug('default: {0}={1}'.format(option, default))
+    #LGR.debug('default: {}={}'.format(option, default))
     return default
 #-------------------------------------------------------------------------------
 # module_config

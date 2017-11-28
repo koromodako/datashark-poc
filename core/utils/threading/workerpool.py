@@ -84,7 +84,7 @@ class WorkerPool(object):
         for task in tasks:
             self.iqueue.put(task)
         # create as much workers as needed
-        LGR.debug('creating {0} workers...'.format(self.num_workers))
+        LGR.debug('creating {} workers...'.format(self.num_workers))
         for i in range(self.num_workers):
             worker = mp.Process(
                 target=worker_routine, 
@@ -105,7 +105,7 @@ class WorkerPool(object):
             results.append(self.oqueue.get())
         # wait for all workers to terminate
         for i in range(len(self.workers)):
-            LGR.debug('waiting worker n°{0} to terminate...'.format(i))
+            LGR.debug('waiting worker n°{} to terminate...'.format(i))
             self.workers[i].join()
         self.workers = []
         # finally returns all results

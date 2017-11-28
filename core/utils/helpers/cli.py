@@ -106,7 +106,7 @@ class CLI(object):
             raise ValueError('CLI.look_for_commands expects "commands" to be a list.')
         for cmd in commands:
             if which(cmd) is None:
-                LGR.error('"{0}" command seems to be unavailable.'.format(cmd))
+                LGR.error('"{}" command seems to be unavailable.'.format(cmd))
                 return False
         return True
     #---------------------------------------------------------------------------
@@ -115,7 +115,7 @@ class CLI(object):
     @staticmethod
     def exec(args):
         LGR.debug('CLI.exec()')
-        LGR.info('exec cmd: {0}'.format(' '.join(args)))
+        LGR.info('exec cmd: {}'.format(' '.join(args)))
         call(args)
     #---------------------------------------------------------------------------
     # exec_shell
@@ -123,7 +123,7 @@ class CLI(object):
     @staticmethod
     def exec_shell(cmd):
         LGR.debug('CLI.exec()')
-        LGR.info('exec cmd: {0}'.format(cmd))
+        LGR.info('exec cmd: {}'.format(cmd))
         call(cmd, shell=True)
     #---------------------------------------------------------------------------
     # start_proc
@@ -131,7 +131,7 @@ class CLI(object):
     @staticmethod
     def start_proc(args, wait=True, capture_outputs=False, cwd=None):
         LGR.debug('CLI.start_proc()')
-        LGR.info('start process with: {0}'.format(' '.join(args)))
+        LGR.info('start process with: {}'.format(' '.join(args)))
         kwargs = {}
         if cwd is not None:
             kwargs['cwd'] = cwd

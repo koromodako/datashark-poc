@@ -68,7 +68,7 @@ def configure(config):
 #-------------------------------------------------------------------------------
 def can_dissect(container):
     LGR.debug('can_dissect()')
-    raise NotImplementedError
+    return ('QEMU QED Image' in container.mime_text)
 #-------------------------------------------------------------------------------
 # dissect
 #   /!\ public mandatory function that the module must define /!\

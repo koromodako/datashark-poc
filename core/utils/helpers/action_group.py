@@ -68,7 +68,7 @@ class ActionGroup(object):
             subkeywords = keywords[1:]
             if isinstance(action, ActionGroup):
                 if len(subkeywords) == 0:
-                    LGR.error('missing keyword after <{0}>.'.format(keywords[0]))
+                    LGR.error('missing keyword after <{}>.'.format(keywords[0]))
                     return
                 action.perform_action(subkeywords, args)
             else:
@@ -86,7 +86,7 @@ class ActionGroup(object):
         LGR.debug('ActionGroup.help()')
         help_txt = ''
         for keyword, action in self.actions.items():
-            help_txt += '\n{0}{1}:'.format(ActionGroup.SEP if depth > 0 else '', keyword)
+            help_txt += '\n{}{}:'.format(ActionGroup.SEP if depth > 0 else '', keyword)
             if isinstance(action, ActionGroup):
                 help_txt += action.help(keywords, args, depth+1).replace('\n', '\n\t')
             else:

@@ -26,6 +26,7 @@
 #===============================================================================
 from dissection.container       import Container 
 from utils.helpers.logging      import get_logger
+from utils.helpers.logging      import todo
 from utils.helpers.action_group import ActionGroup
 #===============================================================================
 # GLOBAL
@@ -68,7 +69,9 @@ def configure(config):
 #-------------------------------------------------------------------------------
 def can_dissect(container):
     LGR.debug('can_dissect()')
-    raise NotImplementedError
+    todo(LGR, 'implement qcow2.can_dissect(), for now will always return False.', 
+        no_raise=True)
+    return False
 #-------------------------------------------------------------------------------
 # dissect
 #   /!\ public mandatory function that the module must define /!\

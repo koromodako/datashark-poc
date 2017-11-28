@@ -45,14 +45,19 @@ LGR = get_logger(__name__)
 # dissect
 #-------------------------------------------------------------------------------
 def dissect(container, dissectors):
-    mods = dissectors.get(container.mime_type, None)
-    if mods is None:
-        LGR.warn('cannot find dissector for: {0}'.format(container.mime_type))
+    containers = []
+    #
+    dissection_mods = dissectors.get(container.mime_type, None)
+    if dissection_mods is None:
+        LGR.warn('cannot find dissector for: {}'.format(container.mime_type))
         container.flagged = True
         return []
-    for dissector in mods:
+    #
+    for dissector in dissection_mods:
         if dissector.can_dissect(container):
-            dissector.dissect(container)
+            containers += dissector.dissect(container)
+    #
+    return containers
 #-------------------------------------------------------------------------------
 # dissection_routine
 #-------------------------------------------------------------------------------
@@ -62,12 +67,18 @@ def dissection_routine(container, whitelist, blacklist, dissectors):
         # foreach new container resulting of the dissection, add it to the 
         # dissect queue
         for new_container in dissect(container, dissectors):
+            #
             container.add_child(new_container)
+            #    
             if whitelist.contains(container):
-                new_container.whitelisted = True # skip processing (whitelisted)
+                LGR.info('matching whitelisted container. skipping!')
+                new_container.whitelisted = True 
+                continue # skip processing (whitelisted)
             elif blacklist.contains(container):
+                LGR.warn('matching blacklisted container. flagged!')
                 new_container.flagged = True
-                new_container.blacklisted = True # skip processing (blacklisted)
+                new_container.blacklisted = True
+                continue # skip processing (blacklisted)
             else:
                 iq.append(new_container) # processing needed
         # return lists
@@ -111,8 +122,8 @@ class Dissection(object):
         missing_funcs = list(missing_funcs.symmetric_difference(Dissection.MANDATORY_FUNCS))
         if len(missing_funcs) > 0:
             LGR.error("""failed to add:
-    {0}
-    >>> details: missing mandatory functions ({1}).""".format(dissector, missing_funcs))
+    {}
+    >>> details: missing mandatory functions ({}).""".format(dissector, missing_funcs))
             return False
         for mime in dissector.mimes():
             if self._dissectors.get(mime, None) is None:
@@ -123,12 +134,12 @@ class Dissection(object):
     # __import_dissector
     #---------------------------------------------------------------------------
     def __import_dissector(self, import_path):
-        LGR.debug('importing: {0}'.format(import_path))
+        LGR.debug('importing: {}'.format(import_path))
         try:
             dissector = import_module(import_path)
             dissector.name = import_path.split('.')[-1]
         except Exception as e:
-            LGR.exception('failed to import: {0}'.format(import_path))
+            LGR.exception('failed to import: {}'.format(import_path))
             return False
         if not self.__register_dissector(dissector):
             LGR.warning('failed to load dissector, see errors above.')
@@ -136,7 +147,7 @@ class Dissection(object):
         if not self.__configure_dissector(dissector):
             LGR.warning('failed to configure dissector, see errors above.')
             return False
-        LGR.info('<{0}> imported successfully.'.format(import_path))
+        LGR.info('<{}> imported successfully.'.format(import_path))
         return True
     #---------------------------------------------------------------------------
     # load_dissectors
@@ -147,7 +158,7 @@ class Dissection(object):
         ok = True
         script_path = os.path.dirname(__file__)
         search_path = os.path.join(script_path, 'dissectors')
-        LGR.debug('dissectors search_path: {0}'.format(search_path))
+        LGR.debug('dissectors search_path: {}'.format(search_path))
         for root, dirs, files in os.walk(search_path):
             rel_root = root.replace(search_path, '')[1:]
             for f in files:
@@ -161,7 +172,7 @@ class Dissection(object):
                         if not config('skip_failing_import', False):
                             LGR.error('dissector import failure: see error above.')
                             exit(1)
-        LGR.info('dissectors loaded{0}'.format(' (with errors).' if not ok else '.'))
+        LGR.info('dissectors loaded{}'.format(' (with errors).' if not ok else '.'))
         return ok
     #---------------------------------------------------------------------------
     # load_hashdatabases
@@ -190,7 +201,7 @@ class Dissection(object):
     def dissect(self, path, num_threads=1):
         LGR.debug('Dissection.dissect()')
         LGR.info('starting dissection processes...')
-        container = Container(path)
+        container = Container(path, os.path.basename(path))
         kwargs = {
             'whitelist': self.__whitelist,
             'blacklist': self.__blacklist,
@@ -209,9 +220,12 @@ class DissectionActionGroup(ActionGroup):
     #---------------------------------------------------------------------------
     def __init__(self):
         super(DissectionActionGroup, self).__init__('dissection', {
-            'dissectors': ActionGroup.action(DissectionActionGroup.dissectors, 'list dissectors.'),
-            'dissector': ActionGroup.action(DissectionActionGroup.dissector, 'forward actions to given dissector.'),
-            'dissect': ActionGroup.action(DissectionActionGroup.dissect, 'dissect given container.')
+            'dissectors': ActionGroup.action(DissectionActionGroup.dissectors, 
+                'list dissectors.'),
+            'dissector': ActionGroup.action(DissectionActionGroup.dissector, 
+                'forward actions to given dissector.'),
+            'dissect': ActionGroup.action(DissectionActionGroup.dissect, 
+                'dissect given container.')
         })
     #---------------------------------------------------------------------------
     # dissectors
@@ -225,9 +239,9 @@ class DissectionActionGroup(ActionGroup):
         LGR.info('dissectors:')
         if len(dissectors) > 0:
             for mime in dissectors:
-                LGR.info('\t+ {0}'.format(mime[0]))
+                LGR.info('\t+ {}'.format(mime[0]))
                 for dissector in mime[1]:
-                    LGR.info('\t\t+ {0}'.format(dissector))
+                    LGR.info('\t\t+ {}'.format(dissector))
         else:
             LGR.error('no dissector registered.')
     #---------------------------------------------------------------------------

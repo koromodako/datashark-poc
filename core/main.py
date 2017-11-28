@@ -87,7 +87,7 @@ def main():
         print_license_conditions()
         return 0
     # execute action
-    LGR.debug('running action: {0}'.format(args.action))
+    LGR.debug('running action: {}'.format(args.action))
     ACTIONS.perform_action(args.action.split(ActionGroup.SEP), args)
     return 0
 #===============================================================================

@@ -75,7 +75,6 @@ def configure_logging(silent, verbose, debug):
     error_log = os.path.join(LOGS_DIR, 'datashark.error.log')
     debug_log = os.path.join(LOGS_DIR, 'datashark.debug.log')
     verbose_log = os.path.join(LOGS_DIR, 'datashark.log')
-    os.makedirs(LOGS_DIR, exist_ok=True)
     LGR = logging.getLogger(PROG_NAME)
     LGR.setLevel(logging.DEBUG)
     fmtr = logging.Formatter(fmt=FMT)
@@ -113,3 +112,13 @@ def configure_logging(silent, verbose, debug):
 def get_logger(name):
     lgr_name = '.'.join([PROG_NAME, name])
     return logging.getLogger(lgr_name)
+#-------------------------------------------------------------------------------
+# todo
+#-------------------------------------------------------------------------------
+def todo(lgr, task='', no_raise=False):
+    msg = 'not implemented. TODO: {}'.format(task)
+    if no_raise:
+        lgr.warning(msg)
+    else:
+        lgr.error(msg)
+        raise NotImplementedError

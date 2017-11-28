@@ -43,8 +43,8 @@ LGR = get_logger(__name__)
 # hashing_routine
 #-------------------------------------------------------------------------------
 def hashing_routine(fpath):
-    LGR.info('processing file: {0}'.format(fpath))
-    container = Container(fpath)
+    LGR.info('processing file: {}'.format(fpath))
+    container = Container(fpath, os.path.basename(fpath))
     return ([], [(container.hashed, container.path)])
 #===============================================================================
 # CLASSES
@@ -67,7 +67,7 @@ class HashDatabase(object):
     def __load_db(self):
         # check if path is valid
         if self.fpath is None or not os.path.isfile(self.fpath):
-            LGR.warning('cannot load <{0}> hash database, invalid path: {1}'.format(
+            LGR.warning('cannot load <{}> hash database, invalid path: {}'.format(
                 self.name, self.fpath))
             return {}
         # read database from file
@@ -145,8 +145,10 @@ class HashDatabaseActionGroup(ActionGroup):
     #---------------------------------------------------------------------------
     def __init__(self):
         super(HashDatabaseActionGroup, self).__init__('hashdb', {
-            'create': ActionGroup.action(HashDatabaseActionGroup.create, 'create a hash-database.'),
-            'merge': ActionGroup.action(HashDatabaseActionGroup.merge, 'merge given hash-databases')
+            'create': ActionGroup.action(HashDatabaseActionGroup.create, 
+                'create a hash-database.'),
+            'merge': ActionGroup.action(HashDatabaseActionGroup.merge, 
+                'merge given hash-databases')
         })
     #---------------------------------------------------------------------------
     # create
@@ -158,10 +160,10 @@ class HashDatabaseActionGroup(ActionGroup):
             fpath = args.files[0]
             dirs = args.files[1:]
             if os.path.isdir(fpath):
-                LGR.error('<{0}> is an existing directory.'.format(fpath))
+                LGR.error('<{}> is an existing directory.'.format(fpath))
             for dpath in dirs:
                 if not os.path.isdir(dpath):
-                    LGR.error('<{0}> must be an existing directory.'.format(dpath))
+                    LGR.error('<{}> must be an existing directory.'.format(dpath))
             # create database
             HashDatabase.create(fpath, dirs, args.recursive, args.dir_filter, args.file_filter)
         else:
@@ -176,11 +178,11 @@ class HashDatabaseActionGroup(ActionGroup):
             fpath = args.files[0]
             files = args.files[1:]
             if os.path.isdir(fpath):
-                LGR.error('<{0}> is an existing directory.'.format(fpath))
+                LGR.error('<{}> is an existing directory.'.format(fpath))
                 return
             for f in files:
                 if not os.path.isfile(f):
-                    LGR.error('<{0}> must be an existing file.'.format(f))
+                    LGR.error('<{}> must be an existing file.'.format(f))
                     return
             # merge db files
             HashDatabase.merge(fpath, files)

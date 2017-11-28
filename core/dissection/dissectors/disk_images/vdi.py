@@ -61,7 +61,19 @@ StructFactory.register_structure(StructSpecif('VDIHeader', [
     StructSpecif.member('pad1', 'ba:0x38')
 ]))
 #===============================================================================
-# FUNCTIONS
+# PRIVATE FUNCTIONS
+#===============================================================================
+def __header(fp):
+    return StructFactory.obj_from_file('VDIHeader', fp)    
+#-------------------------------------------------------------------------------
+# __action_header
+#-------------------------------------------------------------------------------
+def __action_header(keywords, args):
+    for f in args.files:
+        with open(f, 'rb') as fp:
+            LGR.info(StructFactory.obj_to_str(__header(fp)))
+#===============================================================================
+# PUBLIC FUNCTIONS
 #===============================================================================
 #-------------------------------------------------------------------------------
 # mimes
@@ -105,9 +117,8 @@ def can_dissect(container):
 #-------------------------------------------------------------------------------
 def dissect(container):
     LGR.debug('dissect()')
-    with open(container.path, 'rb') as f:
-        vdi_header = StructFactory.obj_from_file('VDIHeader', f)
-        LGR.info(StructFactory.obj_to_str(vdi_header))
+    with open(container.path, 'rb') as fp:
+        vdi_header = __header(fp)
     # TODO : implement raw disk extraction
     raise NotImplementedError
     return []
@@ -117,4 +128,6 @@ def dissect(container):
 #   \brief returns module action group
 #-------------------------------------------------------------------------------
 def action_group():
-    return ActionGroup('vdi', {})
+    return ActionGroup('vdi', {
+        'header': ActionGroup.action(__action_header, 'display vdi header.')
+    })
