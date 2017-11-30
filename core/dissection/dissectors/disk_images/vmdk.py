@@ -106,6 +106,7 @@ StructFactory.register_structure(StructSpecif('MetaDataMarker', [
 # __find_header
 #-------------------------------------------------------------------------------
 def __find_header(fp):
+    LGR.debug('__find_header()')
     sparse_hdr = StructFactory.obj_from_file('SparseExtentHeader', fp)
     cowdsk_hdr = StructFactory.obj_from_file('COWDisk_Header', fp)
     if sparse_hdr is not None and sparse_hdr.magicNumber == b'KDMV': # VMDK
@@ -117,6 +118,7 @@ def __find_header(fp):
 # __parse_descriptor_file
 #-------------------------------------------------------------------------------
 def __parse_descriptor_file(hdr, fp):
+    LGR.debug('__parse_descriptor_file()')
     # read descriptor file from open file
     fp.seek(hdr.obj_size)
     df = b''
@@ -129,35 +131,41 @@ def __parse_descriptor_file(hdr, fp):
 # __extract_extent
 #-------------------------------------------------------------------------------
 def __extract_sparse_extent(wdir, extent, ofp):
+    LGR.debug('__extract_sparse_extent()')
     extent_path = os.path.join(wdir, extent.filename)
     if not os.path.isfile(extent_path):
         LGR.error('cannot find extent: {}'.format(extent_path))
     LGR.info('processing extent: {}'.format(extent_path))
-    
+    todo(LGR, 'implement here.')
 #-------------------------------------------------------------------------------
 # __dissect_monolithic_sparse
 #-------------------------------------------------------------------------------
 def __dissect_monolithic_sparse(wdir, extents, ofp):
+    LGR.debug('__dissect_monolithic_sparse()')
     todo(LGR, 'implement here.')
 #-------------------------------------------------------------------------------
 # __dissect_monolithic_flat
 #-------------------------------------------------------------------------------
 def __dissect_monolithic_flat(wdir, extents, ofp):
+    LGR.debug('__dissect_monolithic_flat()')
     todo(LGR, 'implement here.')
 #-------------------------------------------------------------------------------
 # __dissect_splitted_sparse
 #-------------------------------------------------------------------------------
 def __dissect_splitted_sparse(wdir, extents, ofp):
+    LGR.debug('__dissect_splitted_sparse()')
     todo(LGR, 'implement here.')
 #-------------------------------------------------------------------------------
 # __dissect_splitted_flat
 #-------------------------------------------------------------------------------
 def __dissect_splitted_flat(wdir, extents, ofp):
+    LGR.debug('__dissect_splitted_flat()')
     todo(LGR, 'implement here.')
 #-------------------------------------------------------------------------------
 # __dissect
 #-------------------------------------------------------------------------------
 def __dissect(wdir, df, ifp, ofp):
+    LGR.debug('__dissect()')
     if not df.is_valid():
         LGR.error('invalid DescriptorFile.')
         return False
@@ -258,10 +266,11 @@ def dissect(container):
     if hdr is not None and hdr.obj_type == 'SparseExtentHeader':
         df = __parse_descriptor_file(hdr, ifp)
     else:
+        ifp.seek(0)
         df = DescriptorFile(ifp.read().decode('utf-8'))
     # dissect
     if not __dissect(wdir, df, ifp, ofp):
-        LGR.warning('failed to dissect sparse vmdk.')
+        LGR.warning('failed to dissect vmx/vmdk.')
     ofp.close()
     ifp.close()
     return containers

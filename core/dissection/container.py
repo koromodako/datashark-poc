@@ -25,10 +25,11 @@
 # IMPORTS
 #===============================================================================
 import os
-import hashlib
 from magic                      import Magic
 from utils.config               import config
 from utils.helpers.crypto       import randstr
+from utils.helpers.crypto       import hashbuf
+from utils.helpers.crypto       import hashfile
 from utils.helpers.logging      import get_logger
 from utils.helpers.workspace    import workspace
 from utils.helpers.action_group import ActionGroup
@@ -46,7 +47,6 @@ LGR = get_logger(__name__)
 # Container
 #-------------------------------------------------------------------------------
 class Container(object):
-    BLK_SZ = 8192
     #---------------------------------------------------------------------------
     # exists
     #---------------------------------------------------------------------------
@@ -68,16 +68,9 @@ class Container(object):
     def hash(path):
         LGR.debug('Container.hash()')
         if Container.exists(path):
-            hash_f = config('hash_func', 'sha256')
-            h = hashlib.new(hash_f)
-            sz = Container.size(path)
-            with open(path, 'rb') as f:
-                LGR.info('computing <{}> {}... please wait...'.format(
-                    path, hash_f))
-                while sz > 0:
-                    h.update(f.read(Container.BLK_SZ))
-                    sz -= Container.BLK_SZ
-            return h.digest().hex()
+            hash_func = config('hash_func', 'sha256')
+            LGR.info('computing <{}> {}... please wait...'.format(path, hash_func))
+            return hashfile(hash_func, path).hex()
         return None
     #---------------------------------------------------------------------------
     # __mimes
@@ -95,7 +88,6 @@ class Container(object):
         # container file path
         self.path = path
         self.realname = realname
-        self.tmpd = self.__tmpd()
         # file information
         self.hashed = ''
         if not config('skip_hash', False):
@@ -109,14 +101,6 @@ class Container(object):
         self.parent = None
         # unexpected dissection results will fill this list of errors
         self.__errors = []
-    #---------------------------------------------------------------------------
-    # __tmpd
-    #---------------------------------------------------------------------------
-    def __tmpd(self):
-        LGR.debug('Container.__tmpd()')
-        md5 = hashlib.new('md5')
-        md5.update(self.path.encode('utf-8'))
-        return workspace().tmpdir(subdir=True, prefix=md5.digest().hex())
     #---------------------------------------------------------------------------
     # add_child
     #---------------------------------------------------------------------------
@@ -149,9 +133,7 @@ class Container(object):
     # ofileptr
     #---------------------------------------------------------------------------
     def ofileptr(self, suffix='ds'):
-        oname = '{}.{}'.format(randstr(4), suffix)
-        opath = os.path.join(self.tmpd, oname)
-        return open(opath, 'wb')
+        return workspace().tmpfile(suffix=suffix)
     #---------------------------------------------------------------------------
     # 
     #---------------------------------------------------------------------------
