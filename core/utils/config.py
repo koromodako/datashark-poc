@@ -145,25 +145,6 @@ def load_config(args):
     #
     return None
 #-------------------------------------------------------------------------------
-# __progdir
-#-------------------------------------------------------------------------------
-def __progdir(dirname):
-    path = os.path.join(gettempdir(), PROG_NAME, dirname)
-    os.makedirs(path, exist_ok=True)
-    return path
-#-------------------------------------------------------------------------------
-# logsdir
-#   \brief returns application logs directory
-#-------------------------------------------------------------------------------
-def logsdir():
-    return __progdir('logs')
-#-------------------------------------------------------------------------------
-# tmpdir
-#   \brief returns application temporary files directory
-#-------------------------------------------------------------------------------
-def tmpdir():
-    return __progdir('tmp')
-#-------------------------------------------------------------------------------
 # config
 #   \brief returns application configuration value
 #-------------------------------------------------------------------------------

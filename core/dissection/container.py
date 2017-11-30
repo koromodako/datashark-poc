@@ -27,10 +27,10 @@
 import os
 import hashlib
 from magic                      import Magic
-from utils.config               import tmpdir
 from utils.config               import config
 from utils.helpers.crypto       import randstr
 from utils.helpers.logging      import get_logger
+from utils.helpers.workspace    import workspace
 from utils.helpers.action_group import ActionGroup
 #===============================================================================
 # GLOBAL
@@ -113,12 +113,10 @@ class Container(object):
     # __tmpd
     #---------------------------------------------------------------------------
     def __tmpd(self):
+        LGR.debug('Container.__tmpd()')
         md5 = hashlib.new('md5')
         md5.update(self.path.encode('utf-8'))
-        tmpd = 'ds-{}-{}'.format(md5.digest().hex(), randstr(4))
-        path = os.path.join(tmpdir(), tmpd)
-        os.makedirs(path, exist_ok=True)
-        return path
+        return workspace().tmpdir(subdir=True, prefix=md5.digest().hex())
     #---------------------------------------------------------------------------
     # add_child
     #---------------------------------------------------------------------------
@@ -154,6 +152,23 @@ class Container(object):
         oname = '{}.{}'.format(randstr(4), suffix)
         opath = os.path.join(self.tmpd, oname)
         return open(opath, 'wb')
+    #---------------------------------------------------------------------------
+    # 
+    #---------------------------------------------------------------------------
+    def to_dict(self):
+        return {
+            "parent": self.parent,
+            "path": self.path,
+            "realname": self.realname,
+            "hashed": self.hashed,
+            "mime": {
+                "type": self.mime_type,
+                "text": self.mime_text
+            },
+            "flagged": self.flagged,
+            "whitelisted": self.whitelisted,
+            "blacklisted": self.blacklisted
+        }
 #-------------------------------------------------------------------------------
 # ContainerActionGroup
 #-------------------------------------------------------------------------------

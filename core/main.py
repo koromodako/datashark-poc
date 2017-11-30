@@ -3,7 +3,11 @@
 #===============================================================================
 # IMPORTS
 #===============================================================================
+# modules imports
 import os
+import utils.helpers.logging        as logging
+import utils.helpers.workspace      as workspace
+# functions imports
 from utils.config                   import config
 from utils.config                   import load_config
 from utils.config                   import print_license
@@ -14,7 +18,6 @@ from utils.config                   import print_license_conditions
 from dissection.container           import ContainerActionGroup
 from dissection.dissection          import DissectionActionGroup
 from utils.helpers.logging          import get_logger
-from utils.helpers.logging          import configure_logging
 from utils.helpers.filtering        import FSEntryFilter
 from dissection.hashdatabase        import HashDatabaseActionGroup
 from utils.helpers.action_group     import ActionGroup
@@ -22,16 +25,25 @@ from dissection.dissectiondatabase  import DissectionDatabaseActionGroup
 #===============================================================================
 # GLOBALS
 #===============================================================================
-LGR = None
+#
+if not workspace.init():
+    exit(101)
+#
+if not logging.init(workspace.workspace().logdir()):
+    exit(102)
+#
+LGR = logging.get_logger(__name__)
 HASHDB_ACT_GRP = HashDatabaseActionGroup()
 CONTAINER_ACT_GRP = ContainerActionGroup()
 DISSECTION_ACT_GRP = DissectionActionGroup()
 DISSECTION_DB_ACT_GRP = DissectionDatabaseActionGroup()
+WORKSPACE_ACT_GRP = workspace.action_group()
 ACTIONS = ActionGroup('datashark', {
     HASHDB_ACT_GRP.name: HASHDB_ACT_GRP,
+    WORKSPACE_ACT_GRP.name: WORKSPACE_ACT_GRP,
     CONTAINER_ACT_GRP.name: CONTAINER_ACT_GRP,
     DISSECTION_ACT_GRP.name: DISSECTION_ACT_GRP,
-    DISSECTION_DB_ACT_GRP.name: DISSECTION_DB_ACT_GRP
+    DISSECTION_DB_ACT_GRP.name: DISSECTION_DB_ACT_GRP,
 })
 #===============================================================================
 # FUNCTIONS 
@@ -40,6 +52,7 @@ ACTIONS = ActionGroup('datashark', {
 # parse_args
 #-------------------------------------------------------------------------------
 def parse_args():
+    LGR.debug('parse_args()')
     parser = get_arg_parser()
     # optional arguments
     parser.add_argument('-r', '--recursive', action='store_true', 
@@ -69,6 +82,7 @@ def parse_args():
 # handle_action
 #-------------------------------------------------------------------------------
 def handle_action(args):
+    LGR.debug('handle_action()')
     # create FS entry filters
     args.dir_filter = FSEntryFilter(args.include_dirs, args.exclude_dirs)
     args.file_filter = FSEntryFilter(args.include_files, args.exclude_files)
@@ -88,11 +102,12 @@ def handle_action(args):
 # main
 #-------------------------------------------------------------------------------
 def main():
-    global LGR
+    LGR.debug('main()')
     # parse input arguments
     args = parse_args()
-    # configure logging module
-    configure_logging(args.silent, args.verbose, args.debug)
+    # reconfigure logging module
+    logging.reconfigure(args.silent, args.verbose, args.debug)
+    LGR.debug('args: {}'.format(args))
     # process specific options
     if args.version:
         print_version()
@@ -106,11 +121,11 @@ def main():
     # print license if required
     if not args.silent:
         print_license()
-    # retrieve module logger after logging module has been configured
-    LGR = get_logger(__name__)
     return handle_action(args)
 #===============================================================================
 # SCIRPT
 #===============================================================================
 if __name__ == '__main__':
-    exit(main())
+    code = main()
+    workspace.term()
+    exit(code)
