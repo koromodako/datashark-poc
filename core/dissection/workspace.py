@@ -70,9 +70,9 @@ class Workspace(object):
         # --------------------------------------------------------------------------
         # __filename
         # --------------------------------------------------------------------------
-        return '{}.{}.{}'.format(prefix,
-                                 randstr(4) if randomize else '',
-                                 suffix)
+        parts = [prefix, randstr(4) if randomize else '', suffix]
+        parts = list(filter(None, parts))
+        return '.'.join(parts)
 
     def __file(self, absdir, prefix, suffix, isdir=False, randomize=True):
         # --------------------------------------------------------------------------
@@ -93,12 +93,18 @@ class Workspace(object):
         self.__mkdir(self.__ws_datdir)
         self.__mkdir(self.__ws_tmpdir)
 
+    def cleanup(self):
+        # --------------------------------------------------------------------------
+        # cleanup
+        # --------------------------------------------------------------------------
+        if os.path.isdir(self.__ws_tmpdir):
+            rmtree(self.__ws_tmpdir)  # remove temporary directory (cleanup)
+
     def term(self):
         # --------------------------------------------------------------------------
         # term
         # --------------------------------------------------------------------------
-        if os.path.isdir(self.__ws_tmpdir):
-            rmtree(self.__ws_tmpdir)  # remove temporary directory (cleanup)
+        pass
 
     def logdir(self):
         # --------------------------------------------------------------------------
@@ -169,6 +175,15 @@ def init():
 
     return False
 
+def cleanup():
+    # -------------------------------------------------------------------------
+    # cleanup
+    # -------------------------------------------------------------------------
+    if WORKSPACE is not None:
+        WORKSPACE.cleanup()
+        return True
+
+    return False
 
 def term():
     # ------------------------------------------------------------------------------
@@ -193,13 +208,38 @@ def action_group():
     # action_group
     # ------------------------------------------------------------------------------
 
+    def __action_list(keywords, args):
+        # --------------------------------------------------------------------------
+        # __action_list
+        # --------------------------------------------------------------------------
+        total = 0
+        tmpdir = gettempdir()
+
+        text = '\nworkspaces:\n'
+        for entry in os.listdir(tmpdir):
+            full_path = os.path.join(tmpdir, entry)
+
+            if os.path.isdir(full_path):
+                if entry.startswith(Workspace.WS_PREFIX):
+                    total += 1
+                    text += '\t+ {}\n'.format(full_path)
+
+        text += '\ntotal: {}\n'.format(total)
+        LGR.info(text)
+
     def __action_clean(keywords, args):
         # --------------------------------------------------------------------------
         # __action_clean
         # --------------------------------------------------------------------------
         tmpdir = gettempdir()
 
+        only = args.files
+
         for entry in os.listdir(tmpdir):
+
+            if len(only) > 0 and entry not in only:
+                continue
+
             full_path = os.path.join(tmpdir, entry)
 
             if os.path.isdir(full_path):
@@ -210,7 +250,6 @@ def action_group():
     # ActionGroup
     # -------------------------------------------------------------------------
     return ActionGroup('workspace', {
-        'clean': ActionGroup.action(__action_clean,
-                                    'removes all workspaces from <{}> '
-                                    'directory.'.format(gettempdir()))
+        'list': ActionGroup.action(__action_list, 'lists workspaces.'),
+        'clean': ActionGroup.action(__action_clean, 'removes all workspaces.')
     })

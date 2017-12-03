@@ -167,7 +167,7 @@ def __extract_sparse_extent(wdir, extent, obf):
 
     LGR.info('extracting {} grains from extent...'.format(num_grains))
     for gidx in range(num_grains):
-        if gidx+1 % 1000 == 0:
+        if (gidx+1) % 10 == 0:
             LGR.info('{}/{} grains extracted.'.format(gidx+1, num_grains))
         grain = GD.read_grain(gidx*hdr.grainSize)
         obf.write(grain) # output grain
@@ -188,6 +188,7 @@ def __dissect_monolithic_sparse(wdir, extents, obf):
         LGR.info('extracting {} of {} sectors.'.format(extent_sectors,
                                                        total_sectors))
         if not __extract_sparse_extent(wdir, extent, obf):
+            LGR.error('sparse extent extraction failed!')
             return False
 
     return True
@@ -231,10 +232,10 @@ def __dissect(wdir, df, ibf, obf):
         parent_filename = df.parent_filename()
     # select extraction based on multiple criterions
     if df.is_monolithic():
-
         if df.is_sparse():
             if not __dissect_monolithic_sparse(wdir, df.extents, obf):
                 return False
+
         elif df.is_flat():
             __dissect_monolithic_flat(wdir, df.extents, obf)
         else:
@@ -242,7 +243,6 @@ def __dissect(wdir, df, ibf, obf):
             return False
 
     elif df.is_2gb_splitted():
-
         if df.is_sparse():
             __dissect_splitted_sparse(wdir, df.extents, obf)
         elif df.is_flat():
@@ -261,6 +261,9 @@ def __dissect(wdir, df, ibf, obf):
         todo(LGR, 'implement dissection of ESX disk.')
     else:
         LGR.error('unhandled disk type')
+        return False
+
+    return True
 # =============================================================================
 # PUBLIC FUNCTIONS
 # =============================================================================
@@ -304,14 +307,12 @@ def can_dissect(container):
     # -------------------------------------------------------------------------
     LGR.debug('can_dissect()')
     if 'VMware4 disk image' in container.mime_text:
-
         bf = container.ibf()
         hdr = __find_header(bf)
         bf.close()
         return (hdr is not None)
 
     elif container.path.endswith('.vmx'):
-
         bf = container.ibf()
         df = DescriptorFile(bf.read_text())
         bf.close()
@@ -346,7 +347,7 @@ def dissect(container):
     if not __dissect(wdir, df, ibf, obf):
         LGR.warning('failed to dissect vmx/vmdk.')
     else:
-        containers.append(Container())
+        containers.append(Container(obf.abspath, 'disk.raw'))
 
     obf.close()
     ibf.close()
@@ -359,6 +360,8 @@ def action_group():
     #   /!\ public mandatory function that the module must define /!\
     #   \brief returns module action group
     # -------------------------------------------------------------------------
+    LGR.debug('action_group()')
+
     def __action_header(keywords, args):
         # ---------------------------------------------------------------------
         # __action_header
@@ -386,7 +389,6 @@ def action_group():
         # ---------------------------------------------------------------------
         LGR.debug('__action_descfile()')
         for f in args.files:
-
             if not BinaryFile.exists(f):
                 continue
 

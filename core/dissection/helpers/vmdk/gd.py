@@ -41,13 +41,13 @@ class GrainDirectory(object):
     # -------------------------------------------------------------------------
     # GrainDirectory
     # -------------------------------------------------------------------------
-    def __init__(self, hdr, fp, parent_gd=None):
+    def __init__(self, hdr, bf, parent_gd=None):
         # ---------------------------------------------------------------------
         # __init__
         # ---------------------------------------------------------------------
         super(GrainDirectory, self).__init__()
 
-        self.fp = fp
+        self.bf = bf
         self.hdr = hdr
         self.parent_gd = parent_gd
 
@@ -59,8 +59,8 @@ class GrainDirectory(object):
         # __load_metadata
         # ---------------------------------------------------------------------
         LGR.debug('GrainDirectory.__cache_data()')
-        fp.seek(self.hdr.rgdOffset * SECTOR_SZ)
-        return fp.read(self.hdr.overHead * SECTOR_SZ)
+        self.bf.seek(self.hdr.rgdOffset * SECTOR_SZ)
+        return self.bf.read(self.hdr.overHead * SECTOR_SZ)
 
     def __read_metadata(self, offset, skip=0):
         # ---------------------------------------------------------------------
@@ -71,14 +71,15 @@ class GrainDirectory(object):
         sz = struct.calcsize(fmt)
         start = skip+offset*sz
         data = self.metadata[start:start+sz]
-        return struct.unpack(fmt, data)
+        return struct.unpack(fmt, data)[0]
 
     def __read_file_grain(self, gte):
         # ---------------------------------------------------------------------
         # __read_file_grain
         # ---------------------------------------------------------------------
-        self.fp.seek(gte)
-        return self.fp.read(self.hdr.grainSize * SECTOR_SZ)
+        LGR.debug('GrainDirectory.__read_file_grain()')
+        self.bf.seek(gte)
+        return self.bf.read(self.hdr.grainSize * SECTOR_SZ)
 
     def read_grain(self, sector):
         # ---------------------------------------------------------------------

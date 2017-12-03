@@ -49,6 +49,8 @@ def dissect(container, dissectors):
     # -------------------------------------------------------------------------
     # dissect
     # -------------------------------------------------------------------------
+    LGR.debug('dissect()')
+    LGR.info('dissection of <{}> begins...'.format(container.realname))
     containers = []
     #
     dissection_mods = dissectors.get(container.mime_type, None)
@@ -68,32 +70,33 @@ def dissection_routine(container, whitelist, blacklist, dissectors):
     # -------------------------------------------------------------------------
     # dissection_routine
     # -------------------------------------------------------------------------
-        iq = []
-        oq = []
-        # foreach new container resulting of the dissection, add it to the
-        # dissect queue
-        for new_container in dissect(container, dissectors):
+    LGR.debug('dissection_routine()')
+    iq = []
+    oq = []
+    # foreach new container resulting of the dissection, add it to the
+    # dissect queue
+    for new_container in dissect(container, dissectors):
 
-            new_container.set_parent(container)
+        new_container.set_parent(container)
 
-            if whitelist.contains(container):
-                LGR.info('matching whitelisted container. skipping!')
-                new_container.whitelisted = True
-                DissectionDatabase.persist_container(new_container)
-                continue    # skip processing (whitelisted)
+        if whitelist.contains(container):
+            LGR.info('matching whitelisted container. skipping!')
+            new_container.whitelisted = True
+            DissectionDatabase.persist_container(new_container)
+            continue    # skip processing (whitelisted)
 
-            elif blacklist.contains(container):
-                LGR.warn('matching blacklisted container. flagged!')
-                new_container.flagged = True
-                new_container.blacklisted = True
-                DissectionDatabase.persist_container(new_container)
-                continue    # skip processing (blacklisted)
+        elif blacklist.contains(container):
+            LGR.warn('matching blacklisted container. flagged!')
+            new_container.flagged = True
+            new_container.blacklisted = True
+            DissectionDatabase.persist_container(new_container)
+            continue    # skip processing (blacklisted)
 
-            else:
-                iq.append(new_container)    # processing needed
+        else:
+            iq.append(new_container)    # processing needed
 
-        DissectionDatabase.persist_container(container)
-        return (iq, oq)
+    DissectionDatabase.persist_container(container)
+    return (iq, oq)
 # =============================================================================
 # CLASSES
 # =============================================================================

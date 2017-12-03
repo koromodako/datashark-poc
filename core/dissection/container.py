@@ -124,18 +124,21 @@ class Container(object):
         # ---------------------------------------------------------------------
         # ibf
         # ---------------------------------------------------------------------
+        LGR.debug('Container.ibf()')
         return BinaryFile(self.path, 'r')
 
     def obf(self, suffix='ds'):
         # ---------------------------------------------------------------------
         # obf
         # ---------------------------------------------------------------------
+        LGR.debug('Container.obf()')
         return workspace().tmpfile(suffix=suffix)
 
     def to_dict(self):
         # ---------------------------------------------------------------------
         # to_dict
         # ---------------------------------------------------------------------
+        LGR.debug('Container.to_dict()')
         return {
             "parent": self.parent,
             "path": self.path,
@@ -171,6 +174,7 @@ class ContainerActionGroup(ActionGroup):
         # ---------------------------------------------------------------------
         # hash
         # ---------------------------------------------------------------------
+        LGR.debug('ContainerActionGroup.hash()')
         if len(args.files) > 0:
             for f in args.files:
                 if BinaryFile.exists(f):
@@ -185,6 +189,7 @@ class ContainerActionGroup(ActionGroup):
         # ---------------------------------------------------------------------
         # mimes
         # ---------------------------------------------------------------------
+        LGR.debug('ContainerActionGroup.mimes()')
         if len(args.files) == 0:
             LGR.error('this action expects at least one input file.')
             return
