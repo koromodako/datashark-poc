@@ -162,12 +162,11 @@ def __extract_sparse_extent(wdir, extent, obf):
 
     GD = GrainDirectory(hdr, bf)
 
-    num_sectors = hdr.capacity // SECTOR_SZ
-    num_grains =  num_sectors // hdr.grainSize
+    num_grains = hdr.capacity // hdr.grainSize
 
     LGR.info('extracting {} grains from extent...'.format(num_grains))
     for gidx in range(num_grains):
-        if (gidx+1) % 10 == 0:
+        if (gidx+1) % 100 == 0:
             LGR.info('{}/{} grains extracted.'.format(gidx+1, num_grains))
         grain = GD.read_grain(gidx*hdr.grainSize)
         obf.write(grain) # output grain

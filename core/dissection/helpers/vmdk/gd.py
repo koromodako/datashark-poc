@@ -78,7 +78,7 @@ class GrainDirectory(object):
         # __read_file_grain
         # ---------------------------------------------------------------------
         LGR.debug('GrainDirectory.__read_file_grain()')
-        self.bf.seek(gte)
+        self.bf.seek(gte * SECTOR_SZ)
         return self.bf.read(self.hdr.grainSize * SECTOR_SZ)
 
     def read_grain(self, sector):
@@ -92,7 +92,8 @@ class GrainDirectory(object):
         gt_offset = self.__read_metadata(gde_idx)
         gt_offset -= self.hdr.rgdOffset  # offset relative to r.g.d. start
 
-        gte_idx = math.floor((sector % self.gt_coverage) - self.hdr.grainSize)
+        gte_idx = math.floor((sector % self.gt_coverage) / self.hdr.grainSize)
+
         gte = self.__read_metadata(gte_idx, skip=gt_offset*SECTOR_SZ)
 
         if gte == 0:
