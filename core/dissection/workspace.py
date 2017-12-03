@@ -30,11 +30,14 @@ import os
 from shutil import rmtree
 from tempfile import gettempdir
 from utils.helpers.crypto import randstr
+from utils.helpers.logging import get_logger
+from utils.helpers.binary_file import BinaryFile
 from utils.helpers.action_group import ActionGroup
 # ==============================================================================
 # GLOBALS
 # ==============================================================================
 WORKSPACE = None
+LGR = get_logger(__name__)
 # ==============================================================================
 # CLASSES
 # ==============================================================================
@@ -79,8 +82,8 @@ class Workspace(object):
                                                          randomize))
         if isdir:
             return self.__mkdir(full_path)
-        else:
-            return open(full_path, 'w')
+
+        return BinaryFile(full_path, 'w')
 
     def init(self):
         # --------------------------------------------------------------------------
@@ -115,6 +118,7 @@ class Workspace(object):
         # --------------------------------------------------------------------------
         if subdir:
             return self.__file(self.__ws_datdir, prefix, suffix, isdir=True)
+
         return self.__ws_datdir
 
     def datfile(self, prefix='', suffix=''):
@@ -129,6 +133,7 @@ class Workspace(object):
         # --------------------------------------------------------------------------
         if subdir:
             return self.__file(self.__ws_tmpdir, prefix, suffix, isdir=True)
+
         return self.__ws_tmpdir
 
     def tmpfile(self, prefix='', suffix=''):
@@ -137,7 +142,11 @@ class Workspace(object):
         # --------------------------------------------------------------------------
         return self.__file(self.__ws_tmpdir, prefix, suffix)
 
-
+    def filepath(self, fp):
+        # ---------------------------------------------------------------------
+        # filepath
+        # ---------------------------------------------------------------------
+        return os.path.abspath(fp.name)
 # ==============================================================================
 # FUNCTIONS
 # ==============================================================================
@@ -195,6 +204,7 @@ def action_group():
 
             if os.path.isdir(full_path):
                 if entry.startswith(Workspace.WS_PREFIX):
+                    LGR.info('removing {}...'.format(full_path))
                     rmtree(full_path)
     # -------------------------------------------------------------------------
     # ActionGroup

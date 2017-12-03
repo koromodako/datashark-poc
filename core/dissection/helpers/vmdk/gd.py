@@ -41,28 +41,75 @@ class GrainDirectory(object):
     # -------------------------------------------------------------------------
     # GrainDirectory
     # -------------------------------------------------------------------------
-    def __init__(self, hdr, fp):
+    def __init__(self, hdr, fp, parent_gd=None):
         # ---------------------------------------------------------------------
         # __init__
         # ---------------------------------------------------------------------
         super(GrainDirectory, self).__init__()
+
         self.fp = fp
         self.hdr = hdr
+        self.parent_gd = parent_gd
+
         self.metadata = self.__load_metadata()
-        self.gtCoverage = hdr.numGTEsPerGT * hdr.grainSize
+        self.gt_coverage = hdr.numGTEsPerGT * hdr.grainSize
 
     def __load_metadata(self):
         # ---------------------------------------------------------------------
         # __load_metadata
         # ---------------------------------------------------------------------
         LGR.debug('GrainDirectory.__cache_data()')
-        fp.seek(hdr.rgdOffset * SECTOR_SZ)
-        return fp.read(hdr.overHead * SECTOR_SZ)
+        fp.seek(self.hdr.rgdOffset * SECTOR_SZ)
+        return fp.read(self.hdr.overHead * SECTOR_SZ)
+
+    def __read_metadata(self, offset, skip=0):
+        # ---------------------------------------------------------------------
+        # read_metadata
+        # ---------------------------------------------------------------------
+        LGR.debug('GrainDirectory.__read_metadata()')
+        fmt = '<I'
+        sz = struct.calcsize(fmt)
+        start = skip+offset*sz
+        data = self.metadata[start:start+sz]
+        return struct.unpack(fmt, data)
+
+    def __read_file_grain(self, gte):
+        # ---------------------------------------------------------------------
+        # __read_file_grain
+        # ---------------------------------------------------------------------
+        self.fp.seek(gte)
+        return self.fp.read(self.hdr.grainSize * SECTOR_SZ)
+
+    def read_grain(self, sector):
+        # ---------------------------------------------------------------------
+        # read_grain
+        # ---------------------------------------------------------------------
+        LGR.debug('GrainDirectory.read_grain()')
+
+        gde_idx = math.floor(sector / self.gt_coverage)
+
+        gt_offset = self.__read_metadata(gde_idx)
+        gt_offset -= self.hdr.rgdOffset  # offset relative to r.g.d. start
+
+        gte_idx = math.floor((sector % self.gt_coverage) - self.hdr.grainSize)
+        gte = self.__read_metadata(gte_idx, skip=gt_offset*SECTOR_SZ)
+
+        if gte == 0:
+
+            if self.parent_gd is None:
+                return b'\x00' * (self.hdr.grainSize * SECTOR_SZ)
+            else:
+                return self.parent_gd.read_grain(sector)
+
+        return self.__read_file_grain(gte)
 
     def read_sector(self, n):
         # ---------------------------------------------------------------------
         # read_sector
         # ---------------------------------------------------------------------
         LGR.debug('GrainDirectory.read_sector()')
-        gde_idx = math.floor(n / self.gtCoverage)
-        # gt_offset = ...
+
+        grain = self.read_grain(n)
+        start = n*SECTOR_SZ
+
+        return grain[start:start+SECTOR_SZ]

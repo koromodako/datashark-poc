@@ -30,6 +30,7 @@ from dissection.structure import StructSpecif
 from dissection.structure import StructFactory
 from utils.helpers.logging import todo
 from utils.helpers.logging import get_logger
+from utils.helpers.binary_file import BinaryFile
 from utils.helpers.action_group import ActionGroup
 from dissection.helpers.vmdk.gd import GrainDirectory
 from dissection.helpers.vmdk.gd import SECTOR_SZ
@@ -108,14 +109,14 @@ StructFactory.register_structure(StructSpecif('MetaDataMarker', [
 # =============================================================================
 
 
-def __find_header(fp):
+def __find_header(bf):
     # -------------------------------------------------------------------------
     # __find_header
     # -------------------------------------------------------------------------
     LGR.debug('__find_header()')
 
-    sparse_hdr = StructFactory.obj_from_file('SparseExtentHeader', fp)
-    cowdsk_hdr = StructFactory.obj_from_file('COWDisk_Header', fp)
+    sparse_hdr = StructFactory.obj_from_file('SparseExtentHeader', bf)
+    cowdsk_hdr = StructFactory.obj_from_file('COWDisk_Header', bf)
 
     if sparse_hdr is not None and sparse_hdr.magicNumber == b'KDMV':    # VMDK
         return sparse_hdr
@@ -125,46 +126,56 @@ def __find_header(fp):
     return None
 
 
-def __parse_descriptor_file(hdr, fp):
+def __parse_descriptor_file(hdr, bf):
     # -------------------------------------------------------------------------
     # __parse_descriptor_file
     # -------------------------------------------------------------------------
     LGR.debug('__parse_descriptor_file()')
     # read descriptor file from open file
-    fp.seek(hdr.descriptorOffset * SECTOR_SZ)
-    df_buf = fp.read(hdr.descriptorSize * SECTOR_SZ)
+    bf.seek(hdr.descriptorOffset * SECTOR_SZ)
+    df_buf = bf.read(hdr.descriptorSize * SECTOR_SZ)
     df_eos = df_buf.index(b'\x00')
     df_str = df_buf[:df_eos].decode('utf-8')
     # parse content
     return DescriptorFile(df_str)
 
 
-def __extract_sparse_extent(wdir, extent, ofp):
+def __extract_sparse_extent(wdir, extent, obf):
     # -------------------------------------------------------------------------
     # __extract_extent
     # -------------------------------------------------------------------------
     LGR.debug('__extract_sparse_extent()')
 
     extent_path = os.path.join(wdir, extent.filename)
-    if not os.path.isfile(extent_path):
+    if not BinaryFile.exists(extent_path):
         LGR.error('cannot find extent: {}'.format(extent_path))
         return False
 
     LGR.info('processing extent: {}'.format(extent_path))
-    with open(os.path.join(wdir, extent.filename), 'rb') as fp:
+    path = os.path.join(wdir, extent.filename)
+    bf = BinaryFile(path, 'r')
 
-        hdr = __find_header(fp)
-        if hdr is None or hdr.obj_type != 'SparseExtentHeader':
-            return False
+    hdr = __find_header(bf)
+    if hdr is None or hdr.obj_type != 'SparseExtentHeader':
+        bf.close()
+        return False
 
-        GD = GrainDirectory(hdr, fp)
+    GD = GrainDirectory(hdr, bf)
 
-        num_sectors = hdr.capacity // SECTOR_SZ
-        for sector in range(num_sectors):
-            todo(LGR, 'todo')
+    num_sectors = hdr.capacity // SECTOR_SZ
+    num_grains =  num_sectors // hdr.grainSize
 
+    LGR.info('extracting {} grains from extent...'.format(num_grains))
+    for gidx in range(num_grains):
+        if gidx+1 % 1000 == 0:
+            LGR.info('{}/{} grains extracted.'.format(gidx+1, num_grains))
+        grain = GD.read_grain(gidx*hdr.grainSize)
+        obf.write(grain) # output grain
 
-def __dissect_monolithic_sparse(wdir, extents, ofp):
+    bf.close()
+    return True
+
+def __dissect_monolithic_sparse(wdir, extents, obf):
     # -------------------------------------------------------------------------
     # __dissect_monolithic_sparse
     # -------------------------------------------------------------------------
@@ -176,13 +187,13 @@ def __dissect_monolithic_sparse(wdir, extents, ofp):
         extent_sectors = extent.size // SECTOR_SZ
         LGR.info('extracting {} of {} sectors.'.format(extent_sectors,
                                                        total_sectors))
-        if not __extract_sparse_extent(wdir, extent, ofp):
+        if not __extract_sparse_extent(wdir, extent, obf):
             return False
 
     return True
 
 
-def __dissect_monolithic_flat(wdir, extents, ofp):
+def __dissect_monolithic_flat(wdir, extents, obf):
     # -------------------------------------------------------------------------
     # __dissect_monolithic_flat
     # -------------------------------------------------------------------------
@@ -190,7 +201,7 @@ def __dissect_monolithic_flat(wdir, extents, ofp):
     todo(LGR, 'implement here.')
 
 
-def __dissect_splitted_sparse(wdir, extents, ofp):
+def __dissect_splitted_sparse(wdir, extents, obf):
     # -------------------------------------------------------------------------
     # __dissect_splitted_sparse
     # -------------------------------------------------------------------------
@@ -198,7 +209,7 @@ def __dissect_splitted_sparse(wdir, extents, ofp):
     todo(LGR, 'implement here.')
 
 
-def __dissect_splitted_flat(wdir, extents, ofp):
+def __dissect_splitted_flat(wdir, extents, obf):
     # -------------------------------------------------------------------------
     # __dissect_splitted_flat
     # -------------------------------------------------------------------------
@@ -206,7 +217,7 @@ def __dissect_splitted_flat(wdir, extents, ofp):
     todo(LGR, 'implement here.')
 
 
-def __dissect(wdir, df, ifp, ofp):
+def __dissect(wdir, df, ibf, obf):
     # -------------------------------------------------------------------------
     # __dissect
     # -------------------------------------------------------------------------
@@ -222,9 +233,10 @@ def __dissect(wdir, df, ifp, ofp):
     if df.is_monolithic():
 
         if df.is_sparse():
-            __dissect_monolithic_sparse(wdir, df.extents, ofp)
+            if not __dissect_monolithic_sparse(wdir, df.extents, obf):
+                return False
         elif df.is_flat():
-            __dissect_monolithic_flat(wdir, df.extents, ofp)
+            __dissect_monolithic_flat(wdir, df.extents, obf)
         else:
             LGR.error('disk should be either flat or sparse if monolithic.')
             return False
@@ -232,9 +244,9 @@ def __dissect(wdir, df, ifp, ofp):
     elif df.is_2gb_splitted():
 
         if df.is_sparse():
-            __dissect_splitted_sparse(wdir, df.extents, ofp)
+            __dissect_splitted_sparse(wdir, df.extents, obf)
         elif df.is_flat():
-            __dissect_splitted_flat(wdir, df.extents, ofp)
+            __dissect_splitted_flat(wdir, df.extents, obf)
         else:
             LGR.error('disk should be either flat or sparse if 2GB splitted.')
             return False
@@ -293,16 +305,16 @@ def can_dissect(container):
     LGR.debug('can_dissect()')
     if 'VMware4 disk image' in container.mime_text:
 
-        fp = container.ifileptr()
-        hdr = __find_header(fp)
-        fp.close()
+        bf = container.ibf()
+        hdr = __find_header(bf)
+        bf.close()
         return (hdr is not None)
 
     elif container.path.endswith('.vmx'):
 
-        fp = container.ifileptr()
-        df = DescriptorFile(fp.read().decode('utf-8'))
-        fp.close()
+        bf = container.ibf()
+        df = DescriptorFile(bf.read_text())
+        bf.close()
         return (df.is_valid())
 
     return False
@@ -321,21 +333,23 @@ def dissect(container):
 
     containers = []
     wdir = container.wdir()
-    ifp = container.ifileptr()
-    ofp = container.ofileptr()
-    hdr = __find_header(ifp)
+    ibf = container.ibf()
+    obf = container.obf()
+    hdr = __find_header(ibf)
     # find and parse descriptor file
     if hdr is not None and hdr.obj_type == 'SparseExtentHeader':
-        df = __parse_descriptor_file(hdr, ifp)
+        df = __parse_descriptor_file(hdr, ibf)
     else:
-        ifp.seek(0)
-        df = DescriptorFile(ifp.read().decode('utf-8'))
+        ibf.seek(0)
+        df = DescriptorFile(ibf.read_text())
     # dissect
-    if not __dissect(wdir, df, ifp, ofp):
+    if not __dissect(wdir, df, ibf, obf):
         LGR.warning('failed to dissect vmx/vmdk.')
+    else:
+        containers.append(Container())
 
-    ofp.close()
-    ifp.close()
+    obf.close()
+    ibf.close()
     return containers
 
 
@@ -352,17 +366,19 @@ def action_group():
         LGR.debug('__action_header()')
         for f in args.files:
 
-            if not os.path.isfile(f):
+            if not BinaryFile.exists(f):
                 continue
 
-            with open(f, 'rb') as fp:
+            bf = BinaryFile(f, 'r')
 
-                hdr = __find_header(fp)
-                if hdr is None:
-                    LGR.error('no valid header found.')
-                    continue
+            hdr = __find_header(bf)
+            if hdr is None:
+                LGR.error('no valid header found.')
+                bf.close()
+                continue
 
-                LGR.info(hdr.to_str())
+            bf.close()
+            LGR.info(hdr.to_str())
 
     def __action_descfile(keywords, args):
         # ---------------------------------------------------------------------
@@ -371,27 +387,31 @@ def action_group():
         LGR.debug('__action_descfile()')
         for f in args.files:
 
-            if not os.path.isfile(f):
+            if not BinaryFile.exists(f):
                 continue
 
-            with open(f, 'rb') as fp:
+            bf = BinaryFile(f, 'r')
 
-                hdr = __find_header(fp)
-                if hdr is None:
-                    LGR.error('no valid header found.')
-                    continue
+            hdr = __find_header(bf)
+            if hdr is None:
+                LGR.error('no valid header found.')
+                bf.close()
+                continue
 
-                if hdr.obj_type != 'SparseExtentHeader':
-                    LGR.warning('only sparse extents have an embedded '
-                                'description file.')
-                    continue
+            if hdr.obj_type != 'SparseExtentHeader':
+                LGR.warning('only sparse extents have an embedded '
+                            'description file.')
+                bf.close()
+                continue
 
-                df = __parse_descriptor_file(hdr, fp)
-                if not df.is_valid():
-                    LGR.error('invalid DescriptorFile found.')
-                    continue
+            df = __parse_descriptor_file(hdr, bf)
+            if not df.is_valid():
+                LGR.error('invalid DescriptorFile found.')
+                bf.close()
+                continue
 
-                LGR.info(df.to_str())
+            bf.close()
+            LGR.info(df.to_str())
     # -------------------------------------------------------------------------
     # ActionGroup
     # -------------------------------------------------------------------------

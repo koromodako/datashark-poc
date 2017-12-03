@@ -24,9 +24,9 @@
 # IMPORTS
 # =============================================================================
 import os
-import json
 from tempfile import gettempdir
 from argparse import ArgumentParser
+from utils.helpers.json import json_load
 from utils.helpers.configobj import ConfigObj
 # =============================================================================
 # CONFIGURATION
@@ -156,7 +156,7 @@ def load_config(args):
     for config_file in config_files:
         if os.path.isfile(config_file):
             with open(config_file, 'r') as f:
-                CONFIG = ConfigObj(json.load(f))
+                CONFIG = ConfigObj(json_load(f))
             return config_file
     #
     return None

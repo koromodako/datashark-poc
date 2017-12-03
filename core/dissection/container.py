@@ -27,11 +27,12 @@
 import os
 from magic import Magic
 from utils.config import config
+from dissection.workspace import workspace
 from utils.helpers.crypto import randstr
 from utils.helpers.crypto import hashbuf
 from utils.helpers.crypto import hashfile
 from utils.helpers.logging import get_logger
-from utils.helpers.workspace import workspace
+from utils.helpers.binary_file import BinaryFile
 from utils.helpers.action_group import ActionGroup
 # =============================================================================
 # GLOBAL
@@ -50,28 +51,12 @@ class Container(object):
     # Container
     # -------------------------------------------------------------------------
     @staticmethod
-    def exists(path):
-        # ---------------------------------------------------------------------
-        # exists
-        # ---------------------------------------------------------------------
-        LGR.debug('Container.exists()')
-        return os.path.isfile(path)
-
-    @staticmethod
-    def size(path):
-        # ---------------------------------------------------------------------
-        # size
-        # ---------------------------------------------------------------------
-        LGR.debug('Container.size()')
-        return os.stat(path).st_size
-
-    @staticmethod
     def hash(path):
         # ---------------------------------------------------------------------
         # hash
         # ---------------------------------------------------------------------
         LGR.debug('Container.hash()')
-        if Container.exists(path):
+        if BinaryFile.exists(path):
             hash_func = config('hash_func', 'sha256')
             LGR.info('computing <{}> {}... please wait...'.format(path,
                                                                   hash_func))
@@ -135,15 +120,15 @@ class Container(object):
             parent = parent.__parent
         return os.path.join(*path)
 
-    def ifileptr(self):
+    def ibf(self):
         # ---------------------------------------------------------------------
-        # ifileptr
+        # ibf
         # ---------------------------------------------------------------------
-        return open(self.path, 'rb')
+        return BinaryFile(self.path, 'r')
 
-    def ofileptr(self, suffix='ds'):
+    def obf(self, suffix='ds'):
         # ---------------------------------------------------------------------
-        # ofileptr
+        # obf
         # ---------------------------------------------------------------------
         return workspace().tmpfile(suffix=suffix)
 
@@ -188,7 +173,7 @@ class ContainerActionGroup(ActionGroup):
         # ---------------------------------------------------------------------
         if len(args.files) > 0:
             for f in args.files:
-                if os.path.isfile(f):
+                if BinaryFile.exists(f):
                     LGR.info('{}: {}'.format(f, Container.hash(f)))
                 else:
                     LGR.error('{}: invalid path.'.format(f))
@@ -206,7 +191,7 @@ class ContainerActionGroup(ActionGroup):
 
         for f in args.files:
 
-            if not os.path.isfile(f):
+            if not BinaryFile.exists(f):
                 LGR.error('{}: invalid path.'.format(f))
                 return
 

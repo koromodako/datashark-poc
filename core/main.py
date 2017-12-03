@@ -29,8 +29,8 @@
 # =============================================================================
 # modules imports
 import os
+import dissection.workspace as workspace
 import utils.helpers.logging as logging
-import utils.helpers.workspace as workspace
 # functions imports
 from utils.config import config
 from utils.config import load_config

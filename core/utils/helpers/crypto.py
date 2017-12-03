@@ -26,6 +26,7 @@
 # =============================================================================
 import os
 import hashlib
+from utils.helpers.binary_file import BinaryFile
 # =============================================================================
 # GLOBALS
 # =============================================================================
@@ -53,13 +54,13 @@ def hashfile(hash_func, path):
     # -------------------------------------------------------------------------
     # hashfile
     # -------------------------------------------------------------------------
-    if os.path.isfile(path):
+    if BinaryFile.exists(path):
         h = hashlib.new(hash_func)
-        sz = os.stat(path).st_size
-        with open(path, 'rb') as f:
-            while sz > 0:
-                h.update(f.read(RD_BLK_SZ))
-                sz -= RD_BLK_SZ
+        bf = BinaryFile(path, 'r')
+        sz = bf.size()
+        while sz > 0:
+            h.update(bf.read(RD_BLK_SZ))
+            sz -= RD_BLK_SZ
         return h.digest()
     return None
 

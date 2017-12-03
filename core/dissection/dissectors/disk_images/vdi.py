@@ -124,8 +124,10 @@ def dissect(container):
     #   \return [list(Container)]
     # -------------------------------------------------------------------------
     LGR.debug('dissect()')
-    with open(container.path, 'rb') as fp:
-        vdi_header = __header(fp)
+    ibf = container.ibfptr()
+    vdi_header = __header(ibf)
+    LGR.info(vdi_header.to_str())
+    ibf.close()
     # TODO : implement raw disk extraction
     raise NotImplementedError
     return []
@@ -143,15 +145,16 @@ def action_group():
         # ---------------------------------------------------------------------
         for f in args.files:
 
-            with open(f, 'rb') as fp:
+            bf = BinaryFile(f, 'r')
+            hdr = __header(bf)
+            bf.close()
 
-                hdr = __header(fp)
-                if hdr is None:
-                    LGR.error('failed to read header, see previous logs for '
-                              'error details.')
-                    continue
+            if hdr is None:
+                LGR.error('failed to read header, see previous logs for '
+                          'error details.')
+                continue
 
-                LGR.info(hdr.to_str())
+            LGR.info(hdr.to_str())
     # -------------------------------------------------------------------------
     # ActionGroup
     # -------------------------------------------------------------------------

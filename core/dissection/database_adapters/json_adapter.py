@@ -24,12 +24,10 @@
 # =============================================================================
 # IMPORTS
 # =============================================================================
-#
-import json
-#
+from utils.helpers.json import json_dumps
+from dissection.workspace import workspace
 from utils.helpers.logging import todo
 from utils.helpers.logging import get_logger
-from utils.helpers.workspace import workspace
 # =============================================================================
 # GLOBALS / CONFIG
 # =============================================================================
@@ -53,35 +51,35 @@ class JsonFile(object):
         super(JsonFile, self).__init__()
         self.name = name
         self.__sz = 0
-        self.__fp = None
+        self.__bf = None
 
     def open(self):
         # ---------------------------------------------------------------------
         # open
         # ---------------------------------------------------------------------
         self.__sz = 0
-        self.__fp = workspace().datfile(self.name, 'json')
+        self.__bf = workspace().datfile(self.name, 'json')
 
     def close(self):
         # ---------------------------------------------------------------------
         # close
         # ---------------------------------------------------------------------
         self.__sz = 0
-        self.__fp.close()
-        self.__fp = None
+        self.__bf.close()
+        self.__bf = None
 
     def write(self, data):
         # ---------------------------------------------------------------------
         # write
         # ---------------------------------------------------------------------
         self.__sz += len(data)
-        self.__fp.write(data)
+        self.__bf.write_text(data)
 
     def seek(self, offset):
         # ---------------------------------------------------------------------
         # seek
         # ---------------------------------------------------------------------
-        self.__fp.seek(offset)
+        self.__bf.seek(offset)
 
     def size(self):
         # ---------------------------------------------------------------------
@@ -91,13 +89,6 @@ class JsonFile(object):
 # =============================================================================
 # FUNCTIONS
 # =============================================================================
-
-
-def __container_to_json(container):
-    # -------------------------------------------------------------------------
-    # __container_to_json
-    # -------------------------------------------------------------------------
-    return json.dumps(container.to_dict(), separators=(':', ','))
 
 
 def init(config):
@@ -129,6 +120,6 @@ def persist(container):
     # persist
     # -------------------------------------------------------------------------
     LGR.debug('persist()')
-    json = __container_to_json(container)
+    json = json_dumps(container.to_dict())
     json += ','
     JSON_FILE.write(json)

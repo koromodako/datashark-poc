@@ -30,6 +30,7 @@ from utils.helpers.json import json_load
 from utils.helpers.json import json_dump
 from dissection.container import Container
 from utils.helpers.logging import get_logger
+from utils.helpers.binary_file import BinaryFile
 from utils.helpers.action_group import ActionGroup
 from utils.threading.workerpool import WorkerPool
 # =============================================================================
@@ -71,7 +72,7 @@ class HashDatabase(object):
         # __load_db
         # ---------------------------------------------------------------------
         # check if path is valid
-        if self.fpath is None or not os.path.isfile(self.fpath):
+        if self.fpath is None or not BinaryFile.exists(self.fpath):
             warn = 'cannot load <{}> hash database, invalid path: {}'.format(
                 self.name, self.fpath)
             LGR.warning(warn)
@@ -112,7 +113,7 @@ class HashDatabase(object):
                 # listing only inside given directory
                 for entry in os.listdir(adpath):
                     fpath = os.path.join(adpath, entry)
-                    if os.path.isfile(fpath):
+                    if BinaryFile.exists(fpath):
                         if file_filter.keep(entry):
                             fpaths.append(fpath)
 
@@ -197,7 +198,7 @@ class HashDatabaseActionGroup(ActionGroup):
             return
 
         for f in files:
-            if not os.path.isfile(f):
+            if not BinaryFile.exists(f):
                 LGR.error('<{}> must be an existing file.'.format(f))
                 return
         # merge db files
