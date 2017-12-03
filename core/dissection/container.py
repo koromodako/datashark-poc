@@ -1,89 +1,96 @@
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #    file: container.py
 #    date: 2017-11-11
 #  author: paul.dautry
 # purpose:
-#   
+#
 # license:
 #   Datashark <progdesc>
 #   Copyright (C) 2017 paul.dautry
-#   
+#
 #   This program is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
 #   the Free Software Foundation, either version 3 of the License, or
 #   (at your option) any later version.
-#   
+#
 #   This program is distributed in the hope that it will be useful,
 #   but WITHOUT ANY WARRANTY; without even the implied warranty of
 #   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #   GNU General Public License for more details.
-#   
+#
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#===============================================================================
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# =============================================================================
 # IMPORTS
-#===============================================================================
+# =============================================================================
 import os
-from magic                      import Magic
-from utils.config               import config
-from utils.helpers.crypto       import randstr
-from utils.helpers.crypto       import hashbuf
-from utils.helpers.crypto       import hashfile
-from utils.helpers.logging      import get_logger
-from utils.helpers.workspace    import workspace
+from magic import Magic
+from utils.config import config
+from utils.helpers.crypto import randstr
+from utils.helpers.crypto import hashbuf
+from utils.helpers.crypto import hashfile
+from utils.helpers.logging import get_logger
+from utils.helpers.workspace import workspace
 from utils.helpers.action_group import ActionGroup
-#===============================================================================
+# =============================================================================
 # GLOBAL
-#===============================================================================
+# =============================================================================
 LGR = get_logger(__name__)
-#===============================================================================
+# =============================================================================
 # FUNCTIONS
-#===============================================================================
-#===============================================================================
+# =============================================================================
+# =============================================================================
 # CLASSES
-#===============================================================================
-#-------------------------------------------------------------------------------
-# Container
-#-------------------------------------------------------------------------------
+# =============================================================================
+
+
 class Container(object):
-    #---------------------------------------------------------------------------
-    # exists
-    #---------------------------------------------------------------------------
+    # -------------------------------------------------------------------------
+    # Container
+    # -------------------------------------------------------------------------
     @staticmethod
     def exists(path):
+        # ---------------------------------------------------------------------
+        # exists
+        # ---------------------------------------------------------------------
         LGR.debug('Container.exists()')
         return os.path.isfile(path)
-    #---------------------------------------------------------------------------
-    # size
-    #---------------------------------------------------------------------------
+
     @staticmethod
     def size(path):
+        # ---------------------------------------------------------------------
+        # size
+        # ---------------------------------------------------------------------
         LGR.debug('Container.size()')
         return os.stat(path).st_size
-    #---------------------------------------------------------------------------
-    # hash
-    #---------------------------------------------------------------------------
+
     @staticmethod
     def hash(path):
+        # ---------------------------------------------------------------------
+        # hash
+        # ---------------------------------------------------------------------
         LGR.debug('Container.hash()')
         if Container.exists(path):
             hash_func = config('hash_func', 'sha256')
-            LGR.info('computing <{}> {}... please wait...'.format(path, hash_func))
+            LGR.info('computing <{}> {}... please wait...'.format(path,
+                                                                  hash_func))
             return hashfile(hash_func, path).hex()
         return None
-    #---------------------------------------------------------------------------
-    # __mimes
-    #---------------------------------------------------------------------------
+
     @staticmethod
     def mimes(magic_file, path):
+        # ---------------------------------------------------------------------
+        # mimes
+        # ---------------------------------------------------------------------
         LGR.debug('Container.mimes()')
-        return (Magic(magic_file=magic_file).from_file(path), 
+        return (Magic(magic_file=magic_file).from_file(path),
                 Magic(magic_file=magic_file, mime=True).from_file(path))
-    #---------------------------------------------------------------------------
-    # __init__
-    #---------------------------------------------------------------------------
+
     def __init__(self, path, realname, magic_file=None):
+        # ---------------------------------------------------------------------
+        # __init__
+        # ---------------------------------------------------------------------
         super(Container, self).__init__()
         # container file path
         self.path = path
@@ -101,22 +108,25 @@ class Container(object):
         self.parent = None
         # unexpected dissection results will fill this list of errors
         self.__errors = []
-    #---------------------------------------------------------------------------
-    # add_child
-    #---------------------------------------------------------------------------
+
     def set_parent(self, container):
-        LGR.debug('Container.add_child()')
+        # ---------------------------------------------------------------------
+        # set_parent
+        # ---------------------------------------------------------------------
+        LGR.debug('Container.set_parent()')
         self.parent = container.realname
-    #---------------------------------------------------------------------------
-    # wdir
-    #---------------------------------------------------------------------------
+
     def wdir(self):
+        # ---------------------------------------------------------------------
+        # wdir
+        # ---------------------------------------------------------------------
         LGR.debug('Container.wdir()')
         return os.path.dirname(self.path)
-    #---------------------------------------------------------------------------
-    # virtual_path
-    #---------------------------------------------------------------------------
+
     def virtual_path(self):
+        # ---------------------------------------------------------------------
+        # virtual_path
+        # ---------------------------------------------------------------------
         LGR.debug('Container.virtual_path()')
         path = []
         parent = self.__parent
@@ -124,20 +134,23 @@ class Container(object):
             path.insert(0, parent.realname)
             parent = parent.__parent
         return os.path.join(*path)
-    #---------------------------------------------------------------------------
-    # ifileptr
-    #---------------------------------------------------------------------------
+
     def ifileptr(self):
+        # ---------------------------------------------------------------------
+        # ifileptr
+        # ---------------------------------------------------------------------
         return open(self.path, 'rb')
-    #---------------------------------------------------------------------------
-    # ofileptr
-    #---------------------------------------------------------------------------
+
     def ofileptr(self, suffix='ds'):
+        # ---------------------------------------------------------------------
+        # ofileptr
+        # ---------------------------------------------------------------------
         return workspace().tmpfile(suffix=suffix)
-    #---------------------------------------------------------------------------
-    # 
-    #---------------------------------------------------------------------------
+
     def to_dict(self):
+        # ---------------------------------------------------------------------
+        # to_dict
+        # ---------------------------------------------------------------------
         return {
             "parent": self.parent,
             "path": self.path,
@@ -151,25 +164,28 @@ class Container(object):
             "whitelisted": self.whitelisted,
             "blacklisted": self.blacklisted
         }
-#-------------------------------------------------------------------------------
-# ContainerActionGroup
-#-------------------------------------------------------------------------------
+
+
 class ContainerActionGroup(ActionGroup):
-    #---------------------------------------------------------------------------
-    # __init__
-    #---------------------------------------------------------------------------
+    # -------------------------------------------------------------------------
+    # ContainerActionGroup
+    # -------------------------------------------------------------------------
     def __init__(self):
+        # ---------------------------------------------------------------------
+        # __init__
+        # ---------------------------------------------------------------------
         super(ContainerActionGroup, self).__init__('container', {
-            'hash': ActionGroup.action(ContainerActionGroup.hash, 
-                "gives container's hash value."),
-            'mimes': ActionGroup.action(ContainerActionGroup.mimes, 
-                "gives container's mime type and text.")
+            'hash': ActionGroup.action(ContainerActionGroup.hash,
+                                       "container's hash value."),
+            'mimes': ActionGroup.action(ContainerActionGroup.mimes,
+                                        "container's mime type and text.")
         })
-    #---------------------------------------------------------------------------
-    # hash
-    #---------------------------------------------------------------------------
+
     @staticmethod
     def hash(keywords, args):
+        # ---------------------------------------------------------------------
+        # hash
+        # ---------------------------------------------------------------------
         if len(args.files) > 0:
             for f in args.files:
                 if os.path.isfile(f):
@@ -178,19 +194,23 @@ class ContainerActionGroup(ActionGroup):
                     LGR.error('{}: invalid path.'.format(f))
         else:
             LGR.error('this action expects at least one input file.')
-    #---------------------------------------------------------------------------
-    # mimes
-    #---------------------------------------------------------------------------
+
     @staticmethod
     def mimes(keywords, args):
-        if len(args.files) > 0:
-            for f in args.files:
-                if os.path.isfile(f):
-                    mimes = Container.mimes(config('magic_file'), f)
-                    LGR.info('{}:\n'
-                             '\tmime: {}\n'
-                             '\ttext: {}'.format(f, mimes[1], mimes[0]))
-                else:
-                    LGR.error('{}: invalid path.'.format(f))
-        else:
+        # ---------------------------------------------------------------------
+        # mimes
+        # ---------------------------------------------------------------------
+        if len(args.files) == 0:
             LGR.error('this action expects at least one input file.')
+            return
+
+        for f in args.files:
+
+            if not os.path.isfile(f):
+                LGR.error('{}: invalid path.'.format(f))
+                return
+
+            mimes = Container.mimes(config('magic_file'), f)
+            LGR.info('{}:\n'
+                     '\tmime: {}\n'
+                     '\ttext: {}'.format(f, mimes[1], mimes[0]))

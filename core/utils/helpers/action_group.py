@@ -1,65 +1,70 @@
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #    file: action_group.py
 #    date: 2017-11-20
 #  author: paul.dautry
 # purpose:
-#   
+#
 # license:
 #   Datashark <progdesc>
 #   Copyright (C) 2017 paul.dautry
-#   
+#
 #   This program is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
 #   the Free Software Foundation, either version 3 of the License, or
 #   (at your option) any later version.
-#   
+#
 #   This program is distributed in the hope that it will be useful,
 #   but WITHOUT ANY WARRANTY; without even the implied warranty of
 #   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #   GNU General Public License for more details.
-#   
+#
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#===============================================================================
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# =============================================================================
 # IMPORTS
-#===============================================================================
+# =============================================================================
 from utils.helpers.logging import get_logger
-#===============================================================================
+# =============================================================================
 # GLOBALS
-#===============================================================================
+# =============================================================================
 LGR = get_logger(__name__)
-#===============================================================================
+# =============================================================================
 # CLASSES
-#===============================================================================
-#-------------------------------------------------------------------------------
-# ActionGroup
-#-------------------------------------------------------------------------------
+# =============================================================================
+
+
 class ActionGroup(object):
+    # -------------------------------------------------------------------------
+    # ActionGroup
+    # -------------------------------------------------------------------------
     SEP = '.'
     K_HELP = 'help'
     K_FUNC = 'func'
-    #---------------------------------------------------------------------------
-    # __init__
-    #---------------------------------------------------------------------------
+
     def __init__(self, name, actions):
+        # ---------------------------------------------------------------------
+        # __init__
+        # ---------------------------------------------------------------------
         self.name = name
         self.actions = actions
         self.actions['help'] = ActionGroup.action(self.help, 'prints help.')
-    #---------------------------------------------------------------------------
-    # action
-    #---------------------------------------------------------------------------
+
     @staticmethod
     def action(func, help=''):
+        # ---------------------------------------------------------------------
+        # action
+        # ---------------------------------------------------------------------
         LGR.debug('ActionGroup.action()')
         return {
             ActionGroup.K_FUNC: func,
             ActionGroup.K_HELP: help
         }
-    #---------------------------------------------------------------------------
-    # perform_action
-    #---------------------------------------------------------------------------
+
     def perform_action(self, keywords, args=[]):
+        # ---------------------------------------------------------------------
+        # perform_action
+        # ---------------------------------------------------------------------
         LGR.debug('ActionGroup.perform_action()')
         action = self.actions.get(keywords[0], None)
         if action is None:
@@ -68,27 +73,32 @@ class ActionGroup(object):
             subkeywords = keywords[1:]
             if isinstance(action, ActionGroup):
                 if len(subkeywords) == 0:
-                    LGR.error('missing keyword after <{}>.'.format(keywords[0]))
+                    LGR.error("missing keyword after "
+                              "<{}>.".format(keywords[0]))
                     return
                 action.perform_action(subkeywords, args)
             else:
                 action[ActionGroup.K_FUNC](subkeywords, args)
-    #---------------------------------------------------------------------------
-    # has_action
-    #---------------------------------------------------------------------------
+
     def has_action(self, keywords):
+        # ---------------------------------------------------------------------
+        # has_action
+        # ---------------------------------------------------------------------
         LGR.debug('ActionGroup.has_action()')
         return (self.actions.get(keywords[0], None) is not None)
-    #---------------------------------------------------------------------------
-    # help
-    #---------------------------------------------------------------------------
+
     def help(self, keywords, args, depth=0):
+        # ---------------------------------------------------------------------
+        # help
+        # ---------------------------------------------------------------------
         LGR.debug('ActionGroup.help()')
         help_txt = ''
         for keyword, action in self.actions.items():
-            help_txt += '\n{}{}:'.format(ActionGroup.SEP if depth > 0 else '', keyword)
+            help_txt += '\n{}{}:'.format(ActionGroup.SEP if depth > 0 else '',
+                                         keyword)
             if isinstance(action, ActionGroup):
-                help_txt += action.help(keywords, args, depth+1).replace('\n', '\n\t')
+                help_txt += action.help(keywords, args, depth+1)
+                help_txt = help_txt.replace('\n', '\n\t')
             else:
                 help_txt += ' ' + action[ActionGroup.K_HELP]
         if depth > 0:

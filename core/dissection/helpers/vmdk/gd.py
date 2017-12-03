@@ -1,6 +1,6 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#    file: converting.py
-#    date: 2017-11-19
+#    file: gd.py
+#    date: 2017-12-01
 #  author: paul.dautry
 # purpose:
 #
@@ -24,25 +24,45 @@
 # =============================================================================
 # IMPORTS
 # =============================================================================
-# no import for now
+import math
+import struct
+from utils.helpers.logging import get_logger
 # =============================================================================
-# GLOBALS / CONFIG
+# GLOBALS
 # =============================================================================
-# no global or config. for now
+LGR = get_logger(__name__)
+SECTOR_SZ = 512  # bytes
 # =============================================================================
-# FUNCTIONS
+# CLASSES
 # =============================================================================
 
 
-def str_to_int(s):
+class GrainDirectory(object):
     # -------------------------------------------------------------------------
-    # str_to_int
+    # GrainDirectory
     # -------------------------------------------------------------------------
-    if s.startswith('0x'):
-        return int(s, 16)
-    elif s.startswith('0o'):
-        return int(s, 8)
-    elif s.startswith('0b'):
-        return int(s, 2)
-    # fallback on base 10
-    return int(s)
+    def __init__(self, hdr, fp):
+        # ---------------------------------------------------------------------
+        # __init__
+        # ---------------------------------------------------------------------
+        super(GrainDirectory, self).__init__()
+        self.fp = fp
+        self.hdr = hdr
+        self.metadata = self.__load_metadata()
+        self.gtCoverage = hdr.numGTEsPerGT * hdr.grainSize
+
+    def __load_metadata(self):
+        # ---------------------------------------------------------------------
+        # __load_metadata
+        # ---------------------------------------------------------------------
+        LGR.debug('GrainDirectory.__cache_data()')
+        fp.seek(hdr.rgdOffset * SECTOR_SZ)
+        return fp.read(hdr.overHead * SECTOR_SZ)
+
+    def read_sector(self, n):
+        # ---------------------------------------------------------------------
+        # read_sector
+        # ---------------------------------------------------------------------
+        LGR.debug('GrainDirectory.read_sector()')
+        gde_idx = math.floor(n / self.gtCoverage)
+        # gt_offset = ...

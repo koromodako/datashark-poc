@@ -1,4 +1,4 @@
-#-------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 #    file: exceptions.py
 #    date: 2017-11-12
 #  author: paul.dautry
@@ -20,9 +20,15 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program. If not, see <http://www.gnu.org/licenses/>.
-#-------------------------------------------------------------------------------
-#   MSWindowsSpecificFeatureException
-#       This feature can only be used on a Windows operating system
-#-------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# =============================================================================
+# CLASSES
+# =============================================================================
+
+
 class MSWindowsSpecificFeatureException(Exception):
+    # -------------------------------------------------------------------------
+    #   MSWindowsSpecificFeatureException
+    #       This feature can only be used on a Windows operating system
+    # ------------------------------------------------------------------------------
     pass
