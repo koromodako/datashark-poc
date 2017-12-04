@@ -24,16 +24,17 @@
 # =============================================================================
 # IMPORTS
 # =============================================================================
+from utils.logging import get_logger
+from utils.action_group import ActionGroup
 from dissection.container import Container
 from dissection.structure import StructSpecif
 from dissection.structure import StructFactory
-from utils.helpers.logging import get_logger
-from utils.helpers.action_group import ActionGroup
 # =============================================================================
 # GLOBALS / CONFIG
 # =============================================================================
 LGR = get_logger(__name__)
-StructFactory.register_structure(StructSpecif('VDIHeader', [
+S_VDI_HDR = 'VDIHeader'
+StructFactory.register_structure(StructSpecif(S_VDI_HDR, [
     StructSpecif.member('magic', 'ba:0x40'),
     StructSpecif.member('signature', 'ba:0x04'),
     StructSpecif.member('vmajor', '<H'),
@@ -69,7 +70,7 @@ def __header(fp):
     # -------------------------------------------------------------------------
     # __header
     # -------------------------------------------------------------------------
-    return StructFactory.obj_from_file('VDIHeader', fp)
+    return StructFactory.obj_from_file(S_VDI_HDR, fp)
 # =============================================================================
 # PUBLIC FUNCTIONS
 # =============================================================================

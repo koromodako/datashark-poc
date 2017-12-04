@@ -26,8 +26,8 @@
 import os
 from tempfile import gettempdir
 from argparse import ArgumentParser
-from utils.helpers.json import json_load
-from utils.helpers.configobj import ConfigObj
+from utils.json import json_load
+from utils.configobj import ConfigObj
 # =============================================================================
 # CONFIGURATION
 # =============================================================================

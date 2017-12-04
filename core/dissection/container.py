@@ -28,12 +28,12 @@ import os
 from magic import Magic
 from utils.config import config
 from dissection.workspace import workspace
-from utils.helpers.crypto import randstr
-from utils.helpers.crypto import hashbuf
-from utils.helpers.crypto import hashfile
-from utils.helpers.logging import get_logger
-from utils.helpers.binary_file import BinaryFile
-from utils.helpers.action_group import ActionGroup
+from utils.crypto import randstr
+from utils.crypto import hashbuf
+from utils.crypto import hashfile
+from utils.logging import get_logger
+from utils.binary_file import BinaryFile
+from utils.action_group import ActionGroup
 # =============================================================================
 # GLOBAL
 # =============================================================================

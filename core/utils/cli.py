@@ -28,7 +28,7 @@ from subprocess import call
 from subprocess import Popen
 from subprocess import PIPE
 from utils.config import prog_prompt
-from utils.helpers.logging import get_logger
+from utils.logging import get_logger
 # =============================================================================
 # GLOBAL
 # =============================================================================
@@ -200,7 +200,7 @@ class CLIProgressBar(RePrinter):
     # USAGE:
     #
     # import time
-    # from utils.helpers.cli import CLIProgressBar
+    # from utils.cli import CLIProgressBar
     #
     # if __name__ == '__main__':
     #     bar = CLIProgressBar(show_exact=True)

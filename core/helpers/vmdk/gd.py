@@ -27,12 +27,14 @@
 import math
 import zlib
 import struct
-from utils.helpers.logging import get_logger
+from utils.logging import get_logger
+from helpers.vmdk.vmdk_disk import VmdkDisk
 # =============================================================================
 # GLOBALS
 # =============================================================================
 LGR = get_logger(__name__)
-SECTOR_SZ = 512  # bytes
+
+SECTOR_SZ = VmdkDisk.SECTOR_SZ
 
 FLAG_VALID_NLT = (1 << 0)
 FLAG_USE_RGT = (1 << 1)

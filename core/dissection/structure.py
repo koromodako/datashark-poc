@@ -59,8 +59,8 @@
 # =============================================================================
 import re
 import struct
-from utils.helpers.logging import get_logger
-from utils.helpers.converting import str_to_int
+from utils.logging import get_logger
+from utils.converting import str_to_int
 # =============================================================================
 # GLOBAL
 # =============================================================================

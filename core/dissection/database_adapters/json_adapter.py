@@ -24,10 +24,10 @@
 # =============================================================================
 # IMPORTS
 # =============================================================================
-from utils.helpers.json import json_dumps
+from utils.json import json_dumps
 from dissection.workspace import workspace
-from utils.helpers.logging import todo
-from utils.helpers.logging import get_logger
+from utils.logging import todo
+from utils.logging import get_logger
 # =============================================================================
 # GLOBALS / CONFIG
 # =============================================================================

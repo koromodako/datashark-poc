@@ -30,11 +30,11 @@ from importlib import import_module
 from utils.config import config
 from utils.config import module_config
 from utils.config import section_config
+from utils.logging import get_logger
+from utils.workerpool import WorkerPool
+from utils.action_group import ActionGroup
 from dissection.container import Container
-from utils.helpers.logging import get_logger
 from dissection.hashdatabase import HashDatabase
-from utils.helpers.action_group import ActionGroup
-from utils.threading.workerpool import WorkerPool
 from dissection.dissectiondatabase import DissectionDatabase
 # =============================================================================
 # GLOBAL

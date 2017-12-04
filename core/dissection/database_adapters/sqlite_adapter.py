@@ -24,8 +24,8 @@
 # =============================================================================
 # IMPORTS
 # =============================================================================
-from utils.helpers.logging import todo
-from utils.helpers.logging import get_logger
+from utils.logging import todo
+from utils.logging import get_logger
 # =============================================================================
 # GLOBALS / CONFIG
 # =============================================================================

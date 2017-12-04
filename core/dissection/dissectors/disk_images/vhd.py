@@ -24,9 +24,9 @@
 # =============================================================================
 # IMPORTS
 # =============================================================================
+from utils.logging import get_logger
+from utils.action_group import ActionGroup
 from dissection.container import Container
-from utils.helpers.logging import get_logger
-from utils.helpers.action_group import ActionGroup
 # =============================================================================
 # GLOBAL
 # =============================================================================

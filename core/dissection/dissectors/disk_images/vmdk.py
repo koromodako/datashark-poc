@@ -25,244 +25,73 @@
 # IMPORTS
 # =============================================================================
 import os.path
+from utils.logging import todo
+from utils.logging import get_logger
+from utils.binary_file import BinaryFile
+from utils.action_group import ActionGroup
 from dissection.container import Container
 from dissection.structure import StructSpecif
 from dissection.structure import StructFactory
-from utils.helpers.logging import todo
-from utils.helpers.logging import get_logger
-from utils.helpers.binary_file import BinaryFile
-from utils.helpers.action_group import ActionGroup
-from dissection.helpers.vmdk.gd import GrainDirectory
-from dissection.helpers.vmdk.gd import SECTOR_SZ
-from dissection.helpers.vmdk.descriptor_file import DescriptorFile
+# dissection helpers
+from helpers.vmdk.vmdk_disk import VmdkDisk
+from helpers.vmdk.descriptor_file import DescriptorFile
+from helpers.vmdk.flat_extent_extractor import FlatExtentExtractor
+from helpers.vmdk.sparse_extent_extractor import SparseExtentExtractor
 # =============================================================================
 # GLOBALS / CONFIG
 # =============================================================================
 LGR = get_logger(__name__)
-StructFactory.register_structure(StructSpecif('SparseExtentHeader', [
-    StructSpecif.member('magicNumber', 'ba:4'),
-    StructSpecif.member('version', '<I'),
-    StructSpecif.member('flags', '<I'),
-    StructSpecif.member('capacity', '<Q'),          # in sectors unit
-    StructSpecif.member('grainSize', '<Q'),         # in sectors unit
-    StructSpecif.member('descriptorOffset', '<Q'),  # in sectors unit
-    StructSpecif.member('descriptorSize', '<Q'),    # in sectors unit
-    StructSpecif.member('numGTEsPerGT', '<I'),
-    StructSpecif.member('rgdOffset', '<Q'),         # in sectors unit
-    StructSpecif.member('gdOffset', '<Q'),          # in sectors unit
-    StructSpecif.member('overHead', '<Q'),          # in sectors unit
-    StructSpecif.member('uncleanShutdown', 'ba:1'),
-    StructSpecif.member('singleEndLineChar', 'ba:1'),
-    StructSpecif.member('nonEndLineChar', 'ba:1'),
-    StructSpecif.member('doubleEndLineChar1', 'ba:1'),
-    StructSpecif.member('doubleEndLineChar2', 'ba:1'),
-    StructSpecif.member('compressAlgorithm', '<H'),
-    StructSpecif.member('pad', 'ba:433', load=False)
-]))
-StructFactory.register_structure(StructSpecif('COWDisk_Header', [
-    StructSpecif.member('magicNumber', '<I'),
-    StructSpecif.member('version', '<I'),
-    StructSpecif.member('flags', '<I'),
-    StructSpecif.member('numSectors', '<I'),
-    StructSpecif.member('grainSize', '<I'),
-    StructSpecif.member('gdOffset', '<I'),
-    StructSpecif.member('numGDEntries', '<I'),
-    StructSpecif.member('freeSector', '<I'),
-    # define COWDISK_MAX_PARENT_FILELEN 1024
-    StructSpecif.member('parentFileName', 'ba:1024'),
-    StructSpecif.member('parentGeneration', '<I'),
-    StructSpecif.member('generation', '<I'),
-    # define COWDISK_MAX_NAME_LEN 60
-    StructSpecif.member('name', 'ba:60'),
-    # define COWDISK_MAX_DESC_LEN 512
-    StructSpecif.member('description', 'ba:512'),
-    StructSpecif.member('savedGeneration', '<I'),
-    StructSpecif.member('reserved', 'ba:8'),
-    StructSpecif.member('uncleanShutdown', '<I'),
-    StructSpecif.member('padding', 'ba:396', load=False)
-]))
-StructFactory.register_structure(StructSpecif('Marker', [
-    StructSpecif.member('val', '<Q'),
-    StructSpecif.member('size', '<I'),
-    StructSpecif.member('type', '<I')
-]))
-StructFactory.register_structure(StructSpecif('GrainMarker', [
-    StructSpecif.member('lba', '<Q'),
-    StructSpecif.member('size', '<I'),
-    StructSpecif.member('data', '<B')
-]))
-StructFactory.register_structure(StructSpecif('EOSMarker', [
-    StructSpecif.member('val', '<Q'),
-    StructSpecif.member('size', '<I'),
-    StructSpecif.member('type', '<I'),
-    StructSpecif.member('pad', 'ba:496', load=False)
-]))
-StructFactory.register_structure(StructSpecif('MetaDataMarker', [
-    StructSpecif.member('numSectors', '<Q'),
-    StructSpecif.member('size', '<I'),
-    StructSpecif.member('type', '<I'),
-    StructSpecif.member('pad', 'ba:496', load=False),
-    StructSpecif.member('metadata', '<B')
-]))
 # =============================================================================
 # PRIVATE FUNCTIONS
 # =============================================================================
 
 
-def __find_header(bf):
+def __dissect_from_vmdk(wdir, vmdk, obf):
     # -------------------------------------------------------------------------
-    # __find_header
-    # -------------------------------------------------------------------------
-    LGR.debug('__find_header()')
-
-    sparse_hdr = StructFactory.obj_from_file('SparseExtentHeader', bf)
-    cowdsk_hdr = StructFactory.obj_from_file('COWDisk_Header', bf)
-
-    if sparse_hdr is not None and sparse_hdr.magicNumber == b'KDMV':    # VMDK
-        return sparse_hdr
-    elif cowdsk_hdr is not None and cowdsk_hdr.magicNumber == b'DWOC':  # COWD
-        return cowdsk_hdr
-
-    return None
-
-
-def __parse_descriptor_file(hdr, bf):
-    # -------------------------------------------------------------------------
-    # __parse_descriptor_file
-    # -------------------------------------------------------------------------
-    LGR.debug('__parse_descriptor_file()')
-    # read descriptor file from open file
-    bf.seek(hdr.descriptorOffset * SECTOR_SZ)
-    df_buf = bf.read(hdr.descriptorSize * SECTOR_SZ)
-    df_eos = df_buf.index(b'\x00')
-    df_str = df_buf[:df_eos].decode('utf-8')
-    # parse content
-    return DescriptorFile(df_str)
-
-
-def __extract_sparse_extent(wdir, extent, obf):
-    # -------------------------------------------------------------------------
-    # __extract_extent
-    # -------------------------------------------------------------------------
-    LGR.debug('__extract_sparse_extent()')
-
-    extent_path = os.path.join(wdir, extent.filename)
-    if not BinaryFile.exists(extent_path):
-        LGR.error('cannot find extent: {}'.format(extent_path))
-        return False
-
-    LGR.info('processing extent: {}'.format(extent_path))
-    path = os.path.join(wdir, extent.filename)
-    bf = BinaryFile(path, 'r')
-
-    hdr = __find_header(bf)
-    if hdr is None or hdr.obj_type != 'SparseExtentHeader':
-        bf.close()
-        return False
-
-    GD = GrainDirectory(hdr, bf)
-
-    num_grains = hdr.capacity // hdr.grainSize
-
-    LGR.info('extracting {} grains from extent...'.format(num_grains))
-    for gidx in range(num_grains):
-        if (gidx+1) % 100 == 0:
-            LGR.info('{}/{} grains extracted.'.format(gidx+1, num_grains))
-        grain = GD.read_grain(gidx*hdr.grainSize)
-        obf.write(grain) # output grain
-
-    bf.close()
-    return True
-
-def __dissect_monolithic_sparse(wdir, extents, obf):
-    # -------------------------------------------------------------------------
-    # __dissect_monolithic_sparse
-    # -------------------------------------------------------------------------
-    LGR.debug('__dissect_monolithic_sparse()')
-
-    total_sectors = sum([extent.size for extent in extents]) // SECTOR_SZ
-
-    for extent in extents:
-        extent_sectors = extent.size // SECTOR_SZ
-        LGR.info('extracting {} of {} sectors.'.format(extent_sectors,
-                                                       total_sectors))
-        if not __extract_sparse_extent(wdir, extent, obf):
-            LGR.error('sparse extent extraction failed!')
-            return False
-
-    return True
-
-
-def __dissect_monolithic_flat(wdir, extents, obf):
-    # -------------------------------------------------------------------------
-    # __dissect_monolithic_flat
-    # -------------------------------------------------------------------------
-    LGR.debug('__dissect_monolithic_flat()')
-    todo(LGR, 'implement here.')
-
-
-def __dissect_splitted_sparse(wdir, extents, obf):
-    # -------------------------------------------------------------------------
-    # __dissect_splitted_sparse
-    # -------------------------------------------------------------------------
-    LGR.debug('__dissect_splitted_sparse()')
-    todo(LGR, 'implement here.')
-
-
-def __dissect_splitted_flat(wdir, extents, obf):
-    # -------------------------------------------------------------------------
-    # __dissect_splitted_flat
-    # -------------------------------------------------------------------------
-    LGR.debug('__dissect_splitted_flat()')
-    todo(LGR, 'implement here.')
-
-
-def __dissect(wdir, df, ibf, obf):
-    # -------------------------------------------------------------------------
-    # __dissect
+    # __dissect_from_vmdk
+    #   handles both Hosted Sparse Extent & ESX Server Sparse Extent dissection
     # -------------------------------------------------------------------------
     LGR.debug('__dissect()')
+
+    df = vmdk.descriptor_file()
+
     if not df.is_valid():
-        LGR.error('invalid DescriptorFile.')
+        LGR.error('invalid descriptor file.')
         return False
-    # retrieve parent filename if has one
-    parent_filename = None
-    if df.has_parent():
-        parent_filename = df.parent_filename()
-    # select extraction based on multiple criterions
-    if df.is_monolithic():
-        if df.is_sparse():
-            if not __dissect_monolithic_sparse(wdir, df.extents, obf):
-                return False
 
-        elif df.is_flat():
-            __dissect_monolithic_flat(wdir, df.extents, obf)
-        else:
-            LGR.error('disk should be either flat or sparse if monolithic.')
-            return False
+    if df.is_sparse():
+        see = SparseExtentExtractor(wdir, vmdk, obf)
+        return see.extract()
 
-    elif df.is_2gb_splitted():
-        if df.is_sparse():
-            __dissect_splitted_sparse(wdir, df.extents, obf)
-        elif df.is_flat():
-            __dissect_splitted_flat(wdir, df.extents, obf)
-        else:
-            LGR.error('disk should be either flat or sparse if 2GB splitted.')
-            return False
+    elif df.is_flat():
+        fee = FlatExtentExtractor(wdir, vmdk, obf)
+        return fee.extract()
 
     elif df.is_using_physical_disk():
         todo(LGR, 'implement dissection of physical disks.')
+
     elif df.is_using_raw_device_mapping():
         todo(LGR, 'implement dissection of raw devices mappings.')
+
     elif df.is_stream_optimized():
         todo(LGR, 'implement dissection of stream optimized disks.')
+
     elif df.is_esx_disk():
         todo(LGR, 'implement dissection of ESX disk.')
+
     else:
         LGR.error('unhandled disk type')
         return False
 
     return True
+
+
+def __dissect_from_vmx(wdir, df, obf):
+    # -------------------------------------------------------------------------
+    # __dissect_from_vmx
+    # -------------------------------------------------------------------------
+    LGR.debug('__dissect_from_vmx()')
+    todo(LGR, 'implement dissection from vmx file.')
 # =============================================================================
 # PUBLIC FUNCTIONS
 # =============================================================================
@@ -307,7 +136,8 @@ def can_dissect(container):
     LGR.debug('can_dissect()')
     if 'VMware4 disk image' in container.mime_text:
         bf = container.ibf()
-        hdr = __find_header(bf)
+        vmdk = VmdkDisk(bf)
+        hdr = vmdk.header()
         bf.close()
         return (hdr is not None)
 
@@ -335,18 +165,23 @@ def dissect(container):
     wdir = container.wdir()
     ibf = container.ibf()
     obf = container.obf()
-    hdr = __find_header(ibf)
+    vmdk = VmdkDisk(ibf)
+    hdr = vmdk.header()
     # find and parse descriptor file
-    if hdr is not None and hdr.obj_type == 'SparseExtentHeader':
-        df = __parse_descriptor_file(hdr, ibf)
-    else:
+    if hdr is None:
         ibf.seek(0)
         df = DescriptorFile(ibf.read_text())
-    # dissect
-    if not __dissect(wdir, df, ibf, obf):
-        LGR.warning('failed to dissect vmx/vmdk.')
+
+        if __dissect_from_vmx(wdir, df, obf):
+            containers.append(Container(obf.abspath, 'disk.raw'))
+        else:
+            LGR.warning('failed to dissect from vmx file.')
+
     else:
-        containers.append(Container(obf.abspath, 'disk.raw'))
+        if __dissect_from_vmdk(wdir, vmdk, obf):
+            containers.append(Container(obf.abspath, 'disk.raw'))
+        else:
+            LGR.warning('failed to dissect from vmdk file.')
 
     obf.close()
     ibf.close()
@@ -372,8 +207,9 @@ def action_group():
                 continue
 
             bf = BinaryFile(f, 'r')
+            vmdk = VmdkDisk(bf)
 
-            hdr = __find_header(bf)
+            hdr = vmdk.header()
             if hdr is None:
                 LGR.error('no valid header found.')
                 bf.close()
@@ -392,20 +228,21 @@ def action_group():
                 continue
 
             bf = BinaryFile(f, 'r')
+            vmdk = VmdkDisk(bf)
 
-            hdr = __find_header(bf)
+            hdr = vmdk.header()
             if hdr is None:
                 LGR.error('no valid header found.')
                 bf.close()
                 continue
 
-            if hdr.obj_type != 'SparseExtentHeader':
+            df = vmdk.descriptor_file()
+            if df is None:
                 LGR.warning('only sparse extents have an embedded '
                             'description file.')
                 bf.close()
                 continue
 
-            df = __parse_descriptor_file(hdr, bf)
             if not df.is_valid():
                 LGR.error('invalid DescriptorFile found.')
                 bf.close()

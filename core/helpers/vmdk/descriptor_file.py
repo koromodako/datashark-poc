@@ -24,7 +24,8 @@
 # =============================================================================
 # IMPORTS
 # =============================================================================
-from utils.helpers.logging import get_logger
+from utils.logging import get_logger
+from helpers.vmdk.extent import Extent
 # =============================================================================
 # GLOBALS / CONFIG
 # =============================================================================
@@ -32,80 +33,6 @@ LGR = get_logger(__name__)
 # =============================================================================
 # CLASSES
 # =============================================================================
-
-
-class Extent(object):
-    # -------------------------------------------------------------------------
-    # Extent
-    # -------------------------------------------------------------------------
-    ACCESS_KWDS = [
-        'RW',
-        'RDONLY',
-        'NOACCESS'
-    ]
-    FLAT_TYPES = [
-        'FLAT',
-        'VMFS',
-        'VMFSRDM',
-        'VMFSRAW'
-    ]
-    TYPE_KWDS = FLAT_TYPES + [
-        'SPARSE',
-        'ZERO',
-        'VMFSSPARSE'
-    ]
-
-    def __init__(self, line):
-        # ---------------------------------------------------------------------
-        # __init__
-        # ---------------------------------------------------------------------
-        super(Extent, self).__init__()
-        self.__valid = self.__parse(line)
-
-    def __parse(self, line):
-        # ---------------------------------------------------------------------
-        # __parse
-        # ---------------------------------------------------------------------
-        LGR.debug('Extent.__parse()')
-        pts = line.split(' ')
-        if len(pts) < 4:
-            LGR.warning('invalid extent: {}'.format(line))
-            return False
-        self.access = pts[0]
-        if self.access not in Extent.ACCESS_KWDS:
-            LGR.warning('invalid extent access: {}'.format(self.access))
-            return False
-        self.size = int(pts[1])
-        self.type = pts[2]
-        if self.type not in Extent.TYPE_KWDS:
-            LGR.warning('invalid extent type: {}'.format(self.type))
-            return False
-        self.filename = pts[3][1:-1]
-        self.offset = None  # invalid offset
-        if len(pts) == 5:
-            self.offset = int(pts[4])
-        return True
-
-    def is_valid(self):
-        # ---------------------------------------------------------------------
-        # is_valid
-        # ---------------------------------------------------------------------
-        return self.__valid
-
-    def is_flat(self):
-        # ---------------------------------------------------------------------
-        # is_flat
-        # ---------------------------------------------------------------------
-        LGR.debug('Extent.is_flat()')
-        return (self.type in Extent.FLAT_TYPES)
-
-    def to_str(self):
-        # ---------------------------------------------------------------------
-        # to_str
-        # ---------------------------------------------------------------------
-        offset = '' if self.offset is None else self.offset
-        return '{} {} {} {} {}'.format(self.access, self.size, self.type,
-                                       self.filename, offset)
 
 
 class DescriptorFile(object):
@@ -165,6 +92,7 @@ class DescriptorFile(object):
         # __parse
         # ---------------------------------------------------------------------
         LGR.debug('DescriptorFile.__parse()')
+
         for line in s.split('\n'):
             ok = False
             line = line.strip()
@@ -227,6 +155,8 @@ class DescriptorFile(object):
         # --------------------------------------------------------------------------
         # is_valid
         # --------------------------------------------------------------------------
+        LGR.debug('DescriptorFile.is_valid()')
+
         return self.__valid
 
     def has_parent(self):
@@ -234,6 +164,7 @@ class DescriptorFile(object):
         # has_parent
         # --------------------------------------------------------------------------
         LGR.debug('DescriptorFile.has_parent()')
+
         return (getattr(self, self.K_PARENT_CID) != self.CID_NOPARENT)
 
     def is_monolithic(self):
@@ -241,6 +172,7 @@ class DescriptorFile(object):
         # is_monolithic
         # --------------------------------------------------------------------------
         LGR.debug('DescriptorFile.is_monolithic()')
+
         return ('monolithic' in getattr(self, self.K_CREATE_TYPE).lower())
 
     def is_2gb_splitted(self):
@@ -248,6 +180,7 @@ class DescriptorFile(object):
         # is_2gb_splitted
         # --------------------------------------------------------------------------
         LGR.debug('DescriptorFile.is_2gb_splitted()')
+
         return ('twogbmaxextent' in getattr(self, self.K_CREATE_TYPE).lower())
 
     def is_sparse(self):
@@ -255,6 +188,7 @@ class DescriptorFile(object):
         # is_sparse
         # --------------------------------------------------------------------------
         LGR.debug('DescriptorFile.is_sparse()')
+
         return ('sparse' in getattr(self, self.K_CREATE_TYPE).lower())
 
     def is_esx_disk(self):
@@ -262,6 +196,7 @@ class DescriptorFile(object):
         # is_esx_disk
         # --------------------------------------------------------------------------
         LGR.debug('DescriptorFile.is_esx_disk()')
+
         return ('vmfs' in getattr(self, self.K_CREATE_TYPE).lower())
 
     def is_using_physical_disk(self):
@@ -269,6 +204,7 @@ class DescriptorFile(object):
         # is_using_physical_disk
         # --------------------------------------------------------------------------
         LGR.debug('DescriptorFile.is_using_physical_disk()')
+
         return (getattr(self, self.K_CREATE_TYPE) in self.PHY_CREATE_TYPES)
 
     def is_using_raw_device_mapping(self):
@@ -276,6 +212,7 @@ class DescriptorFile(object):
         # is_using_raw_device_mapping
         # --------------------------------------------------------------------------
         LGR.debug('DescriptorFile.is_using_physical_disk()')
+
         createType = getattr(self, self.K_CREATE_TYPE)
         return (createType in self.RAW_DEV_MAP_CREATE_TYPES)
 
@@ -284,6 +221,7 @@ class DescriptorFile(object):
         # is_stream_optimized
         # --------------------------------------------------------------------------
         LGR.debug('DescriptorFile.is_using_physical_disk()')
+
         createType = getattr(self, self.K_CREATE_TYPE)
         return (createType in self.STREAM_OPTIM_CREATE_TYPES)
 
@@ -291,20 +229,29 @@ class DescriptorFile(object):
         # --------------------------------------------------------------------------
         # parent_filename
         # --------------------------------------------------------------------------
+        LGR.debug('DescriptorFile.parent_filename()')
+
+        if not hasattr(self, self.K_PARENT_FILENAME_HINT):
+            return None
+
         return getattr(self, self.K_PARENT_FILENAME_HINT)
 
     def to_str(self):
         # --------------------------------------------------------------------------
         # to_str
         # --------------------------------------------------------------------------
+        LGR.debug('DescriptorFile.to_str()')
+
         text = '\nDescriptorFile:'
         text += '\n\theader:'
         for key in DescriptorFile.HEADER_KWDS:
             if hasattr(self, key):
                 text += '\n\t\t+ {}: {}'.format(key, getattr(self, key))
+
         text += '\n\textents:'
         for extent in self.extents:
             text += '\n\t\t + {}'.format(extent.to_str())
+
         text += '\n\tddb:'
         for key, value in self.ddb.items():
             text += '\n\t\t + {}: {}'.format(key, value)

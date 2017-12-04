@@ -29,8 +29,8 @@
 # =============================================================================
 # modules imports
 import os
+import utils.logging as logging
 import dissection.workspace as workspace
-import utils.helpers.logging as logging
 # functions imports
 from utils.config import config
 from utils.config import load_config
@@ -39,12 +39,12 @@ from utils.config import print_version
 from utils.config import get_arg_parser
 from utils.config import print_license_warranty
 from utils.config import print_license_conditions
+from utils.logging import get_logger
+from utils.filtering import FSEntryFilter
+from utils.action_group import ActionGroup
 from dissection.container import ContainerActionGroup
 from dissection.dissection import DissectionActionGroup
-from utils.helpers.logging import get_logger
-from utils.helpers.filtering import FSEntryFilter
 from dissection.hashdatabase import HashDatabaseActionGroup
-from utils.helpers.action_group import ActionGroup
 from dissection.dissectiondatabase import DissectionDatabaseActionGroup
 # =============================================================================
 # GLOBALS

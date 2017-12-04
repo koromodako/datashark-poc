@@ -25,8 +25,8 @@
 # IMPORTS
 # =============================================================================
 from multiprocessing import Lock
-from utils.helpers.logging import get_logger
-from utils.helpers.action_group import ActionGroup
+from utils.logging import get_logger
+from utils.action_group import ActionGroup
 import dissection.database_adapters.json_adapter as json_adapter
 import dissection.database_adapters.sqlite_adapter as sqlite_adapter
 # =============================================================================

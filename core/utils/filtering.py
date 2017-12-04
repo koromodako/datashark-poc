@@ -25,7 +25,7 @@
 # IMPORTS
 # =============================================================================
 from fnmatch import fnmatch
-from utils.helpers.logging import get_logger
+from utils.logging import get_logger
 # =============================================================================
 # GLOBALS / CONFIG
 # =============================================================================

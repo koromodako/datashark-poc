@@ -29,10 +29,10 @@ import os
 #
 from shutil import rmtree
 from tempfile import gettempdir
-from utils.helpers.crypto import randstr
-from utils.helpers.logging import get_logger
-from utils.helpers.binary_file import BinaryFile
-from utils.helpers.action_group import ActionGroup
+from utils.crypto import randstr
+from utils.logging import get_logger
+from utils.binary_file import BinaryFile
+from utils.action_group import ActionGroup
 # ==============================================================================
 # GLOBALS
 # ==============================================================================
