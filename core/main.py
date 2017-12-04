@@ -97,9 +97,9 @@ def parse_args():
                         help='Comma-separated list of patterns.')
     parser.add_argument('--exclude-files', type=str, default='',
                         help='Comma-separated list of patterns.')
-    parser.add_argument('--no-cleanup', action='store_true',
-                        help="Skip workspace cleanup.")
     # optional processing
+    parser.add_argument('--cleanup', action='store_true',
+                        help="Cleanup workspace after processing.")
     parser.add_argument('--skip-failing-import', action='store_true',
                         help='Ignore dissectors that failed to be imported.')
     parser.add_argument('--skip-hash', action='store_true',
@@ -162,7 +162,7 @@ def main():
 
     code = handle_action(args)
 
-    if not args.no_cleanup:
+    if args.cleanup:
         workspace.cleanup()
 
     return code
