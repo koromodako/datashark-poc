@@ -25,6 +25,7 @@
 # IMPORTS
 # =============================================================================
 import math
+import zlib
 import struct
 from utils.helpers.logging import get_logger
 # =============================================================================
@@ -32,6 +33,14 @@ from utils.helpers.logging import get_logger
 # =============================================================================
 LGR = get_logger(__name__)
 SECTOR_SZ = 512  # bytes
+
+FLAG_VALID_NLT = (1 << 0)
+FLAG_USE_RGT = (1 << 1)
+FLAG_COMPRESSED = (1 << 16)
+FLAG_HAS_MARKERS = (1 << 17)
+
+COMPRESSION_NONE = 0
+COMPRESSION_DEFLATE = 1
 # =============================================================================
 # CLASSES
 # =============================================================================
@@ -50,6 +59,8 @@ class GrainDirectory(object):
         self.bf = bf
         self.hdr = hdr
         self.parent_gd = parent_gd
+
+        self.compressed = ((hdr.flags & FLAG_COMPRESSED) != 0)
 
         self.metadata = self.__load_metadata()
         self.gt_coverage = hdr.numGTEsPerGT * hdr.grainSize
@@ -97,13 +108,18 @@ class GrainDirectory(object):
         gte = self.__read_metadata(gte_idx, skip=gt_offset*SECTOR_SZ)
 
         if gte == 0:
-
             if self.parent_gd is None:
-                return b'\x00' * (self.hdr.grainSize * SECTOR_SZ)
+                data = b'\x00' * (self.hdr.grainSize * SECTOR_SZ)
             else:
-                return self.parent_gd.read_grain(sector)
+                data = self.parent_gd.read_grain(sector)
+        else:
+            data = self.__read_file_grain(gte)
 
-        return self.__read_file_grain(gte)
+        if self.compressed:
+            if self.hdr.compressAlgorithm == COMPRESSION_DEFLATE:
+                data = zlib.decompress(data)
+
+        return data
 
     def read_sector(self, n):
         # ---------------------------------------------------------------------
