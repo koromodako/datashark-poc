@@ -217,7 +217,7 @@ def todo(lgr, task='', no_raise=False):
     # -------------------------------------------------------------------------
     # todo
     # -------------------------------------------------------------------------
-    msg = 'not implemented. TODO: {}'.format(task)
+    msg = 'not implemented [contribute! :)]. TODO: {}'.format(task)
 
     if no_raise:
         lgr.warning(msg)
