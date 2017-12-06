@@ -58,7 +58,7 @@ class Container(object):
         LGR.debug('Container.hash()')
         if BinaryFile.exists(path):
             hash_func = config('hash_func', 'sha256')
-            LGR.info('computing <{}> {}... please wait...'.format(path,
+            LGR.info("computing <{}> {}... please wait...".format(path,
                                                                   hash_func))
             return hashfile(hash_func, path).hex()
         return None
@@ -140,17 +140,17 @@ class Container(object):
         # ---------------------------------------------------------------------
         LGR.debug('Container.to_dict()')
         return {
-            "parent": self.parent,
-            "path": self.path,
-            "realname": self.realname,
-            "hashed": self.hashed,
-            "mime": {
-                "type": self.mime_type,
-                "text": self.mime_text
+            'parent': self.parent,
+            'path': self.path,
+            'realname': self.realname,
+            'hashed': self.hashed,
+            'mime': {
+                'type': self.mime_type,
+                'text': self.mime_text
             },
-            "flagged": self.flagged,
-            "whitelisted": self.whitelisted,
-            "blacklisted": self.blacklisted
+            'flagged': self.flagged,
+            'whitelisted': self.whitelisted,
+            'blacklisted': self.blacklisted
         }
 
 
@@ -180,9 +180,9 @@ class ContainerActionGroup(ActionGroup):
                 if BinaryFile.exists(f):
                     LGR.info('{}: {}'.format(f, Container.hash(f)))
                 else:
-                    LGR.error('{}: invalid path.'.format(f))
+                    LGR.error("{}: invalid path.".format(f))
         else:
-            LGR.error('this action expects at least one input file.')
+            LGR.error("this action expects at least one input file.")
 
     @staticmethod
     def mimes(keywords, args):
@@ -191,13 +191,13 @@ class ContainerActionGroup(ActionGroup):
         # ---------------------------------------------------------------------
         LGR.debug('ContainerActionGroup.mimes()')
         if len(args.files) == 0:
-            LGR.error('this action expects at least one input file.')
+            LGR.error("this action expects at least one input file.")
             return
 
         for f in args.files:
 
             if not BinaryFile.exists(f):
-                LGR.error('{}: invalid path.'.format(f))
+                LGR.error("{}: invalid path.".format(f))
                 return
 
             mimes = Container.mimes(config('magic_file'), f)

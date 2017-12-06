@@ -121,7 +121,7 @@ class DescriptorFile(object):
                 continue
             # unhandled line
             if not ok:
-                LGR.warning('unhandled descriptor file line: {}'.format(l))
+                LGR.warning("unhandled descriptor file line: {}".format(l))
         # descriptor file parsing step is valid
         return True
 
@@ -132,20 +132,20 @@ class DescriptorFile(object):
         LGR.debug('DescriptorFile.__check()')
         # check parentCID and parentFileNameHint
         if not hasattr(self, self.K_PARENT_CID):
-            LGR.error('missing parentCID.')
+            LGR.error("missing parentCID.")
             return False
         if self.has_parent():
             if not hasattr(self, self.K_PARENT_FILENAME_HINT):
-                LGR.error('missing parentFileNameHint.')
+                LGR.error("missing parentFileNameHint.")
                 return False
         # check createType
         if not hasattr(self, self.K_CREATE_TYPE):
-            LGR.error('missing createType in descriptor file.')
+            LGR.error("missing createType in descriptor file.")
             return False
         createType = getattr(self, self.K_CREATE_TYPE)[1:-1]
         setattr(self, self.K_CREATE_TYPE, createType)
         if createType not in self.CREATE_TYPES:
-            LGR.error('unhandled createType in descriptor file. ({})'.format(
+            LGR.error("unhandled createType in descriptor file. ({})".format(
                 getattr(self, self.K_CREATE_TYPE)))
             return False
         # descriptor file check step is valid
@@ -242,17 +242,17 @@ class DescriptorFile(object):
         # --------------------------------------------------------------------------
         LGR.debug('DescriptorFile.to_str()')
 
-        text = '\nDescriptorFile:'
-        text += '\n\theader:'
+        text = "\nDescriptorFile:"
+        text += "\n\theader:"
         for key in DescriptorFile.HEADER_KWDS:
             if hasattr(self, key):
-                text += '\n\t\t+ {}: {}'.format(key, getattr(self, key))
+                text += "\n\t\t+ {}: {}".format(key, getattr(self, key))
 
-        text += '\n\textents:'
+        text += "\n\textents:"
         for extent in self.extents:
-            text += '\n\t\t + {}'.format(extent.to_str())
+            text += "\n\t\t + {}".format(extent.to_str())
 
-        text += '\n\tddb:'
+        text += "\n\tddb:"
         for key, value in self.ddb.items():
-            text += '\n\t\t + {}: {}'.format(key, value)
-        return text + '\n'
+            text += "\n\t\t + {}: {}".format(key, value)
+        return text + "\n"

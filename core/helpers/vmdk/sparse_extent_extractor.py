@@ -31,6 +31,7 @@ from utils.logging import get_logger
 from utils.binary_file import BinaryFile
 from helpers.vmdk.gd_stack import GrainDirectoryStack
 from helpers.vmdk.vmdk_disk import VmdkDisk
+from helpers.vmdk.vmdk_disk import S_SPARSE_EXTENT_HDR
 # =============================================================================
 #  GLOBALS
 # =============================================================================
@@ -64,15 +65,15 @@ class SparseExtentExtractor(object):
 
         extent_path = os.path.join(self.wdir, extent.filename)
         if not BinaryFile.exists(extent_path):
-            LGR.error('cannot find extent: {}'.format(extent_path))
+            LGR.error("cannot find extent: {}".format(extent_path))
             return False
 
-        LGR.info('processing extent: {}'.format(extent_path))
+        LGR.info("processing extent: {}".format(extent_path))
         ebf = BinaryFile(extent_path, 'r')
         evmdk = VmdkDisk(ebf)
 
         hdr = evmdk.header()
-        if hdr is None or hdr.obj_type != 'SparseExtentHeader':
+        if hdr is None or hdr.type() != S_SPARSE_EXTENT_HDR:
             ebf.close()
             return False
 
@@ -80,11 +81,11 @@ class SparseExtentExtractor(object):
 
         num_grains = hdr.capacity // hdr.grainSize
 
-        LGR.info('extracting {} grains from extent...'.format(num_grains))
+        LGR.info("extracting {} grains from extent...".format(num_grains))
         for gidx in range(num_grains):
 
             if (gidx+1) % 100 == 0:
-                LGR.info('{}/{} grains extracted.'.format(gidx+1, num_grains))
+                LGR.info("{}/{} grains extracted.".format(gidx+1, num_grains))
 
             grain = gds.base().read_grain(gidx*hdr.grainSize)
             self.obf.write(grain) # output grain
@@ -103,10 +104,10 @@ class SparseExtentExtractor(object):
 
         for extent in self.df.extents:
             extent_sectors = extent.size // SECTOR_SZ
-            LGR.info('extracting {} of {} sectors.'.format(extent_sectors,
+            LGR.info("extracting {} of {} sectors.".format(extent_sectors,
                                                            total_sectors))
             if not self.__extract_sparse_extent(extent):
-                LGR.error('sparse extent extraction failed!')
+                LGR.error("sparse extent extraction failed!")
                 return False
 
         return True

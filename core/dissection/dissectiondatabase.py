@@ -70,7 +70,7 @@ class DissectionDatabase(object):
             config)
 
         if not DissectionDatabase.__VALID:
-            LGR.error('database initialization failed.')
+            LGR.error("database initialization failed.")
             DissectionDatabase.__DB_ADAPTER = None
 
         return DissectionDatabase.__VALID

@@ -167,10 +167,10 @@ class HashDatabaseActionGroup(ActionGroup):
             fpath = args.files[0]
             dirs = args.files[1:]
             if os.path.isdir(fpath):
-                LGR.error('<{}> is an existing directory.'.format(fpath))
+                LGR.error("<{}> is an existing directory.".format(fpath))
             for dpath in dirs:
                 if not os.path.isdir(dpath):
-                    LGR.error('<{}> must be an existing directory.'.format(
+                    LGR.error("<{}> must be an existing directory.".format(
                         dpath))
             # create database
             HashDatabase.create(fpath, dirs, args.recursive, args.dir_filter,
@@ -194,12 +194,12 @@ class HashDatabaseActionGroup(ActionGroup):
         files = args.files[1:]
 
         if os.path.isdir(fpath):
-            LGR.error('<{}> is an existing directory.'.format(fpath))
+            LGR.error("<{}> is an existing directory.".format(fpath))
             return
 
         for f in files:
             if not BinaryFile.exists(f):
-                LGR.error('<{}> must be an existing file.'.format(f))
+                LGR.error("<{}> must be an existing file.".format(f))
                 return
         # merge db files
         HashDatabase.merge(fpath, files)
@@ -210,7 +210,7 @@ class HashDatabaseActionGroup(ActionGroup):
         # ---------------------------------------------------------------------
         super(HashDatabaseActionGroup, self).__init__('hashdb', {
             'create': ActionGroup.action(HashDatabaseActionGroup.create,
-                                         'create a hash-database.'),
+                                         "create a hash-database."),
             'merge': ActionGroup.action(HashDatabaseActionGroup.merge,
-                                        'merge given hash-databases')
+                                        "merge given hash-databases")
         })

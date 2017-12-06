@@ -51,14 +51,14 @@ class CLI(object):
             prompt, allow_empty, expect_digit))
         uinput = ''
         if not isinstance(prompt, str):
-            LGR.error('read_input prompt argument must be a string. (dev)')
+            LGR.error("read_input prompt argument must be a string. (dev)")
         full_prompt = prog_prompt('?') + prompt
         uinput = input(full_prompt)
         while not allow_empty and len(uinput) == 0:
-            LGR.error('empty answer is not allowed.')
+            LGR.error("empty answer is not allowed.")
             uinput = input(full_prompt)
         while expect_digit and not uinput.isdigit():
-            LGR.error('answer must be a digit.')
+            LGR.error("answer must be a digit.")
             uinput = input(full_prompt)
         if expect_digit:
             uinput = int(uinput, 10)
@@ -72,9 +72,9 @@ class CLI(object):
         LGR.debug('CLI.read_input_loop(<%s>, <%s>, expect_digit=%s)' % (
             prompt, subprompt, expect_digit))
         out = []
-        print(prog_prompt('?') + prompt)
+        print(prog_prompt("?") + prompt)
         uinput = CLI.read_input(subprompt, True, expect_digit)
-        while uinput != '.' and len(uinput) > 0:
+        while uinput != "." and len(uinput) > 0:
             out.append(uinput)
             uinput = CLI.read_input(subprompt, False, expect_digit)
         return out
@@ -85,8 +85,8 @@ class CLI(object):
         # confirm
         # ---------------------------------------------------------------------
         LGR.debug('CLI.confirm(<%s>)' % question)
-        resp = CLI.read_input('%s [y/*]: ' % question)
-        return (resp == 'y')
+        resp = CLI.read_input("%s [y/*]: " % question)
+        return (resp == "y")
 
     @staticmethod
     def choose_one(prompt, among):
@@ -95,13 +95,13 @@ class CLI(object):
         # ---------------------------------------------------------------------
         LGR.debug('CLI.choose_one(<%s>,among=%s)' % (prompt, among))
         if not isinstance(among, list) or len(among) < 2:
-            raise ValueError('among must be a list with at least 2 elements.')
-        print(prog_prompt('?') + prompt)
+            raise ValueError("among must be a list with at least 2 elements.")
+        print(prog_prompt("?") + prompt)
         for i in range(len(among)):
-            print('\t%02d: %s' % (i, among[i]))
-        uinput = CLI.read_input('select a number: ', expect_digit=True)
+            print("\t%02d: %s" % (i, among[i]))
+        uinput = CLI.read_input("select a number: ", expect_digit=True)
         while uinput < 0 or uinput >= len(among):
-            LGR.error('input must be in [0,%d]' % (len(among)-1))
+            LGR.error("input must be in [0,%d]" % (len(among)-1))
             uinput = CLI.read_input('select a number: ', expect_digit=True)
         return among[uinput]
 
@@ -112,11 +112,11 @@ class CLI(object):
         # ---------------------------------------------------------------------
         LGR.debug('CLI.look_for_commands(%s)' % commands)
         if not isinstance(commands, list):
-            raise ValueError('CLI.look_for_commands expects "commands" to be '
-                             'a list.')
+            raise ValueError("CLI.look_for_commands expects "commands" to be "
+                             "a list.")
         for cmd in commands:
             if which(cmd) is None:
-                LGR.error('"{}" command seems to be unavailable.'.format(cmd))
+                LGR.error("'{}' command seems to be unavailable.".format(cmd))
                 return False
         return True
 
@@ -126,7 +126,7 @@ class CLI(object):
         # exec
         # ---------------------------------------------------------------------
         LGR.debug('CLI.exec()')
-        LGR.info('exec cmd: {}'.format(' '.join(args)))
+        LGR.info("exec cmd: {}".format(' '.join(args)))
         call(args)
 
     @staticmethod
@@ -135,7 +135,7 @@ class CLI(object):
         # exec_shell
         # ---------------------------------------------------------------------
         LGR.debug('CLI.exec()')
-        LGR.info('exec cmd: {}'.format(cmd))
+        LGR.info("exec cmd: {}".format(cmd))
         call(cmd, shell=True)
 
     @staticmethod
@@ -144,7 +144,7 @@ class CLI(object):
         # start_proc
         # ---------------------------------------------------------------------
         LGR.debug('CLI.start_proc()')
-        LGR.info('start process with: {}'.format(' '.join(args)))
+        LGR.info("start process with: {}".format(' '.join(args)))
         kwargs = {}
         if cwd is not None:
             kwargs['cwd'] = cwd
@@ -222,12 +222,12 @@ class CLIProgressBar(RePrinter):
         self.show_exact = show_exact
         self.total = 100.0
         if len(bar_chars) != 4:
-            raise ValueError('bar_chars is expected to be a 4 chars tuple')
+            raise ValueError("bar_chars is expected to be a 4 chars tuple")
         self.begin = bar_chars[0]
         self.halfcell = bar_chars[1]
         self.fullcell = bar_chars[2]
         self.end = bar_chars[3]
-        self.prev_bar = ''
+        self.prev_bar = ""
 
     def __floatify(self, value):
         # ---------------------------------------------------------------------
@@ -243,7 +243,7 @@ class CLIProgressBar(RePrinter):
         # ---------------------------------------------------------------------
         total = self.__floatify(total)
         if not isinstance(total, float) or total < 0.0:
-            raise ValueError('total must be in [0.0, +inf[')
+            raise ValueError("total must be in [0.0, +inf[")
         self.total = total
         return True
 
@@ -253,29 +253,29 @@ class CLIProgressBar(RePrinter):
         # ---------------------------------------------------------------------
         value = self.__floatify(value)
         if not isinstance(value, float) or value < 0.0 or value > self.total:
-            raise ValueError('value must be a float in [0.0, '
-                             '{}]'.format(self.total))
+            raise ValueError("value must be a float in [0.0, "
+                             "{}]".format(self.total))
 
         perc = (value / self.total) * 100
 
-        percentage = ''
+        percentage = ""
         if self.show_percentage:
-            percentage = ' {:5.1f}%'.format(perc)
+            percentage = " {:5.1f}%".format(perc)
 
-        exact = ''
+        exact = ""
         if self.show_exact:
-            exact = ' {:.1f}/{:.1f}'.format(value, self.total)
+            exact = " {:.1f}/{:.1f}".format(value, self.total)
 
         q = int(perc) // 2
         r = int(perc) % 2
 
-        bar = '{}{}{}{}{}'.format(self.begin,
+        bar = "{}{}{}{}{}".format(self.begin,
                                   self.fullcell * q,
                                   self.halfcell * r,
                                   RePrinter.BLANK * (50 - (q + r)),
                                   self.end)
 
-        self.prev_bar = '{}{}{} {}'.format(bar, percentage, exact, text)
+        self.prev_bar = "{}{}{} {}".format(bar, percentage, exact, text)
         self.print(self.prev_bar)
 
     def done(self):

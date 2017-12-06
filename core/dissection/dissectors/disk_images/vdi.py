@@ -27,39 +27,41 @@
 from utils.logging import get_logger
 from utils.action_group import ActionGroup
 from dissection.container import Container
-from dissection.structure import StructSpecif
-from dissection.structure import StructFactory
+from utils.structure_specif import SimpleMember
+from utils.structure_specif import StructSpecif
+from utils.structure_specif import ByteArrayMember
+from utils.structure_factory import StructFactory
 # =============================================================================
 # GLOBALS / CONFIG
 # =============================================================================
 LGR = get_logger(__name__)
 S_VDI_HDR = 'VDIHeader'
-StructFactory.register_structure(StructSpecif(S_VDI_HDR, [
-    StructSpecif.member('magic', 'ba:0x40'),
-    StructSpecif.member('signature', 'ba:0x04'),
-    StructSpecif.member('vmajor', '<H'),
-    StructSpecif.member('vminor', '<H'),
-    StructSpecif.member('hdr_sz', '<I'),
-    StructSpecif.member('img_type', '<I'),
-    StructSpecif.member('img_flags', '<I'),
-    StructSpecif.member('img_desc', 'ba:0x100'),
-    StructSpecif.member('oft_blk', '<I'),
-    StructSpecif.member('oft_dat', '<I'),
-    StructSpecif.member('num_cylinders', '<I'),
-    StructSpecif.member('num_heads', '<I'),
-    StructSpecif.member('num_sectors', '<I'),
-    StructSpecif.member('sector_sz', '<I'),
-    StructSpecif.member('pad0', '<I', load=False),
-    StructSpecif.member('disk_sz', '<Q'),
-    StructSpecif.member('blk_sz', '<I'),
-    StructSpecif.member('blk_extra_dat', '<I'),
-    StructSpecif.member('num_blk_in_hdd', '<I'),
-    StructSpecif.member('num_blk_allocated', '<I'),
-    StructSpecif.member('uuid_vdi', 'ba:0x10'),
-    StructSpecif.member('uuid_last_snap', 'ba:0x10'),
-    StructSpecif.member('uuid_link', 'ba:0x10'),
-    StructSpecif.member('uuid_parent', 'ba:0x10'),
-    StructSpecif.member('pad1', 'ba:0x38', load=False)
+StructFactory.st_register(StructSpecif(S_VDI_HDR, [
+    ByteArrayMember('magic', 0x40),
+    ByteArrayMember('signature', 0x04),
+    SimpleMember('vmajor', '<H'),
+    SimpleMember('vminor', '<H'),
+    SimpleMember('hdr_sz', '<I'),
+    SimpleMember('img_type', '<I'),
+    SimpleMember('img_flags', '<I'),
+    ByteArrayMember('img_desc', 0x100),
+    SimpleMember('oft_blk', '<I'),
+    SimpleMember('oft_dat', '<I'),
+    SimpleMember('num_cylinders', '<I'),
+    SimpleMember('num_heads', '<I'),
+    SimpleMember('num_sectors', '<I'),
+    SimpleMember('sector_sz', '<I'),
+    SimpleMember('pad0', '<I', load=False),
+    SimpleMember('disk_sz', '<Q'),
+    SimpleMember('blk_sz', '<I'),
+    SimpleMember('blk_extra_dat', '<I'),
+    SimpleMember('num_blk_in_hdd', '<I'),
+    SimpleMember('num_blk_allocated', '<I'),
+    ByteArrayMember('uuid_vdi', 0x10),
+    ByteArrayMember('uuid_last_snap', 0x10),
+    ByteArrayMember('uuid_link', 0x10),
+    ByteArrayMember('uuid_parent', 0x10),
+    ByteArrayMember('pad1', 0x38, load=False)
 ]))
 # =============================================================================
 # PRIVATE FUNCTIONS
@@ -70,7 +72,7 @@ def __header(fp):
     # -------------------------------------------------------------------------
     # __header
     # -------------------------------------------------------------------------
-    return StructFactory.obj_from_file(S_VDI_HDR, fp)
+    return StructFactory.st_from_file(S_VDI_HDR, fp)
 # =============================================================================
 # PUBLIC FUNCTIONS
 # =============================================================================
@@ -151,8 +153,8 @@ def action_group():
             bf.close()
 
             if hdr is None:
-                LGR.error('failed to read header, see previous logs for '
-                          'error details.')
+                LGR.error("failed to read header, see previous logs for "
+                          "error details.")
                 continue
 
             LGR.info(hdr.to_str())

@@ -80,13 +80,13 @@ def dissection_routine(container, whitelist, blacklist, dissectors):
         new_container.set_parent(container)
 
         if whitelist.contains(container):
-            LGR.info('matching whitelisted container. skipping!')
+            LGR.info("matching whitelisted container. skipping!")
             new_container.whitelisted = True
             DissectionDatabase.persist_container(new_container)
             continue    # skip processing (whitelisted)
 
         elif blacklist.contains(container):
-            LGR.warn('matching blacklisted container. flagged!')
+            LGR.warn("matching blacklisted container. flagged!")
             new_container.flagged = True
             new_container.blacklisted = True
             DissectionDatabase.persist_container(new_container)
@@ -171,11 +171,11 @@ class Dissection(object):
             return False
 
         if not self.__register_dissector(dissector):
-            LGR.warning('failed to load dissector, see errors above.')
+            LGR.warning("failed to load dissector, see errors above.")
             return False
 
         if not self.__configure_dissector(dissector):
-            LGR.warning('failed to configure dissector, see errors above.')
+            LGR.warning("failed to configure dissector, see errors above.")
             return False
 
         LGR.info('<{}> imported successfully.'.format(import_path))
@@ -200,7 +200,7 @@ class Dissection(object):
         # load_dissectors
         # ---------------------------------------------------------------------
         LGR.debug('Dissection.load_dissectors()')
-        LGR.info('loading dissectors...')
+        LGR.info("loading dissectors...")
 
         ok = True
         script_path = os.path.dirname(__file__)
@@ -220,12 +220,12 @@ class Dissection(object):
                     if not self.__import_dissector(import_path):
                         ok = False
                         if not config('skip_failing_import', False):
-                            LGR.error('dissector import failure: see error '
-                                      'above.')
+                            LGR.error("dissector import failure: see error "
+                                      "above.")
                             exit(1)
 
-        with_errors = ' (with errors).' if not ok else '.'
-        LGR.info('dissectors loaded{}'.format(with_errors))
+        with_errors = " (with errors)." if not ok else "."
+        LGR.info("dissectors loaded{}".format(with_errors))
         return ok
 
     def load_hashdatabases(self):
@@ -234,10 +234,10 @@ class Dissection(object):
         # ---------------------------------------------------------------------
         LGR.debug('Dissection.load_hashdatabases()')
 
-        LGR.info('loading whitelist database...')
+        LGR.info("loading whitelist database...")
         self.__whitelist = HashDatabase('whitelist', config('whitelist'))
 
-        LGR.info('loading blacklist database...')
+        LGR.info("loading blacklist database...")
         self.__blacklist = HashDatabase('blacklist', config('blacklist'))
 
     def dissectors(self):
@@ -295,7 +295,7 @@ class DissectionActionGroup(ActionGroup):
         dissectors = dissection.dissectors()
 
         if len(dissectors) == 0:
-            LGR.error('no dissector registered.')
+            LGR.error("no dissector registered.")
             return
 
         LGR.info('dissectors:')
@@ -324,7 +324,7 @@ class DissectionActionGroup(ActionGroup):
             # create action group to perform action
             ActionGroup('dissector', actions).perform_action(keywords, args)
         else:
-            LGR.error('missing keyword.')
+            LGR.error("missing keyword.")
 
     @staticmethod
     def dissect(keywords, args):
@@ -336,7 +336,7 @@ class DissectionActionGroup(ActionGroup):
         dissection.load_dissectors()
         dissection.load_hashdatabases()
         if len(args.files) == 0:
-            LGR.error('give at least one file to dissect.')
+            LGR.error("give at least one file to dissect.")
             return
 
         for f in args.files:

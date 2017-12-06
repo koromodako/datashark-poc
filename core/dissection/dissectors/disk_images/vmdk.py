@@ -30,8 +30,6 @@ from utils.logging import get_logger
 from utils.binary_file import BinaryFile
 from utils.action_group import ActionGroup
 from dissection.container import Container
-from dissection.structure import StructSpecif
-from dissection.structure import StructFactory
 # dissection helpers
 from helpers.vmdk.vmdk_disk import VmdkDisk
 from helpers.vmdk.descriptor_file import DescriptorFile
@@ -56,7 +54,7 @@ def __dissect_from_vmdk(wdir, vmdk, obf):
     df = vmdk.descriptor_file()
 
     if not df.is_valid():
-        LGR.error('invalid descriptor file.')
+        LGR.error("invalid descriptor file.")
         return False
 
     if df.is_sparse():
@@ -80,7 +78,7 @@ def __dissect_from_vmdk(wdir, vmdk, obf):
         todo(LGR, 'implement dissection of ESX disk.')
 
     else:
-        LGR.error('unhandled disk type')
+        LGR.error("unhandled disk type")
         return False
 
     return True
@@ -211,7 +209,7 @@ def action_group():
 
             hdr = vmdk.header()
             if hdr is None:
-                LGR.error('no valid header found.')
+                LGR.error("no valid header found.")
                 bf.close()
                 continue
 
@@ -232,19 +230,19 @@ def action_group():
 
             hdr = vmdk.header()
             if hdr is None:
-                LGR.error('no valid header found.')
+                LGR.error("no valid header found.")
                 bf.close()
                 continue
 
             df = vmdk.descriptor_file()
             if df is None:
-                LGR.warning('only sparse extents have an embedded '
-                            'description file.')
+                LGR.warning("only sparse extents have an embedded "
+                            "description file.")
                 bf.close()
                 continue
 
             if not df.is_valid():
-                LGR.error('invalid DescriptorFile found.')
+                LGR.error("invalid DescriptorFile found.")
                 bf.close()
                 continue
 
@@ -255,7 +253,7 @@ def action_group():
     # -------------------------------------------------------------------------
     return ActionGroup('vmdk', {
         'header': ActionGroup.action(__action_header,
-                                     'display vmdk sparse header.'),
+                                     "display vmdk sparse header."),
         'descfile': ActionGroup.action(__action_descfile,
-                                       'display description file if found.')
+                                       "display description file if found.")
     })

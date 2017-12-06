@@ -48,7 +48,7 @@ class ActionGroup(object):
         # ---------------------------------------------------------------------
         self.name = name
         self.actions = actions
-        self.actions['help'] = ActionGroup.action(self.help, 'prints help.')
+        self.actions['help'] = ActionGroup.action(self.help, "prints help.")
 
     @staticmethod
     def action(func, help=''):
@@ -68,7 +68,7 @@ class ActionGroup(object):
         LGR.debug('ActionGroup.perform_action()')
         action = self.actions.get(keywords[0], None)
         if action is None:
-            LGR.error('unknown action.')
+            LGR.error("unknown action.")
         else:
             subkeywords = keywords[1:]
             if isinstance(action, ActionGroup):
@@ -92,20 +92,20 @@ class ActionGroup(object):
         # help
         # ---------------------------------------------------------------------
         LGR.debug('ActionGroup.help()')
-        help_txt = ''
+        help_txt = ""
         for keyword, action in self.actions.items():
-            help_txt += '\n{}{}:'.format(ActionGroup.SEP if depth > 0 else '',
+            help_txt += "\n{}{}:".format(ActionGroup.SEP if depth > 0 else "",
                                          keyword)
             if isinstance(action, ActionGroup):
                 help_txt += action.help(keywords, args, depth+1)
-                help_txt = help_txt.replace('\n', '\n\t')
+                help_txt = help_txt.replace("\n", "\n\t")
             else:
-                help_txt += ' ' + action[ActionGroup.K_HELP]
+                help_txt += " " + action[ActionGroup.K_HELP]
         if depth > 0:
             return help_txt
         else:
-            sep = '-' * (len(self.name) + 7)
-            ptxt = '\n{sep} HELP {name} {sep}'.format(sep=sep, name=self.name)
+            sep = "-" * (len(self.name) + 7)
+            ptxt = "\n{sep} HELP {name} {sep}".format(sep=sep, name=self.name)
             ptxt += help_txt
-            ptxt += '\n{sep}{sep}{sep}'.format(sep=sep)
+            ptxt += "\n{sep}{sep}{sep}".format(sep=sep)
             LGR.info(ptxt)
