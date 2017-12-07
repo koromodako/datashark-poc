@@ -25,54 +25,14 @@
 # IMPORTS
 # =============================================================================
 from utils.logging import get_logger
+from utils.binary_file import BinaryFile
 from utils.action_group import ActionGroup
 from dissection.container import Container
-from utils.structure_specif import SimpleMember
-from utils.structure_specif import StructSpecif
-from utils.structure_specif import ByteArrayMember
-from utils.structure_factory import StructFactory
+from helpers.vdi.vdi_disk import VdiDisk
 # =============================================================================
 # GLOBALS / CONFIG
 # =============================================================================
 LGR = get_logger(__name__)
-S_VDI_HDR = 'VDIHeader'
-StructFactory.st_register(StructSpecif(S_VDI_HDR, [
-    ByteArrayMember('magic', 0x40),
-    ByteArrayMember('signature', 0x04),
-    SimpleMember('vmajor', '<H'),
-    SimpleMember('vminor', '<H'),
-    SimpleMember('hdr_sz', '<I'),
-    SimpleMember('img_type', '<I'),
-    SimpleMember('img_flags', '<I'),
-    ByteArrayMember('img_desc', 0x100),
-    SimpleMember('oft_blk', '<I'),
-    SimpleMember('oft_dat', '<I'),
-    SimpleMember('num_cylinders', '<I'),
-    SimpleMember('num_heads', '<I'),
-    SimpleMember('num_sectors', '<I'),
-    SimpleMember('sector_sz', '<I'),
-    SimpleMember('pad0', '<I', load=False),
-    SimpleMember('disk_sz', '<Q'),
-    SimpleMember('blk_sz', '<I'),
-    SimpleMember('blk_extra_dat', '<I'),
-    SimpleMember('num_blk_in_hdd', '<I'),
-    SimpleMember('num_blk_allocated', '<I'),
-    ByteArrayMember('uuid_vdi', 0x10),
-    ByteArrayMember('uuid_last_snap', 0x10),
-    ByteArrayMember('uuid_link', 0x10),
-    ByteArrayMember('uuid_parent', 0x10),
-    ByteArrayMember('pad1', 0x38, load=False)
-]))
-# =============================================================================
-# PRIVATE FUNCTIONS
-# =============================================================================
-
-
-def __header(fp):
-    # -------------------------------------------------------------------------
-    # __header
-    # -------------------------------------------------------------------------
-    return StructFactory.st_from_file(S_VDI_HDR, fp)
 # =============================================================================
 # PUBLIC FUNCTIONS
 # =============================================================================
@@ -114,7 +74,18 @@ def can_dissect(container):
     #   \return [bool]
     # -------------------------------------------------------------------------
     LGR.debug('can_dissect()')
-    return ('VirtualBox Disk Image' in container.mime_text)
+    if 'VirtualBox Disk Image' not in container.mime_text:
+        return False
+
+    ibf = container.ibf()
+    vdi = VdiDisk(ibf)
+    vdi_hdr = vdi.header()
+    ibf.close()
+
+    if vdi_hdr is None:
+        return False
+
+    return True
 
 
 def dissect(container):
@@ -127,12 +98,10 @@ def dissect(container):
     #   \return [list(Container)]
     # -------------------------------------------------------------------------
     LGR.debug('dissect()')
-    ibf = container.ibfptr()
-    vdi_header = __header(ibf)
-    LGR.info(vdi_header.to_str())
+    ibf = container.ibf()
+    vdi = VdiDisk(ibf)
+    vdi_hdr = vdi.header()
     ibf.close()
-    # TODO : implement raw disk extraction
-    raise NotImplementedError
     return []
 
 
@@ -149,18 +118,19 @@ def action_group():
         for f in args.files:
 
             bf = BinaryFile(f, 'r')
-            hdr = __header(bf)
+            vdi = VdiDisk(bf)
+            vdi_hdr = vdi.header()
             bf.close()
 
-            if hdr is None:
+            if vdi_hdr is None:
                 LGR.error("failed to read header, see previous logs for "
                           "error details.")
                 continue
 
-            LGR.info(hdr.to_str())
+            LGR.info(vdi_hdr.to_str())
     # -------------------------------------------------------------------------
     # ActionGroup
     # -------------------------------------------------------------------------
     return ActionGroup('vdi', {
-        'header': ActionGroup.action(__action_header, 'display vdi header.')
+        'header': ActionGroup.action(__action_header, "display vdi header.")
     })
