@@ -59,6 +59,7 @@
 # =============================================================================
 import re
 import struct
+from utils.wrapper import lazy_getter
 from utils.logging import get_logger
 from utils.structure import Struct
 from utils.structure_factory import StructFactory
@@ -108,14 +109,12 @@ class Member(object):
 
         return True
 
-    def size(self):  # LAZY METHOD
+    @lazy_getter('__size')
+    def size(self):
         # ---------------------------------------------------------------------
         # size
         # ---------------------------------------------------------------------
-        if not hasattr(self, '__size'):
-            self.__size = self._size()
-
-        return self.__size
+        return self._size()
 
     def read(self, data):
         # ---------------------------------------------------------------------

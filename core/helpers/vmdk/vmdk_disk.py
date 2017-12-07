@@ -27,6 +27,7 @@
 # =============================================================================
 from utils.logging import todo
 from utils.logging import get_logger
+from utils.wrapper import lazy_getter
 from utils.structure_specif import UnionMember
 from utils.structure_specif import SimpleMember
 from utils.structure_specif import StructMember
@@ -153,110 +154,89 @@ class VmdkDisk(object):
         super(VmdkDisk, self).__init__()
         self.bf = bf  # never close this bf you dont have the ownership
 
-    def header(self):   # LAZY METHOD
+    @lazy_getter('_hdr')
+    def header(self):
         # ---------------------------------------------------------------------
         # header
         # ---------------------------------------------------------------------
         LGR.debug('VmdkDisk.header()')
 
-        if not hasattr(self, 'hdr'):
-            self.hdr = None
+        sparse_hdr = StructFactory.st_from_file(S_SPARSE_EXTENT_HDR, self.bf)
+        if sparse_hdr is not None:
+            if sparse_hdr.magicNumber == self.SIGN_VMDK:
+                return sparse_hdr
 
-            sparse_hdr = StructFactory.st_from_file(S_SPARSE_EXTENT_HDR, self.bf)
-            if sparse_hdr is not None:
-                if sparse_hdr.magicNumber == self.SIGN_VMDK:
-                    self.hdr = sparse_hdr
+        cowdsk_hdr = StructFactory.st_from_file(S_COWD_EXTENT_HDR, self.bf)
+        if cowdsk_hdr is not None:
+            if cowdsk_hdr.magicNumber == self.SIGN_COWD:
+                return cowdsk_hdr
 
-            cowdsk_hdr = StructFactory.st_from_file(S_COWD_EXTENT_HDR, self.bf)
-            if cowdsk_hdr is not None:
-                if cowdsk_hdr.magicNumber == self.SIGN_COWD:
-                    self.hdr = cowdsk_hdr
+        return None
 
-        return self.hdr
-
+    @lazy_getter('_has_ftr')
     def has_footer(self):   # LAZY METHOD
         # ---------------------------------------------------------------------
         # has_footer
         # ---------------------------------------------------------------------
         LGR.debug('VmdkDisk.footer()')
+        if self.header() is None: # requires header
+            return False
 
-        if not hasattr(self, 'has_ftr'):
-            self.has_ftr = False
+        if self._hdr.st_type != S_SPARSE_EXTENT_HDR:
+            return False
 
-            if self.header() is None: # requires header
-                return self.has_ftr
+        if self._hdr.gdOffset != self.GD_AT_END:
+            return False
 
-            if self.hdr.st_type != S_SPARSE_EXTENT_HDR:
-                return self.has_ftr
+        compressed = (self.FLAG_HAS_MARKERS|self.FLAG_COMPRESSED)
+        if (self._hdr.flags & compressed) == 0:
+            return False
 
-            if self.hdr.gdOffset != self.GD_AT_END:
-                return self.has_ftr
+        if self._hdr.compressAlgorithm != COMPRESSION_DEFLATE:
+            return False
 
-            compressed = (self.FLAG_HAS_MARKERS|self.FLAG_COMPRESSED)
-            if (self.hdr.flags & compressed) == 0:
-                return self.has_ftr
+        return True
 
-            if self.compressAlgorithm != COMPRESSION_DEFLATE:
-                return self.has_ftr
-
-            self.has_ftr = True
-
-        return self.has_ftr
-
-    def footer(self):   # LAZY METHOD
+    @lazy_getter('_ftr')
+    def footer(self):
         # ---------------------------------------------------------------------
         # footer
         # ---------------------------------------------------------------------
         LGR.debug('VmdkDisk.footer()')
+        if self.header() is None: # requires header
+            return None
 
-        if not hasattr(self, 'ftr'):
-            self.ftr = None
+        if not self.has_footer():
+            return None
 
-            if self.header() is None: # requires header
-                return self.ftr
+        sector_cnt = self.bf.size() // self.SECTOR_SZ
+        oft = (sector_cnt - 2) * self.SECTOR_SZ
 
-            if not self.has_footer():
-                return self.ftr
+        ftr = StructFactory.st_from_file(S_SPARSE_EXTENT_HDR, self.bf, oft)
 
-            vmdk_sz = self.bf.size()
-            sector_cnt = vmdk_sz // self.SECTOR_SZ
-            oft = (sector_cnt - 2) * self.SECTOR_SZ
+        return ftr
 
-            ftr = StructFactory.st_from_file(S_SPARSE_EXTENT_HDR, self.bf, oft)
-
-            if ftr is None:
-                return self.ftr
-
-            self.ftr = ftr
-
-        return self.ftr
-
-    def descriptor_file(self):  # LAZY METHOD
+    @lazy_getter('_df')
+    def descriptor_file(self):
         # ---------------------------------------------------------------------
         # descriptor_file
         # ---------------------------------------------------------------------
         LGR.debug('VmdkDisk.descriptor_file()')
+        if self.header() is None: # requires header
+            return None
 
-        if not hasattr(self, 'df'):
-            self.df = None
+        if self._hdr.st_type != S_SPARSE_EXTENT_HDR:
+            return None
 
-            if self.header() is None: # requires header
-                return self.df
+        if self._hdr.descriptorOffset == 0:
+            return None
 
-            if self.hdr.st_type != S_SPARSE_EXTENT_HDR:
-                return self.df
+        self.bf.seek(self._hdr.descriptorOffset * self.SECTOR_SZ)
+        df_buf = self.bf.read(self._hdr.descriptorSize * self.SECTOR_SZ)
+        df_eos = df_buf.index(b'\x00')
+        df_str = df_buf[:df_eos].decode('utf-8')
 
-            if self.hdr.descriptorOffset == 0:
-                return self.df
-
-            self.bf.seek(self.hdr.descriptorOffset * self.SECTOR_SZ)
-            df_buf = self.bf.read(self.hdr.descriptorSize * self.SECTOR_SZ)
-            df_eos = df_buf.index(b'\x00')
-            df_str = df_buf[:df_eos].decode('utf-8')
-
-            self.df = DescriptorFile(df_str)
-
-        return self.df
+        return DescriptorFile(df_str)
 
     def metadata(self):
         # ---------------------------------------------------------------------
@@ -268,7 +248,7 @@ class VmdkDisk(object):
             LGR.error("cannot read disk header => cannot extract metadata.")
             return None
 
-        if self.hdr.st_type == S_SPARSE_EXTENT_HDR:
+        if self._hdr.st_type == S_SPARSE_EXTENT_HDR:
 
             if self.has_footer():
                 # -- Stream-Optimized Compressed Sparse Extents
@@ -279,16 +259,16 @@ class VmdkDisk(object):
             # -- Hosted Sparse Extents
             # loads redundant GD & GTs and normal GD & GTs in a single
             # bytearray
-            self.bf.seek(self.hdr.rgdOffset * self.SECTOR_SZ)
-            return self.bf.read(self.hdr.overHead * self.SECTOR_SZ)
+            self.bf.seek(self._hdr.rgdOffset * self.SECTOR_SZ)
+            return self.bf.read(self._hdr.overHead * self.SECTOR_SZ)
 
-        elif self.hdr.st_type == S_COWD_EXTENT_HDR:
+        elif self._hdr.st_type == S_COWD_EXTENT_HDR:
             # -- ESX Server Sparse Extents
             # loads GD only
-            self.bf.seek(self.hdr.gdOffset * self.SECTOR_SZ)
+            self.bf.seek(self._hdr.gdOffset * self.SECTOR_SZ)
             gde_sz = SimpleMember('_', '<I').size()
-            return self.bf.read(self.hdr.numGDEntries * gde_sz)
+            return self.bf.read(self._hdr.numGDEntries * gde_sz)
 
         LGR.error("unknown header type => cannot extract metadata. "
-                  "<{}>".format(self.hdr.st_type))
+                  "<{}>".format(self._hdr.st_type))
         return None
