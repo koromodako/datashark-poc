@@ -76,7 +76,7 @@ class GrainDirectoryStack(object):
         else:
             parent_gd = None
 
-        return GrainDirectory(vmdk.header(), vmdk.bf, parent_gd)
+        return GrainDirectory(vmdk, parent_gd)
 
     def base(self):
         return self.base_gd

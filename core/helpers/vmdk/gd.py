@@ -25,7 +25,6 @@
 # IMPORTS
 # =============================================================================
 import math
-import zlib
 import struct
 from utils.logging import get_logger
 from helpers.vmdk.vmdk_disk import VmdkDisk
@@ -35,14 +34,6 @@ from helpers.vmdk.vmdk_disk import VmdkDisk
 LGR = get_logger(__name__)
 
 SECTOR_SZ = VmdkDisk.SECTOR_SZ
-
-FLAG_VALID_NLT = (1 << 0)
-FLAG_USE_RGT = (1 << 1)
-FLAG_COMPRESSED = (1 << 16)
-FLAG_HAS_MARKERS = (1 << 17)
-
-COMPRESSION_NONE = 0
-COMPRESSION_DEFLATE = 1
 # =============================================================================
 # CLASSES
 # =============================================================================
@@ -52,28 +43,21 @@ class GrainDirectory(object):
     # -------------------------------------------------------------------------
     # GrainDirectory
     # -------------------------------------------------------------------------
-    def __init__(self, hdr, bf, parent_gd=None):
+    def __init__(self, vmdk, parent_gd=None):
         # ---------------------------------------------------------------------
         # __init__
         # ---------------------------------------------------------------------
         super(GrainDirectory, self).__init__()
 
-        self.bf = bf
-        self.hdr = hdr
+        self.bf = vmdk.bf
+        self.hdr = vmdk.header()
         self.parent_gd = parent_gd
 
-        self.compressed = ((hdr.flags & FLAG_COMPRESSED) != 0)
+        self.metadata = vmdk.metadata()
+        if self.metadata is None:
+            LGR.error("failed to load metadata.")
 
-        self.metadata = self.__load_metadata()
-        self.gt_coverage = hdr.numGTEsPerGT * hdr.grainSize
-
-    def __load_metadata(self):
-        # ---------------------------------------------------------------------
-        # __load_metadata
-        # ---------------------------------------------------------------------
-        LGR.debug('GrainDirectory.__cache_data()')
-        self.bf.seek(self.hdr.rgdOffset * SECTOR_SZ)
-        return self.bf.read(self.hdr.overHead * SECTOR_SZ)
+        self.gt_coverage = self.hdr.numGTEsPerGT * self.hdr.grainSize
 
     def __read_metadata(self, offset, skip=0):
         # ---------------------------------------------------------------------
@@ -116,10 +100,6 @@ class GrainDirectory(object):
                 data = self.parent_gd.read_grain(sector)
         else:
             data = self.__read_file_grain(gte)
-
-        if self.compressed:
-            if self.hdr.compressAlgorithm == COMPRESSION_DEFLATE:
-                data = zlib.decompress(data)
 
         return data
 
