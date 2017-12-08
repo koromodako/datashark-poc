@@ -25,8 +25,9 @@
 # IMPORTS
 # =============================================================================
 import math
-import struct
+from struct import calcsize
 from utils.logging import get_logger
+from utils.converting import unpack_one
 from helpers.vmdk.vmdk_disk import VmdkDisk
 # =============================================================================
 # GLOBALS
@@ -65,10 +66,10 @@ class GrainDirectory(object):
         # ---------------------------------------------------------------------
         LGR.debug('GrainDirectory.__read_metadata()')
         fmt = '<I'
-        sz = struct.calcsize(fmt)
+        sz = calcsize(fmt)
         start = skip+offset*sz
         data = self.metadata[start:start+sz]
-        return struct.unpack(fmt, data)[0]
+        return unpack_one(fmt, data)
 
     def __read_file_grain(self, gte):
         # ---------------------------------------------------------------------
@@ -113,3 +114,11 @@ class GrainDirectory(object):
         start = n*SECTOR_SZ
 
         return grain[start:start+SECTOR_SZ]
+
+    def term(self):
+        # ---------------------------------------------------------------------
+        # term
+        # ---------------------------------------------------------------------
+        if self.parent_gd is not None:
+            self.parent_gd.term()
+        self.bf.close()

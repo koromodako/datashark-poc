@@ -67,7 +67,7 @@ class GrainDirectoryStack(object):
 
             if BinaryFile.exists(parent_path):
                 parent_bf = BinaryFile(parent_path)
-                parent_vmdk = VmdkDisk(bf)
+                parent_vmdk = VmdkDisk(parent_bf)
                 parent_gd = self.__build_gd(parent_vmdk)
 
             else:
@@ -79,4 +79,13 @@ class GrainDirectoryStack(object):
         return GrainDirectory(vmdk, parent_gd)
 
     def base(self):
+        # ---------------------------------------------------------------------
+        # base
+        # ---------------------------------------------------------------------
         return self.base_gd
+
+    def term(self):
+        # ---------------------------------------------------------------------
+        # term
+        # ---------------------------------------------------------------------
+        self.base_gd.term()

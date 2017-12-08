@@ -58,10 +58,11 @@
 #  IMPORTS
 # =============================================================================
 import re
-import struct
+from struct import calcsize
 from utils.wrapper import lazy_getter
 from utils.logging import get_logger
 from utils.structure import Struct
+from utils.converting import unpack_one
 from utils.structure_factory import StructFactory
 # =============================================================================
 # GLOBAL
@@ -162,13 +163,13 @@ class SimpleMember(Member):
         # ---------------------------------------------------------------------
         # _size
         # ---------------------------------------------------------------------
-        return struct.calcsize(self.fmt)
+        return calcsize(self.fmt)
 
     def _read(self, data):
         # ---------------------------------------------------------------------
         # _read
         # ---------------------------------------------------------------------
-        return struct.unpack(self.fmt, data)[0]
+        return unpack_one(self.fmt, data)
 
 
 class ArrayMember(Member):

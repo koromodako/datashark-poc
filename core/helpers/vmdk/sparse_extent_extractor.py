@@ -84,12 +84,15 @@ class SparseExtentExtractor(object):
         LGR.info("extracting {} grains from extent...".format(num_grains))
         for gidx in range(num_grains):
 
-            if (gidx+1) % 100 == 0:
-                LGR.info("{}/{} grains extracted.".format(gidx+1, num_grains))
-
             grain = gds.base().read_grain(gidx*hdr.grainSize)
             self.obf.write(grain) # output grain
 
+
+            if (gidx+1) % 100 == 0:
+                LGR.info("{}/{} grains extracted.".format(gidx+1, num_grains))
+
+
+        gds.term() # close grain directory stack internal binary files
         ebf.close()
         return True
 
