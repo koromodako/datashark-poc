@@ -1,5 +1,5 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#     file: vdi_disk_extractor.py
+#     file: vdi_extractor.py
 #     date: 2017-12-08
 #   author: paul.dautry
 #  purpose:
@@ -35,9 +35,9 @@ LGR = get_logger(__name__)
 # =============================================================================
 
 
-class VdiDiskExtractor(object):
+class VdiExtractor(object):
     # -------------------------------------------------------------------------
-    # VdiDiskExtractor
+    # VdiExtractor
     # -------------------------------------------------------------------------
     def __init__(self, wdir, vdi, obf):
         self.wdir = wdir
@@ -48,7 +48,7 @@ class VdiDiskExtractor(object):
         # ---------------------------------------------------------------------
         # extract
         # ---------------------------------------------------------------------
-        LGR.debug('VdiDiskExtractor.extract()')
+        LGR.debug('VdiExtractor.extract()')
 
         vdi_blk_cnt = self.vdi.header().numBlkInHdd
 

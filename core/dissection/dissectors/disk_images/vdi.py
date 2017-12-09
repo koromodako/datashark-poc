@@ -29,7 +29,7 @@ from utils.binary_file import BinaryFile
 from utils.action_group import ActionGroup
 from dissection.container import Container
 from helpers.vdi.vdi_disk import VdiDisk
-from helpers.vdi.vdi_disk_extractor import VdiDiskExtractor
+from helpers.vdi.vdi_extractor import VdiExtractor
 # =============================================================================
 # GLOBALS / CONFIG
 # =============================================================================
@@ -104,7 +104,7 @@ def dissect(container):
     obf = container.obf()
     ibf = container.ibf()
 
-    extractor = VdiDiskExtractor(container.wdir(), VdiDisk(ibf), obf)
+    extractor = VdiExtractor(container.wdir(), VdiDisk(ibf), obf)
     if extractor.extract():
         containers.append(Container(obf.abspath, 'disk.raw'))
     else:
