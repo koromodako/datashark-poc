@@ -25,8 +25,10 @@
 # IMPORTS
 # =============================================================================
 from utils.logging import get_logger
+from utils.binary_file import BinaryFile
 from utils.action_group import ActionGroup
 from dissection.container import Container
+from helpers.vhd.vhd_disk import VhdDisk
 # =============================================================================
 # GLOBAL
 # =============================================================================
@@ -75,7 +77,19 @@ def can_dissect(container):
     #   \return [bool]
     # -------------------------------------------------------------------------
     LGR.debug('can_dissect()')
-    return ('Microsoft Disk Image' in container.mime_text)
+
+    if 'Microsoft Disk Image' not in container.mime_text:
+        return False
+
+    ibf = container.ibf()
+    vhd = VhdDisk(ibf)
+
+    if vhd.footer() is None:
+        ibf.close()
+        return False
+
+    ibf.close()
+    return True
 
 
 def dissect(container):
@@ -98,4 +112,53 @@ def action_group():
     #   /!\ public mandatory function that the module must define /!\
     #   \brief returns module action group
     # -------------------------------------------------------------------------
-    return ActionGroup('vhd', {})
+    def __action_header(keywords, args):
+        # ---------------------------------------------------------------------
+        # __action_header
+        # ---------------------------------------------------------------------
+        for f in args.files:
+
+            if not BinaryFile.exists(f):
+                LGR.error("cannot open inexistant file: <{}>".format(f))
+                continue
+
+            bf = BinaryFile(f, 'r')
+            vhd = VhdDisk(bf)
+            hdr = vhd.header()
+            bf.close()
+
+            if hdr is None:
+                LGR.error("fail to read VHD header.")
+                continue
+
+            LGR.info(hdr.to_str())
+
+
+    def __action_footer(keywords, args):
+        # ---------------------------------------------------------------------
+        # __action_footer
+        # ---------------------------------------------------------------------
+        for f in args.files:
+
+            if not BinaryFile.exists(f):
+                LGR.error("cannot open inexistant file: <{}>".format(f))
+                continue
+
+            bf = BinaryFile(f, 'r')
+            vhd = VhdDisk(bf)
+            ftr = vhd.footer()
+            bf.close()
+
+            if ftr is None:
+                LGR.error("fail to read VHD footer.")
+                continue
+
+            LGR.info(ftr.to_str())
+
+    # -------------------------------------------------------------------------
+    # ActionGroup
+    # -------------------------------------------------------------------------
+    return ActionGroup('vhd', {
+        'header': ActionGroup.action(__action_header, "display vhd header."),
+        'footer': ActionGroup.action(__action_footer, "display vhd footer.")
+    })
