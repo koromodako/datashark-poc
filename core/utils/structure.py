@@ -115,6 +115,25 @@ class Struct(object):
         # ---------------------------------------------------------------------
         return getattr(self, Struct.K_ST_SIZE)
 
+    @staticmethod
+    def __kv_to_str(key, value):
+        # ---------------------------------------------------------------------
+        # __kv_to_str
+        # ---------------------------------------------------------------------
+        if isinstance(value, Struct):
+            s = value.to_str().replace("\n", "\n\t")
+
+        elif isinstance(value, list):
+            s = "\n\t+ {}:".format(key)
+
+            for elem in value:
+                s += Struct.__kv_to_str('_', elem).replace("\n", "\n\t")
+
+        else:
+            s = "\n\t+ {}: {}".format(key, value)
+
+        return s
+
     def to_str(self):
         # ---------------------------------------------------------------------
         # to_str
@@ -127,10 +146,6 @@ class Struct(object):
         s = "\n{}(size={}):".format(st_type, st_size)
 
         for key, value in members.items():
-
-            if isinstance(value, Struct):
-                s += value.to_str().replace("\n", "\n\t")
-            else:
-                s += "\n\t+ {}: {}".format(key, value)
+            s += self.__kv_to_str(key, value)
 
         return s
