@@ -25,8 +25,10 @@
 # =============================================================================
 #  IMPORTS
 # =============================================================================
+from struct import calcsize
 from utils.logging import get_logger
 from utils.wrapper import lazy_getter
+from utils.converting import unpack_one
 from utils.structure_specif import SimpleMember
 from utils.structure_specif import StructSpecif
 from utils.structure_specif import ByteArrayMember
@@ -44,7 +46,7 @@ StructFactory.st_register(StructSpecif(S_VDI_HDR, [
     SimpleMember('hdrSz', '<I'),
     SimpleMember('imgType', '<I'),
     SimpleMember('imgFlags', '<I'),
-    ByteArrayMember('img_desc', 0x100),
+    ByteArrayMember('imgDesc', 0x100),
     SimpleMember('oftBlk', '<I'),
     SimpleMember('oftDat', '<I'),
     SimpleMember('numCylinders', '<I'),
@@ -52,7 +54,7 @@ StructFactory.st_register(StructSpecif(S_VDI_HDR, [
     SimpleMember('numSectors', '<I'),
     SimpleMember('sectorSz', '<I'),
     SimpleMember('pad0', '<I', load=False),
-    SimpleMember('diskSz', '<Q'),
+    SimpleMember('diskSz', '<Q'),                   # unit: B
     SimpleMember('blkSz', '<I'),
     SimpleMember('blkExtraDat', '<I'),
     SimpleMember('numBlkInHdd', '<I'),
@@ -85,6 +87,7 @@ class VdiDisk(object):
         # ---------------------------------------------------------------------
         # header
         # ---------------------------------------------------------------------
+        LGR.debug('VdiDisk.header()')
         hdr = StructFactory.st_from_file(S_VDI_HDR, self.bf)
 
         if hdr is None:
@@ -95,3 +98,36 @@ class VdiDisk(object):
 
         return hdr
 
+    @lazy_getter('_blk_map')
+    def block_map(self):
+        # ---------------------------------------------------------------------
+        # block_map
+        # ---------------------------------------------------------------------
+        LGR.debug('VdiDisk.blk_map()')
+
+        if self.header() is None:
+            LGR.error("cannot parse header => cannot retrieve block map.")
+            return None
+
+        self.bf.seek(self._hdr.oftBlk)
+        return self.bf.read(4 * self._hdr.numBlkInHdd)
+
+    def read_block(self, n):
+        # ---------------------------------------------------------------------
+        # block_map_size
+        # ---------------------------------------------------------------------
+        LGR.debug('VdiDisk.block_map_size()')
+
+        if self.block_map() is None:
+            LGR.error("cannot retrieve block map => cannot retrieve a block.")
+            return None
+
+        fmt = '<i'
+        sz = calcsize(fmt)
+        blk_oft = unpack_one(fmt, self._blk_map[n*sz:(n+1)*sz])
+
+        if blk_oft < 0:
+            return b'\x00' * self._hdr.blkSz
+
+        self.bf.seek(self._hdr.oftDat + blk_oft)
+        return self.bf.read(self._hdr.blkSz)

@@ -29,6 +29,7 @@ from utils.binary_file import BinaryFile
 from utils.action_group import ActionGroup
 from dissection.container import Container
 from helpers.vdi.vdi_disk import VdiDisk
+from helpers.vdi.vdi_disk_extractor import VdiDiskExtractor
 # =============================================================================
 # GLOBALS / CONFIG
 # =============================================================================
@@ -98,11 +99,20 @@ def dissect(container):
     #   \return [list(Container)]
     # -------------------------------------------------------------------------
     LGR.debug('dissect()')
+    containers = []
+
+    obf = container.obf()
     ibf = container.ibf()
-    vdi = VdiDisk(ibf)
-    vdi_hdr = vdi.header()
+
+    extractor = VdiDiskExtractor(container.wdir(), VdiDisk(ibf), obf)
+    if extractor.extract():
+        containers.append(Container(obf.abspath, 'disk.raw'))
+    else:
+        LGR.error("failed to extract data from VDI.")
+
+    obf.close()
     ibf.close()
-    return []
+    return containers
 
 
 def action_group():

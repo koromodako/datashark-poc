@@ -164,9 +164,8 @@ def dissect(container):
     ibf = container.ibf()
     obf = container.obf()
     vmdk = VmdkDisk(ibf)
-    hdr = vmdk.header()
     # find and parse descriptor file
-    if hdr is None:
+    if vmdk.header() is None:
         ibf.seek(0)
         df = DescriptorFile(ibf.read_text())
 
@@ -206,14 +205,13 @@ def action_group():
 
             bf = BinaryFile(f, 'r')
             vmdk = VmdkDisk(bf)
-
             hdr = vmdk.header()
+            bf.close()
+
             if hdr is None:
                 LGR.error("no valid header found.")
-                bf.close()
                 continue
 
-            bf.close()
             LGR.info(hdr.to_str())
 
     def __action_descfile(keywords, args):
@@ -228,25 +226,23 @@ def action_group():
             bf = BinaryFile(f, 'r')
             vmdk = VmdkDisk(bf)
 
-            hdr = vmdk.header()
-            if hdr is None:
+            if vmdk.header() is None:
                 LGR.error("no valid header found.")
                 bf.close()
                 continue
 
             df = vmdk.descriptor_file()
+            bf.close()
+
             if df is None:
                 LGR.warning("only sparse extents have an embedded "
                             "description file.")
-                bf.close()
                 continue
 
             if not df.is_valid():
                 LGR.error("invalid DescriptorFile found.")
-                bf.close()
                 continue
 
-            bf.close()
             LGR.info(df.to_str())
     # -------------------------------------------------------------------------
     # ActionGroup

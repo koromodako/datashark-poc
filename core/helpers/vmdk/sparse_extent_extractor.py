@@ -91,7 +91,7 @@ class SparseExtentExtractor(object):
             if (gidx+1) % 100 == 0:
                 LGR.info("{}/{} grains extracted.".format(gidx+1, num_grains))
 
-
+        LGR.info("extent processed.")
         gds.term() # close grain directory stack internal binary files
         ebf.close()
         return True
@@ -105,6 +105,7 @@ class SparseExtentExtractor(object):
         total_sectors = sum([extent.size for extent in self.df.extents])
         total_sectors = total_sectors // SECTOR_SZ
 
+        LGR.info("extracting raw disk...")
         for extent in self.df.extents:
             extent_sectors = extent.size // SECTOR_SZ
             LGR.info("extracting {} of {} sectors.".format(extent_sectors,
@@ -113,6 +114,11 @@ class SparseExtentExtractor(object):
                 LGR.error("sparse extent extraction failed!")
                 return False
 
+            LGR.info("extraction of {} of {} sectors completed.".format(
+                extent_sectors,
+                total_sectors))
+
+        LGR.info("extraction completed.")
         return True
 
     def extract(self):

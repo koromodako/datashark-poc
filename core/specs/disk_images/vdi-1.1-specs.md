@@ -1,4 +1,4 @@
-# VDI 1.1 Specs
+# VDI 1.1 Disk Image Format
 
 _source : [https://forums.virtualbox.org/viewtopic.php?t=8046](https://forums.virtualbox.org/viewtopic.php?t=8046)_
 
@@ -72,11 +72,26 @@ is converted into a block number and block offset. The block number is then
 mapped to a physical image block in the VDI file by means of the image block
 mapping table, so for byte Z in the virtual HDD:
 
+```
+Original equations in the article:
+
  + Hsize = 512 + 4N + (508 + 4N) mod 512
  + Zblock = int( Z / BlockSize )
  + Zoffset = Z mod BlockSize
  + Fblock = IndexMap[Zblock]
  + Fposition = Hsize + ( Fblock * BlockSize ) + ZOffset
+
+The equations above are wrong at the time of coding 
+datashark, because they do not use elements oftBlk and 
+oftDat of the VDI header... 
+
+ + sof = (unsigned char*) ptr to start of file
+ + IndexMap = (int32_t*)(sof+oftBlk)
+ + Zblock = int(Z / BlockSize)
+ + Zoffset = Z mod BlockSize
+ + Fblock = IndexMap[Zblock]
+ + Fposition = (sof+oftDat+Fblock*BlockSize)[Zoffset]
+```
 
 However the VDI can be sparse. What this means is that zero blocks (that is
 1Mbytes of 0x00) may not be allocated. In such a case, the image map entry is
