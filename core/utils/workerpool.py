@@ -25,7 +25,9 @@
 # IMPORTS
 # =============================================================================
 import multiprocessing as mp
+from utils.wrapper import trace
 from utils.logging import get_logger
+from utils.wrapper import trace_func
 # =============================================================================
 # GLOBALS
 # =============================================================================
@@ -34,7 +36,7 @@ LGR = get_logger(__name__)
 # FUNCTIONS
 # =============================================================================
 
-
+@trace_func(LGR)
 def worker_routine(iqueue, oqueue, routine, kwargs):
     # -------------------------------------------------------------------------
     # worker_routine
@@ -53,7 +55,8 @@ def worker_routine(iqueue, oqueue, routine, kwargs):
         try:
             (iq, oq) = routine(task, **kwargs)
         except Exception as e:
-            LGR.exception('an exception occured in worker internal routine.')
+            LGR.exception("a worker caught an internal exception; details "
+                          "below:")
         else:
             # re-inject results if needed
             for e in iq:
@@ -83,6 +86,7 @@ class WorkerPool(object):
         self.iqueue = mp.JoinableQueue()
         self.oqueue = mp.Queue()
 
+    @trace(LGR)
     def map(self, routine, kwargs, tasks):
         # --------------------------------------------------------------------------
         # map

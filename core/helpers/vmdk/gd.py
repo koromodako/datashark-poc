@@ -26,6 +26,7 @@
 # =============================================================================
 import math
 from struct import calcsize
+from utils.wrapper import trace
 from utils.logging import get_logger
 from utils.converting import unpack_one
 from helpers.vmdk.vmdk_disk import VmdkDisk
@@ -60,31 +61,30 @@ class GrainDirectory(object):
 
         self.gt_coverage = self.hdr.numGTEsPerGT * self.hdr.grainSize
 
+    @trace(LGR)
     def __read_metadata(self, offset, skip=0):
         # ---------------------------------------------------------------------
         # read_metadata
         # ---------------------------------------------------------------------
-        LGR.debug('GrainDirectory.__read_metadata()')
         fmt = '<I'
         sz = calcsize(fmt)
         start = skip+offset*sz
         data = self.metadata[start:start+sz]
         return unpack_one(fmt, data)
 
+    @trace(LGR)
     def __read_file_grain(self, gte):
         # ---------------------------------------------------------------------
         # __read_file_grain
         # ---------------------------------------------------------------------
-        LGR.debug('GrainDirectory.__read_file_grain()')
         self.bf.seek(gte * SECTOR_SZ)
         return self.bf.read(self.hdr.grainSize * SECTOR_SZ)
 
+    @trace(LGR)
     def read_grain(self, sector):
         # ---------------------------------------------------------------------
         # read_grain
         # ---------------------------------------------------------------------
-        LGR.debug('GrainDirectory.read_grain()')
-
         gde_idx = math.floor(sector / self.gt_coverage)
 
         gt_offset = self.__read_metadata(gde_idx)
@@ -104,17 +104,17 @@ class GrainDirectory(object):
 
         return data
 
+    @trace(LGR)
     def read_sector(self, n):
         # ---------------------------------------------------------------------
         # read_sector
         # ---------------------------------------------------------------------
-        LGR.debug('GrainDirectory.read_sector()')
-
         grain = self.read_grain(n)
         start = n*SECTOR_SZ
 
         return grain[start:start+SECTOR_SZ]
 
+    @trace(LGR)
     def term(self):
         # ---------------------------------------------------------------------
         # term

@@ -59,7 +59,9 @@
 # =============================================================================
 import re
 import struct
+from utils.wrapper import trace
 from utils.logging import get_logger
+from utils.wrapper import trace_static
 from utils.converting import str_to_int
 # =============================================================================
 # GLOBAL
@@ -87,6 +89,7 @@ class Struct(object):
         setattr(self, Struct.K_ST_TYPE, st_type)
         setattr(self, Struct.K_ST_SIZE, st_size)
 
+    @trace(LGR)
     def set_member(self, name, value):
         # ---------------------------------------------------------------------
         # set_member
@@ -97,25 +100,29 @@ class Struct(object):
         setattr(self, name, value)
         return True
 
+    @trace(LGR)
     def set_size(self, st_size):
         # ---------------------------------------------------------------------
         # set_size
         # ---------------------------------------------------------------------
         setattr(self, Struct.K_ST_SIZE, st_size)
 
+    @trace(LGR)
     def type(self):
         # ---------------------------------------------------------------------
         # name
         # ---------------------------------------------------------------------
         return getattr(self, Struct.K_ST_TYPE)
 
-    def  size(self):
+    @trace(LGR)
+    def size(self):
         # ---------------------------------------------------------------------
         # size
         # ---------------------------------------------------------------------
         return getattr(self, Struct.K_ST_SIZE)
 
     @staticmethod
+    @trace_static(LGR, 'Struct')
     def __kv_to_str(key, value):
         # ---------------------------------------------------------------------
         # __kv_to_str
@@ -134,12 +141,11 @@ class Struct(object):
 
         return s
 
+    @trace(LGR)
     def to_str(self):
         # ---------------------------------------------------------------------
         # to_str
         # ---------------------------------------------------------------------
-        LGR.debug('Struct.to_str()')
-
         members = vars(self)
         st_type = members.pop(Struct.K_ST_TYPE)
         st_size = members.pop(Struct.K_ST_SIZE)

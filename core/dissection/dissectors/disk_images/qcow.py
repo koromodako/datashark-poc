@@ -25,6 +25,7 @@
 # IMPORTS
 # =============================================================================
 from utils.logging import get_logger
+from utils.wrapper import trace_func
 from dissection.container import Container
 from utils.action_group import ActionGroup
 # =============================================================================
@@ -36,6 +37,7 @@ LGR = get_logger(__name__)
 # =============================================================================
 
 
+@trace_func(LGR)
 def mimes():
     # -------------------------------------------------------------------------
     # mimes
@@ -43,12 +45,12 @@ def mimes():
     #   \brief returns a list of mime types that this dissector can handle
     #   \return [list(str)]
     # -------------------------------------------------------------------------
-    LGR.debug('mimes()')
     return [
         'application/octet-stream'
     ]
 
 
+@trace_func(LGR)
 def configure(config):
     # -------------------------------------------------------------------------
     # configure
@@ -58,10 +60,10 @@ def configure(config):
     #       configuration taken from Datashark's INI file if found.
     #       config might be None or empty.
     # -------------------------------------------------------------------------
-    LGR.debug('configure()')
     return True
 
 
+@trace_func(LGR)
 def can_dissect(container):
     # -------------------------------------------------------------------------
     # can_dissect
@@ -71,10 +73,10 @@ def can_dissect(container):
     #   \param [Container] container
     #   \return [bool]
     # -------------------------------------------------------------------------
-    LGR.debug('can_dissect()')
     return ('QEMU QCOW Image (v1)' in container.mime_text)
 
 
+@trace_func(LGR)
 def dissect(container):
     # -------------------------------------------------------------------------
     # dissect
@@ -84,11 +86,11 @@ def dissect(container):
     #   \param
     #   \return [list(Container)]
     # -------------------------------------------------------------------------
-    LGR.debug('dissect()')
     raise NotImplementedError
     return []
 
 
+@trace_func(LGR)
 def action_group():
     # -------------------------------------------------------------------------
     # action_group()

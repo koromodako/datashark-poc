@@ -30,6 +30,7 @@
 import re
 import struct
 from utils.logging import get_logger
+from utils.wrapper import trace_static
 from utils.structure import Struct
 # =============================================================================
 # GLOBAL
@@ -49,12 +50,11 @@ class StructFactory:
     K_MEMBERS = 'members'
 
     @staticmethod
+    @trace_static(LGR, 'StructFactory')
     def st_exists(st_type, log=False):
         # ---------------------------------------------------------------------
         # st_exists
         # ---------------------------------------------------------------------
-        LGR.debug('StructFactory.st_exists()')
-
         st = StructFactory.STRUCTS.get(st_type, None)
         if log and st is None:
             LGR.error("object <{}> has not been registered!".format(st_type))
@@ -62,24 +62,22 @@ class StructFactory:
         return (st is not None)
 
     @staticmethod
+    @trace_static(LGR, 'StructFactory')
     def st_size(st_type):
         # ---------------------------------------------------------------------
         # st_size
         # ---------------------------------------------------------------------
-        LGR.debug('StructFactory.st_size()')
-
         if not StructFactory.st_exists(st_type, log=True):
             return None
 
         return StructFactory.STRUCTS[st_type][StructFactory.K_SIZE]
 
     @staticmethod
+    @trace_static(LGR, 'StructFactory')
     def st_register(st_specif):
         # ---------------------------------------------------------------------
         # st_register
         # ---------------------------------------------------------------------
-        LGR.debug('StructFactory.st_register()')
-
         if st_specif.valid:
 
             if st_specif.size() == 0:
@@ -102,12 +100,11 @@ class StructFactory:
         return False
 
     @staticmethod
+    @trace_static(LGR, 'StructFactory')
     def st_from_bytes(st_type, data):
         # ---------------------------------------------------------------------
         # st_from_bytes
         # ---------------------------------------------------------------------
-        LGR.debug('StructFactory.st_from_bytes()')
-
         if not StructFactory.st_exists(st_type, log=True):
             return None
 
@@ -133,12 +130,11 @@ class StructFactory:
         return st
 
     @staticmethod
+    @trace_static(LGR, 'StructFactory')
     def st_from_file(st_type, fp, oft=0):
         # ---------------------------------------------------------------------
         # st_from_file
         # ---------------------------------------------------------------------
-        LGR.debug('StructFactory.st_from_file()')
-
         if not StructFactory.st_exists(st_type, log=True):
             return None
 

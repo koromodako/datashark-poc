@@ -27,6 +27,8 @@
 # =============================================================================
 from enum import Enum
 from struct import calcsize
+from utils.logging import todo
+from utils.wrapper import trace
 from utils.logging import get_logger
 from utils.wrapper import lazy_getter
 from utils.converting import unpack_one
@@ -124,6 +126,9 @@ class VhdDisk(object):
     # -------------------------------------------------------------------------
     # VhdDisk
     # -------------------------------------------------------------------------
+    # misc
+    SECTOR_SZ = 512 # bytes
+    # feature flags
     FEATURE_NONE = 0x0          # no special feature
     FEATURE_TEMPORARY = 0x1     # is it a temporary disk ?
     FEATURE_RESERVED = 0x2      # must always be set
@@ -136,16 +141,119 @@ class VhdDisk(object):
         super(VhdDisk, self).__init__()
         self.bf = bf
 
-    @lazy_getter('_hdr')
-    def header(self):
-        # ---------------------------------------------------------------------
-        # header
-        # ---------------------------------------------------------------------
-        return StructFactory.st_from_file(S_VHD_HEADER, self.bf, oft=512)
-
     @lazy_getter('_ftr')
+    @trace(LGR)
     def footer(self):
         # ---------------------------------------------------------------------
         # footer
         # ---------------------------------------------------------------------
         return StructFactory.st_from_file(S_VHD_FOOTER, self.bf)
+
+    @lazy_getter('_type')
+    @trace(LGR)
+    def type(self):
+        # ---------------------------------------------------------------------
+        # type
+        # ---------------------------------------------------------------------
+        if self.footer() is None:
+            LGR.error("cannot parse footer => cannot extract disk type.")
+            return None
+
+        return VhdDiskType(self._ftr.diskType)
+
+    @lazy_getter('_hdr')
+    @trace(LGR)
+    def header(self):
+        # ---------------------------------------------------------------------
+        # header
+        # ---------------------------------------------------------------------
+        if self.type() is None:
+            LGR.error("failed to extract disk type.")
+            return None
+
+        if self._type not in [VhdDiskType.DYNAMIC, VhdDiskType.DIFFERENCING]:
+            LGR.warning("cannot read header if disk is not dynamic nor "
+                        "differencing.")
+            return None
+
+        return StructFactory.st_from_file(S_VHD_HEADER, self.bf, oft=512)
+
+    @lazy_getter('_bat')
+    @trace(LGR)
+    def block_allocation_table(self):
+        # ---------------------------------------------------------------------
+        # block_allocation_table
+        # ---------------------------------------------------------------------
+        if self.header() is None:
+            LGR.error("")
+            return None
+
+        self.bf.seek(self._hdr.tableOft)
+        return self.bf.read(self._hdr.maxTableEntries * 4)
+
+    @lazy_getter('_blk_cnt')
+    @trace(LGR)
+    def block_count(self):
+        # ---------------------------------------------------------------------
+        # block_count
+        # ---------------------------------------------------------------------
+        dtype = self.type()
+
+        if dtype == VhdDiskType.FIXED:
+            todo(LGR, "implement FIXED vhd type extraction.")
+
+        elif dtype == VhdDiskType.DYNAMIC:
+            if self.header() is None:
+                LGR.error("dynamic vhd must have a header.")
+                return None
+
+            return self._hdr.maxTableEntries
+
+        elif dtype == VhdDiskType.DIFFERENCING:
+            todo(LGR, "implement DIFFERENCING vhd type extraction")
+
+        LGR.error("unsupported vhd type.")
+        return None
+
+    @trace(LGR)
+    def __read_dynamic_vhd_block(self, n):
+        # ---------------------------------------------------------------------
+        # __read_dynamic_vhd_block
+        # ---------------------------------------------------------------------
+        if self.block_allocation_table() is None:
+            LGR.error("")
+            return None
+
+        blk_sz = self._hdr.blkSz
+        bitmap_sz = (blk_sz // self.SECTOR_SZ) // 8
+
+        fmt = '>I'
+        sz = calcsize(fmt)
+        blk_oft = unpack_one(fmt, self._bat[n*sz:(n+1)*sz])
+
+        if blk_oft == 0xffffffff:
+            data = b'\x00' * blk_sz
+        else:
+            self.bf.seek(blk_oft * self.SECTOR_SZ + bitmap_sz)
+            data = self.bf.read(blk_sz)
+
+        return data
+
+    @trace(LGR)
+    def read_block(self, n):
+        # ---------------------------------------------------------------------
+        # read_block
+        # ---------------------------------------------------------------------
+        dtype = self.type()
+
+        if dtype == VhdDiskType.FIXED:
+            todo(LGR, "implement FIXED vhd type extraction.")
+
+        elif dtype == VhdDiskType.DYNAMIC:
+            return self.__read_dynamic_vhd_block(n)
+
+        elif dtype == VhdDiskType.DIFFERENCING:
+            todo(LGR, "implement DIFFERENCING vhd type extraction")
+
+        LGR.error("unsupported vhd type.")
+        return None

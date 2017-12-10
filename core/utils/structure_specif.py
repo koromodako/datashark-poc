@@ -59,6 +59,7 @@
 # =============================================================================
 import re
 from struct import calcsize
+from utils.wrapper import trace
 from utils.wrapper import lazy_getter
 from utils.logging import get_logger
 from utils.structure import Struct
@@ -353,12 +354,11 @@ class StructSpecif(object):
         self.members = members
         self.valid = self.__validate()
 
+    @trace(LGR)
     def __validate(self):
         # ---------------------------------------------------------------------
         # __validate
         # ---------------------------------------------------------------------
-        LGR.debug('StructSpecif.__validate()')
-
         if not isinstance(self.st_type, str):
             LGR.error("StructSpecif's st_type must be a string!")
             return False

@@ -25,6 +25,7 @@
 # =============================================================================
 #  IMPORTS
 # =============================================================================
+from utils.wrapper import trace
 from utils.logging import get_logger
 # =============================================================================
 #  GLOBALS / CONFIG
@@ -63,12 +64,11 @@ class Extent(object):
         super(Extent, self).__init__()
         self.__valid = self.__parse(line)
 
+    @trace(LGR)
     def __parse(self, line):
         # ---------------------------------------------------------------------
         # __parse
         # ---------------------------------------------------------------------
-        LGR.debug('Extent.__parse()')
-
         pts = line.split(' ')
 
         if len(pts) < 4:
@@ -96,28 +96,25 @@ class Extent(object):
 
         return True
 
+    @trace(LGR)
     def is_valid(self):
         # ---------------------------------------------------------------------
         # is_valid
         # ---------------------------------------------------------------------
-        LGR.debug('Extent.is_valid()')
-
         return self.__valid
 
+    @trace(LGR)
     def is_flat(self):
         # ---------------------------------------------------------------------
         # is_flat
         # ---------------------------------------------------------------------
-        LGR.debug('Extent.is_flat()')
-
         return (self.type in Extent.FLAT_TYPES)
 
+    @trace(LGR)
     def to_str(self):
         # ---------------------------------------------------------------------
         # to_str
         # ---------------------------------------------------------------------
-        LGR.debug('Extent.to_str()')
-
         offset = '' if self.offset is None else self.offset
 
         return '{} {} {} {} {}'.format(self.access, self.size, self.type,

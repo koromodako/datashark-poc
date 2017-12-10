@@ -25,7 +25,9 @@
 # =============================================================================
 #  IMPORTS
 # =============================================================================
+from utils.wrapper import trace
 from utils.logging import get_logger
+from helpers.vhd.vhd_disk import VhdDiskType
 # =============================================================================
 #  GLOBALS / CONFIG
 # =============================================================================
@@ -48,10 +50,26 @@ class VhdExtractor(object):
         self.vhd = vhd
         self.obf = obf
 
+    @trace(LGR)
     def extract(self):
         # ---------------------------------------------------------------------
         # extract
         # ---------------------------------------------------------------------
-        LGR.debug("VhdExtractor.extract()")
+        blk_cnt = self.vhd.block_count()
 
-        // TODO
+        LGR.info("extracting {} blocks...".format(blk_cnt))
+
+        for n in range(blk_cnt):
+            data = self.vhd.read_block(n)
+
+            if data is None:
+                LGR.error("an error occured while extracting data.")
+                return False
+
+            self.obf.write(data)
+
+            if (n+1) % 50 == 0:
+                LGR.info("{}/{} blocks extracted.".format(n+1, blk_cnt))
+
+        LGR.info("extraction completed.")
+        return True

@@ -32,6 +32,8 @@ from utils.crypto import randstr
 from utils.crypto import hashbuf
 from utils.crypto import hashfile
 from utils.logging import get_logger
+from utils.wrapper import trace
+from utils.wrapper import trace_static
 from utils.binary_file import BinaryFile
 from utils.action_group import ActionGroup
 # =============================================================================
@@ -51,11 +53,11 @@ class Container(object):
     # Container
     # -------------------------------------------------------------------------
     @staticmethod
+    @trace_static(LGR, 'Container')
     def hash(path):
         # ---------------------------------------------------------------------
         # hash
         # ---------------------------------------------------------------------
-        LGR.debug('Container.hash()')
         if BinaryFile.exists(path):
             hash_func = config('hash_func', 'sha256')
             LGR.info("computing <{}> {}... please wait...".format(path,
@@ -64,11 +66,11 @@ class Container(object):
         return None
 
     @staticmethod
+    @trace_static(LGR, 'Container')
     def mimes(magic_file, path):
         # ---------------------------------------------------------------------
         # mimes
         # ---------------------------------------------------------------------
-        LGR.debug('Container.mimes()')
         return (Magic(magic_file=magic_file).from_file(path),
                 Magic(magic_file=magic_file, mime=True).from_file(path))
 
@@ -94,25 +96,25 @@ class Container(object):
         # unexpected dissection results will fill this list of errors
         self.__errors = []
 
+    @trace(LGR)
     def set_parent(self, container):
         # ---------------------------------------------------------------------
         # set_parent
         # ---------------------------------------------------------------------
-        LGR.debug('Container.set_parent()')
         self.parent = container.realname
 
+    @trace(LGR)
     def wdir(self):
         # ---------------------------------------------------------------------
         # wdir
         # ---------------------------------------------------------------------
-        LGR.debug('Container.wdir()')
         return os.path.dirname(self.path)
 
+    @trace(LGR)
     def virtual_path(self):
         # ---------------------------------------------------------------------
         # virtual_path
         # ---------------------------------------------------------------------
-        LGR.debug('Container.virtual_path()')
         path = []
         parent = self.__parent
         while parent is not None:
@@ -120,25 +122,25 @@ class Container(object):
             parent = parent.__parent
         return os.path.join(*path)
 
+    @trace(LGR)
     def ibf(self):
         # ---------------------------------------------------------------------
         # ibf
         # ---------------------------------------------------------------------
-        LGR.debug('Container.ibf()')
         return BinaryFile(self.path, 'r')
 
+    @trace(LGR)
     def obf(self, suffix='ds'):
         # ---------------------------------------------------------------------
         # obf
         # ---------------------------------------------------------------------
-        LGR.debug('Container.obf()')
         return workspace().tmpfile(suffix=suffix)
 
+    @trace(LGR)
     def to_dict(self):
         # ---------------------------------------------------------------------
         # to_dict
         # ---------------------------------------------------------------------
-        LGR.debug('Container.to_dict()')
         return {
             'parent': self.parent,
             'path': self.path,
@@ -170,11 +172,11 @@ class ContainerActionGroup(ActionGroup):
         })
 
     @staticmethod
+    @trace_static(LGR, 'ContainerActionGroup')
     def hash(keywords, args):
         # ---------------------------------------------------------------------
         # hash
         # ---------------------------------------------------------------------
-        LGR.debug('ContainerActionGroup.hash()')
         if len(args.files) > 0:
             for f in args.files:
                 if BinaryFile.exists(f):
@@ -185,11 +187,11 @@ class ContainerActionGroup(ActionGroup):
             LGR.error("this action expects at least one input file.")
 
     @staticmethod
+    @trace_static(LGR, 'ContainerActionGroup')
     def mimes(keywords, args):
         # ---------------------------------------------------------------------
         # mimes
         # ---------------------------------------------------------------------
-        LGR.debug('ContainerActionGroup.mimes()')
         if len(args.files) == 0:
             LGR.error("this action expects at least one input file.")
             return

@@ -24,6 +24,7 @@
 # =============================================================================
 # IMPORTS
 # =============================================================================
+from utils.wrapper import trace
 from utils.logging import get_logger
 from helpers.vmdk.extent import Extent
 # =============================================================================
@@ -87,12 +88,11 @@ class DescriptorFile(object):
         self.ddb = {}
         self.__valid = (self.__parse(s) and self.__check())
 
+    @trace(LGR)
     def __parse(self, s):
         # ---------------------------------------------------------------------
         # __parse
         # ---------------------------------------------------------------------
-        LGR.debug('DescriptorFile.__parse()')
-
         for line in s.split('\n'):
             ok = False
             line = line.strip()
@@ -125,11 +125,11 @@ class DescriptorFile(object):
         # descriptor file parsing step is valid
         return True
 
+    @trace(LGR)
     def __check(self):
         # ---------------------------------------------------------------------
         # __check
         # ---------------------------------------------------------------------
-        LGR.debug('DescriptorFile.__check()')
         # check parentCID and parentFileNameHint
         if not hasattr(self, self.K_PARENT_CID):
             LGR.error("missing parentCID.")
@@ -151,97 +151,86 @@ class DescriptorFile(object):
         # descriptor file check step is valid
         return True
 
+    @trace(LGR)
     def is_valid(self):
         # --------------------------------------------------------------------------
         # is_valid
         # --------------------------------------------------------------------------
-        LGR.debug('DescriptorFile.is_valid()')
-
         return self.__valid
 
+    @trace(LGR)
     def has_parent(self):
         # --------------------------------------------------------------------------
         # has_parent
         # --------------------------------------------------------------------------
-        LGR.debug('DescriptorFile.has_parent()')
-
         return (getattr(self, self.K_PARENT_CID) != self.CID_NOPARENT)
 
+    @trace(LGR)
     def is_monolithic(self):
         # --------------------------------------------------------------------------
         # is_monolithic
         # --------------------------------------------------------------------------
-        LGR.debug('DescriptorFile.is_monolithic()')
-
         return ('monolithic' in getattr(self, self.K_CREATE_TYPE).lower())
 
+    @trace(LGR)
     def is_2gb_splitted(self):
         # --------------------------------------------------------------------------
         # is_2gb_splitted
         # --------------------------------------------------------------------------
-        LGR.debug('DescriptorFile.is_2gb_splitted()')
-
         return ('twogbmaxextent' in getattr(self, self.K_CREATE_TYPE).lower())
 
+    @trace(LGR)
     def is_sparse(self):
         # --------------------------------------------------------------------------
         # is_sparse
         # --------------------------------------------------------------------------
-        LGR.debug('DescriptorFile.is_sparse()')
-
         return ('sparse' in getattr(self, self.K_CREATE_TYPE).lower())
 
+    @trace(LGR)
     def is_esx_disk(self):
         # --------------------------------------------------------------------------
         # is_esx_disk
         # --------------------------------------------------------------------------
-        LGR.debug('DescriptorFile.is_esx_disk()')
-
         return ('vmfs' in getattr(self, self.K_CREATE_TYPE).lower())
 
+    @trace(LGR)
     def is_using_physical_disk(self):
         # --------------------------------------------------------------------------
         # is_using_physical_disk
         # --------------------------------------------------------------------------
-        LGR.debug('DescriptorFile.is_using_physical_disk()')
-
         return (getattr(self, self.K_CREATE_TYPE) in self.PHY_CREATE_TYPES)
 
+    @trace(LGR)
     def is_using_raw_device_mapping(self):
         # --------------------------------------------------------------------------
         # is_using_raw_device_mapping
         # --------------------------------------------------------------------------
-        LGR.debug('DescriptorFile.is_using_physical_disk()')
-
         createType = getattr(self, self.K_CREATE_TYPE)
         return (createType in self.RAW_DEV_MAP_CREATE_TYPES)
 
+    @trace(LGR)
     def is_stream_optimized(self):
         # --------------------------------------------------------------------------
         # is_stream_optimized
         # --------------------------------------------------------------------------
-        LGR.debug('DescriptorFile.is_using_physical_disk()')
-
         createType = getattr(self, self.K_CREATE_TYPE)
         return (createType in self.STREAM_OPTIM_CREATE_TYPES)
 
+    @trace(LGR)
     def parent_filename(self):
         # --------------------------------------------------------------------------
         # parent_filename
         # --------------------------------------------------------------------------
-        LGR.debug('DescriptorFile.parent_filename()')
-
         if not hasattr(self, self.K_PARENT_FILENAME_HINT):
             return None
 
         return getattr(self, self.K_PARENT_FILENAME_HINT)
 
+    @trace(LGR)
     def to_str(self):
         # --------------------------------------------------------------------------
         # to_str
         # --------------------------------------------------------------------------
-        LGR.debug('DescriptorFile.to_str()')
-
         text = "\nDescriptorFile:"
         text += "\n\theader:"
         for key in DescriptorFile.HEADER_KWDS:

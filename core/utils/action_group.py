@@ -24,7 +24,9 @@
 # =============================================================================
 # IMPORTS
 # =============================================================================
+from utils.wrapper import trace
 from utils.logging import get_logger
+from utils.wrapper import trace_static
 # =============================================================================
 # GLOBALS
 # =============================================================================
@@ -51,21 +53,21 @@ class ActionGroup(object):
         self.actions['help'] = ActionGroup.action(self.help, "prints help.")
 
     @staticmethod
+    @trace_static(LGR, 'ActionGroup')
     def action(func, help=''):
         # ---------------------------------------------------------------------
         # action
         # ---------------------------------------------------------------------
-        LGR.debug('ActionGroup.action()')
         return {
             ActionGroup.K_FUNC: func,
             ActionGroup.K_HELP: help
         }
 
+    @trace(LGR)
     def perform_action(self, keywords, args=[]):
         # ---------------------------------------------------------------------
         # perform_action
         # ---------------------------------------------------------------------
-        LGR.debug('ActionGroup.perform_action()')
         action = self.actions.get(keywords[0], None)
         if action is None:
             LGR.error("unknown action.")
@@ -80,18 +82,18 @@ class ActionGroup(object):
             else:
                 action[ActionGroup.K_FUNC](subkeywords, args)
 
+    @trace(LGR)
     def has_action(self, keywords):
         # ---------------------------------------------------------------------
         # has_action
         # ---------------------------------------------------------------------
-        LGR.debug('ActionGroup.has_action()')
         return (self.actions.get(keywords[0], None) is not None)
 
+    @trace(LGR)
     def help(self, keywords, args, depth=0):
         # ---------------------------------------------------------------------
         # help
         # ---------------------------------------------------------------------
-        LGR.debug('ActionGroup.help()')
         help_txt = ""
         for keyword, action in self.actions.items():
             help_txt += "\n{}{}:".format(ActionGroup.SEP if depth > 0 else "",

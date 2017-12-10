@@ -30,7 +30,10 @@ from importlib import import_module
 from utils.config import config
 from utils.config import module_config
 from utils.config import section_config
+from utils.wrapper import trace
 from utils.logging import get_logger
+from utils.wrapper import trace_func
+from utils.wrapper import trace_static
 from utils.workerpool import WorkerPool
 from utils.action_group import ActionGroup
 from dissection.container import Container
@@ -44,12 +47,11 @@ LGR = get_logger(__name__)
 # FUNCTIONS
 # =============================================================================
 
-
+@trace_func(LGR)
 def dissect(container, dissectors):
     # -------------------------------------------------------------------------
     # dissect
     # -------------------------------------------------------------------------
-    LGR.debug('dissect()')
     LGR.info('dissection of <{}> begins...'.format(container.realname))
     containers = []
     #
@@ -65,12 +67,11 @@ def dissect(container, dissectors):
     #
     return containers
 
-
+@trace_func(LGR)
 def dissection_routine(container, whitelist, blacklist, dissectors):
     # -------------------------------------------------------------------------
     # dissection_routine
     # -------------------------------------------------------------------------
-    LGR.debug('dissection_routine()')
     iq = []
     oq = []
     # foreach new container resulting of the dissection, add it to the
@@ -123,20 +124,19 @@ class Dissection(object):
         self.__whitelist = None
         self.__blacklist = None
 
+    @trace(LGR)
     def __configure_dissector(self, dissector):
         # ---------------------------------------------------------------------
         # __register_dissector
         # ---------------------------------------------------------------------
-        LGR.debug('Dissection.__configure_dissector()')
         conf = module_config(dissector.name)
         return dissector.configure(conf)
 
+    @trace(LGR)
     def __register_dissector(self, dissector):
         # ---------------------------------------------------------------------
         # __register_dissector
         # ---------------------------------------------------------------------
-        LGR.debug('Dissection.__register_dissector()')
-
         mod_funcs = set(dir(dissector))
         missing_funcs = mod_funcs.intersection(Dissection.MANDATORY_FUNCS)
         missing_funcs = list(missing_funcs.symmetric_difference(
@@ -157,12 +157,11 @@ class Dissection(object):
 
         return True
 
+    @trace(LGR)
     def __import_dissector(self, import_path):
         # ---------------------------------------------------------------------
         # __import_dissector
         # ---------------------------------------------------------------------
-        LGR.debug('Dissection.__import_dissector(<{}>)'.format(import_path))
-
         try:
             dissector = import_module(import_path)
             dissector.name = import_path.split('.')[-1]
@@ -181,25 +180,25 @@ class Dissection(object):
         LGR.info('<{}> imported successfully.'.format(import_path))
         return True
 
+    @trace(LGR)
     def __init_dissection_db(self):
         # ---------------------------------------------------------------------
         # __init_dissection_db
         # ---------------------------------------------------------------------
-        LGR.debug('Dissection.__init_dissection_db()')
         return DissectionDatabase.init(section_config('dissectiondb'))
 
+    @trace(LGR)
     def __term_dissection_db(self):
         # ---------------------------------------------------------------------
         # __term_dissection_db
         # ---------------------------------------------------------------------
-        LGR.debug('Dissection.__term_dissection_db()')
         DissectionDatabase.term()
 
+    @trace(LGR)
     def load_dissectors(self):
         # ---------------------------------------------------------------------
         # load_dissectors
         # ---------------------------------------------------------------------
-        LGR.debug('Dissection.load_dissectors()')
         LGR.info("loading dissectors...")
 
         ok = True
@@ -228,23 +227,22 @@ class Dissection(object):
         LGR.info("dissectors loaded{}".format(with_errors))
         return ok
 
+    @trace(LGR)
     def load_hashdatabases(self):
         # ---------------------------------------------------------------------
         # load_hashdatabases
         # ---------------------------------------------------------------------
-        LGR.debug('Dissection.load_hashdatabases()')
-
         LGR.info("loading whitelist database...")
         self.__whitelist = HashDatabase('whitelist', config('whitelist'))
 
         LGR.info("loading blacklist database...")
         self.__blacklist = HashDatabase('blacklist', config('blacklist'))
 
+    @trace(LGR)
     def dissectors(self):
         # ---------------------------------------------------------------------
         # dissectors
         # ---------------------------------------------------------------------
-        LGR.debug('Dissection.dissectors()')
         dissectors = []
         for mime in sorted(list(self._dissectors.keys())):
             mime_dissectors = []
@@ -253,12 +251,11 @@ class Dissection(object):
             dissectors.append([mime, sorted(mime_dissectors)])
         return dissectors
 
+    @trace(LGR)
     def dissect(self, path, num_threads=1):
         # ---------------------------------------------------------------------
         # dissect
         # ---------------------------------------------------------------------
-        LGR.debug('Dissection.dissect()')
-
         LGR.info('starting dissection processes...')
         if not self.__init_dissection_db():
             return False
@@ -284,6 +281,7 @@ class DissectionActionGroup(ActionGroup):
     # DissectionActionGroup
     # -------------------------------------------------------------------------
     @staticmethod
+    @trace_static(LGR, 'DissectionActionGroup')
     def dissectors(keywords, args):
         # ---------------------------------------------------------------------
         # dissectors
@@ -305,6 +303,7 @@ class DissectionActionGroup(ActionGroup):
                 LGR.info('\t\t+ {}'.format(dissector))
 
     @staticmethod
+    @trace_static(LGR, 'DissectionActionGroup')
     def dissector(keywords, args):
         # ---------------------------------------------------------------------
         # dissector
@@ -327,6 +326,7 @@ class DissectionActionGroup(ActionGroup):
             LGR.error("missing keyword.")
 
     @staticmethod
+    @trace_static(LGR, 'DissectionActionGroup')
     def dissect(keywords, args):
         # ---------------------------------------------------------------------
         # dissect

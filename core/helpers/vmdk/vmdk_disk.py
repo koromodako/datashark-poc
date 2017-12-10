@@ -26,6 +26,7 @@
 #  IMPORTS
 # =============================================================================
 from utils.logging import todo
+from utils.wrapper import trace
 from utils.logging import get_logger
 from utils.wrapper import lazy_getter
 from utils.structure_specif import UnionMember
@@ -155,12 +156,11 @@ class VmdkDisk(object):
         self.bf = bf  # never close this bf you dont have the ownership
 
     @lazy_getter('_hdr')
+    @trace(LGR)
     def header(self):
         # ---------------------------------------------------------------------
         # header
         # ---------------------------------------------------------------------
-        LGR.debug('VmdkDisk.header()')
-
         sparse_hdr = StructFactory.st_from_file(S_SPARSE_EXTENT_HDR, self.bf)
         if sparse_hdr is not None:
             if sparse_hdr.magicNumber == self.SIGN_VMDK:
@@ -174,11 +174,11 @@ class VmdkDisk(object):
         return None
 
     @lazy_getter('_has_ftr')
+    @trace(LGR)
     def has_footer(self):   # LAZY METHOD
         # ---------------------------------------------------------------------
         # has_footer
         # ---------------------------------------------------------------------
-        LGR.debug('VmdkDisk.footer()')
         if self.header() is None: # requires header
             return False
 
@@ -198,11 +198,11 @@ class VmdkDisk(object):
         return True
 
     @lazy_getter('_ftr')
+    @trace(LGR)
     def footer(self):
         # ---------------------------------------------------------------------
         # footer
         # ---------------------------------------------------------------------
-        LGR.debug('VmdkDisk.footer()')
         if self.header() is None: # requires header
             return None
 
@@ -217,11 +217,11 @@ class VmdkDisk(object):
         return ftr
 
     @lazy_getter('_df')
+    @trace(LGR)
     def descriptor_file(self):
         # ---------------------------------------------------------------------
         # descriptor_file
         # ---------------------------------------------------------------------
-        LGR.debug('VmdkDisk.descriptor_file()')
         if self.header() is None: # requires header
             return None
 
@@ -238,12 +238,11 @@ class VmdkDisk(object):
 
         return DescriptorFile(df_str)
 
+    @trace(LGR)
     def metadata(self):
         # ---------------------------------------------------------------------
         # metadata
         # ---------------------------------------------------------------------
-        LGR.debug('VmdkDisk.metadata()')
-
         if self.header() is None:
             LGR.error("cannot read disk header => cannot extract metadata.")
             return None

@@ -25,6 +25,7 @@
 # =============================================================================
 #  IMPORTS
 # =============================================================================
+from utils.wrapper import trace
 from utils.logging import get_logger
 # =============================================================================
 #  GLOBALS / CONFIG
@@ -44,12 +45,11 @@ class VdiExtractor(object):
         self.vdi = vdi
         self.obf = obf
 
+    @trace(LGR)
     def extract(self):
         # ---------------------------------------------------------------------
         # extract
         # ---------------------------------------------------------------------
-        LGR.debug('VdiExtractor.extract()')
-
         vdi_blk_cnt = self.vdi.header().numBlkInHdd
 
         LGR.info("extracting {} 1MB blocks...".format(vdi_blk_cnt))

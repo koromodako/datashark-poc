@@ -43,10 +43,87 @@ def lazy_getter(cls_member_name):
     def wrapper(f):
         @wraps(f)
         def wrapped(self, *args, **kwds):
-            LGR.debug("lazy_getter(<{}>)".format(cls_member_name))
             if not hasattr(self, cls_member_name):
                 setattr(self, cls_member_name, f(self, *args, **kwds))
+
             return getattr(self, cls_member_name)
+
+        return wrapped
+
+    return wrapper
+
+
+def __in(lgr, called, *args, **kwds):
+    # -------------------------------------------------------------------------
+    # __in
+    # -------------------------------------------------------------------------
+    lgr.debug("I> {}(...)".format(called))
+
+
+def __out(lgr, called, ret):
+    # -------------------------------------------------------------------------
+    # __out
+    # -------------------------------------------------------------------------
+    lgr.debug("O> {}(...) => ...".format(called))
+
+
+def trace(lgr):
+    # -------------------------------------------------------------------------
+    # trace
+    # -------------------------------------------------------------------------
+    def wrapper(f):
+        @wraps(f)
+        def wrapped(self, *args, **kwds):
+            cls_name = type(self).__name__
+            method_name = f.__name__
+            called = "{}.{}".format(cls_name, method_name)
+            __in(lgr, called, args, kwds)
+
+            ret = f(self, *args, **kwds)
+
+            __out(lgr, called, ret)
+            return ret
+
+        return wrapped
+
+    return wrapper
+
+
+def trace_static(lgr, cls_name):
+    # -------------------------------------------------------------------------
+    # trace_static
+    # -------------------------------------------------------------------------
+    def wrapper(f):
+        @wraps(f)
+        def wrapped(*args, **kwds):
+            method_name = f.__name__
+            called = "{}.{}".format(cls_name, method_name)
+            __in(lgr, called, args, kwds)
+
+            ret = f(*args, **kwds)
+
+            __out(lgr, called, ret)
+            return ret
+
+        return wrapped
+
+    return wrapper
+
+
+def trace_func(lgr):
+    # -------------------------------------------------------------------------
+    # trace_func
+    # -------------------------------------------------------------------------
+    def wrapper(f):
+        @wraps(f)
+        def wrapped(*args, **kwds):
+            called = f.__name__
+            __in(lgr, called, args, kwds)
+
+            ret = f(*args, **kwds)
+
+            __out(lgr, called, ret)
+            return ret
 
         return wrapped
 

@@ -26,6 +26,7 @@
 #  IMPORTS
 # =============================================================================
 from utils.logging import todo
+from utils.wrapper import trace
 from utils.logging import get_logger
 # =============================================================================
 #  GLOBALS
@@ -50,12 +51,11 @@ class FlatExtentExtractor(object):
         self.vmdk = vmdk
         self.obf = obf
 
+    @trace(LGR)
     def extract(self):
         # ---------------------------------------------------------------------
         # extract
         # ---------------------------------------------------------------------
-        LGR.debug('FlatExtentExtractor.extract()')
-
         if self.df.is_monolithic():
             todo(LGR, 'implement flat monolithic disk extraction.')
 

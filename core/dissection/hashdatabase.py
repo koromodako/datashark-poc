@@ -28,7 +28,10 @@ import os
 from utils.config import config
 from utils.json import json_load
 from utils.json import json_dump
+from utils.wrapper import trace
 from utils.logging import get_logger
+from utils.wrapper import trace_func
+from utils.wrapper import trace_static
 from utils.workerpool import WorkerPool
 from utils.binary_file import BinaryFile
 from utils.action_group import ActionGroup
@@ -41,7 +44,7 @@ LGR = get_logger(__name__)
 # FUNCTIONS
 # =============================================================================
 
-
+@trace_func(LGR)
 def hashing_routine(fpath):
     # -------------------------------------------------------------------------
     # hashing_routine
@@ -67,6 +70,7 @@ class HashDatabase(object):
         self.valid = False
         self.db = self.__load_db()
 
+    @trace(LGR)
     def __load_db(self):
         # ---------------------------------------------------------------------
         # __load_db
@@ -84,6 +88,7 @@ class HashDatabase(object):
         self.valid = True
         return dat
 
+    @trace(LGR)
     def contains(self, container):
         # ---------------------------------------------------------------------
         # contains
@@ -91,6 +96,7 @@ class HashDatabase(object):
         return (self.valid and self.db.get(container.hashed) is not None)
 
     @staticmethod
+    @trace_static(LGR, 'HashDatabase')
     def create(path, dirs, recursive, dir_filter, file_filter):
         # ---------------------------------------------------------------------
         # create
@@ -133,6 +139,7 @@ class HashDatabase(object):
         LGR.info('done.')
 
     @staticmethod
+    @trace_static(LGR, 'HashDatabase')
     def merge(fpath, files):
         # ---------------------------------------------------------------------
         # merge
@@ -158,6 +165,7 @@ class HashDatabaseActionGroup(ActionGroup):
     # HashDatabaseActionGroup
     # -------------------------------------------------------------------------
     @staticmethod
+    @trace_static(LGR, 'HashDatabaseActionGroup')
     def create(keywords, args):
         # ---------------------------------------------------------------------
         # create
@@ -180,6 +188,7 @@ class HashDatabaseActionGroup(ActionGroup):
                         "dir [dir ...]")
 
     @staticmethod
+    @trace_static(LGR, 'HashDatabaseActionGroup')
     def merge(keywords, args):
         # ---------------------------------------------------------------------
         # merge

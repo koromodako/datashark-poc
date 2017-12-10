@@ -24,6 +24,7 @@
 # IMPORTS
 # =============================================================================
 from utils.logging import get_logger
+from utils.wrapper import trace_func
 # =============================================================================
 # GLOBAL
 # =============================================================================
@@ -44,11 +45,11 @@ def __printable(byte):
     return chr(byte)
 
 
+@trace_func(LGR)
 def hexdump(data, col_sz=2, col_num=4, human=True, max_lines=10):
     # -------------------------------------------------------------------------
     # hexdump
     # -------------------------------------------------------------------------
-    LGR.debug('hexdump()')
     lines = []
     row_sz = col_sz * col_num
     r = len(data) % row_sz

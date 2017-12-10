@@ -25,6 +25,7 @@
 # IMPORTS
 # =============================================================================
 from fnmatch import fnmatch
+from utils.wrapper import trace
 from utils.logging import get_logger
 # =============================================================================
 # GLOBALS / CONFIG
@@ -60,6 +61,7 @@ class FSEntryFilter(object):
         self.include = include
         self.exclude = exclude
 
+    @trace(LGR)
     def keep(self, path):
         # ---------------------------------------------------------------------
         # keep

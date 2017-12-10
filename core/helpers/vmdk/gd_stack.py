@@ -26,6 +26,7 @@
 #  IMPORTS
 # =============================================================================
 import os.path
+from utils.wrapper import trace
 from utils.logging import get_logger
 from utils.binary_file import BinaryFile
 from helpers.vmdk.gd import GrainDirectory
@@ -52,12 +53,11 @@ class GrainDirectoryStack(object):
         self.wdir = wdir
         self.base_gd = self.__build_gd(vmdk)
 
+    @trace(LGR)
     def __build_gd(self, vmdk):
         # ---------------------------------------------------------------------
         # __build_gd
         # ---------------------------------------------------------------------
-        LGR.debug('GrainDirectoryStack.__build_gd()')
-
         df = vmdk.descriptor_file()
 
         parent_filename = df.parent_filename()
@@ -78,12 +78,14 @@ class GrainDirectoryStack(object):
 
         return GrainDirectory(vmdk, parent_gd)
 
+    @trace(LGR)
     def base(self):
         # ---------------------------------------------------------------------
         # base
         # ---------------------------------------------------------------------
         return self.base_gd
 
+    @trace(LGR)
     def term(self):
         # ---------------------------------------------------------------------
         # term

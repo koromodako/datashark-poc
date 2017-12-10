@@ -25,9 +25,11 @@
 # IMPORTS
 # =============================================================================
 from utils.json import json_dumps
-from dissection.workspace import workspace
 from utils.logging import todo
 from utils.logging import get_logger
+from utils.wrapper import trace
+from utils.wrapper import trace_func
+from dissection.workspace import workspace
 # =============================================================================
 # GLOBALS / CONFIG
 # =============================================================================
@@ -53,6 +55,7 @@ class JsonFile(object):
         self.__sz = 0
         self.__bf = None
 
+    @trace(LGR)
     def open(self):
         # ---------------------------------------------------------------------
         # open
@@ -60,6 +63,7 @@ class JsonFile(object):
         self.__sz = 0
         self.__bf = workspace().datfile(self.name, 'json')
 
+    @trace(LGR)
     def close(self):
         # ---------------------------------------------------------------------
         # close
@@ -68,6 +72,7 @@ class JsonFile(object):
         self.__bf.close()
         self.__bf = None
 
+    @trace(LGR)
     def write(self, data):
         # ---------------------------------------------------------------------
         # write
@@ -75,12 +80,14 @@ class JsonFile(object):
         self.__sz += len(data)
         self.__bf.write_text(data)
 
+    @trace(LGR)
     def seek(self, offset):
         # ---------------------------------------------------------------------
         # seek
         # ---------------------------------------------------------------------
         self.__bf.seek(offset)
 
+    @trace(LGR)
     def size(self):
         # ---------------------------------------------------------------------
         # size
@@ -90,36 +97,37 @@ class JsonFile(object):
 # FUNCTIONS
 # =============================================================================
 
-
+@trace_func(LGR)
 def init(config):
     # -------------------------------------------------------------------------
     # init
     # -------------------------------------------------------------------------
     global JSON_FILE
-    LGR.debug('init()')
+
     JSON_FILE = JsonFile(config.get('filename', 'db'))
     JSON_FILE.open()
     JSON_FILE.write(BEGIN)
+
     return True
 
-
+@trace_func(LGR)
 def term():
     # -------------------------------------------------------------------------
     # term
     # -------------------------------------------------------------------------
-    LGR.debug('term()')
     sz = JSON_FILE.size()
+
     if sz > len(BEGIN):
         JSON_FILE.seek(sz - 2)
+
     JSON_FILE.write(END)
     JSON_FILE.close()
 
-
+@trace_func(LGR)
 def persist(container):
     # -------------------------------------------------------------------------
     # persist
     # -------------------------------------------------------------------------
-    LGR.debug('persist()')
     json = json_dumps(container.to_dict())
     json += ','
     JSON_FILE.write(json)

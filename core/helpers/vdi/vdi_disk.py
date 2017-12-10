@@ -26,6 +26,7 @@
 #  IMPORTS
 # =============================================================================
 from struct import calcsize
+from utils.wrapper import trace
 from utils.logging import get_logger
 from utils.wrapper import lazy_getter
 from utils.converting import unpack_one
@@ -83,13 +84,12 @@ class VdiDisk(object):
         self.bf = bf
 
     @lazy_getter('_hdr')
+    @trace(LGR)
     def header(self):
         # ---------------------------------------------------------------------
         # header
         # ---------------------------------------------------------------------
-        LGR.debug('VdiDisk.header()')
         hdr = StructFactory.st_from_file(S_VDI_HDR, self.bf)
-
         if hdr is None:
             return hdr
 
@@ -99,12 +99,11 @@ class VdiDisk(object):
         return hdr
 
     @lazy_getter('_blk_map')
+    @trace(LGR)
     def block_map(self):
         # ---------------------------------------------------------------------
         # block_map
         # ---------------------------------------------------------------------
-        LGR.debug('VdiDisk.blk_map()')
-
         if self.header() is None:
             LGR.error("cannot parse header => cannot retrieve block map.")
             return None
@@ -112,12 +111,11 @@ class VdiDisk(object):
         self.bf.seek(self._hdr.oftBlk)
         return self.bf.read(4 * self._hdr.numBlkInHdd)
 
+    @trace(LGR)
     def read_block(self, n):
         # ---------------------------------------------------------------------
-        # block_map_size
+        # read_block
         # ---------------------------------------------------------------------
-        LGR.debug('VdiDisk.block_map_size()')
-
         if self.block_map() is None:
             LGR.error("cannot retrieve block map => cannot retrieve a block.")
             return None

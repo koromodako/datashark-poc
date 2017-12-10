@@ -27,6 +27,7 @@
 # =============================================================================
 import os.path
 from utils.logging import todo
+from utils.wrapper import trace
 from utils.logging import get_logger
 from utils.binary_file import BinaryFile
 from helpers.vmdk.gd_stack import GrainDirectoryStack
@@ -57,12 +58,11 @@ class SparseExtentExtractor(object):
         self.obf = obf
         self.df = vmdk.descriptor_file()
 
+    @trace(LGR)
     def __extract_sparse_extent(self, extent):
         # ---------------------------------------------------------------------
         # __extract_sparse_extent
         # ---------------------------------------------------------------------
-        LGR.debug('SparseExtentExtractor.__extract_sparse_extent()')
-
         extent_path = os.path.join(self.wdir, extent.filename)
         if not BinaryFile.exists(extent_path):
             LGR.error("cannot find extent: {}".format(extent_path))
@@ -96,12 +96,11 @@ class SparseExtentExtractor(object):
         ebf.close()
         return True
 
+    @trace(LGR)
     def __extract_monolithic_sparse(self):
         # ---------------------------------------------------------------------
         # __extract_monolithic_sparse
         # ---------------------------------------------------------------------
-        LGR.debug('SparseExtentExtractor.__extract_monolithic_sparse()')
-
         total_sectors = sum([extent.size for extent in self.df.extents])
         total_sectors = total_sectors // SECTOR_SZ
 
@@ -121,12 +120,11 @@ class SparseExtentExtractor(object):
         LGR.info("extraction completed.")
         return True
 
+    @trace(LGR)
     def extract(self):
         # ---------------------------------------------------------------------
         # extract
         # ---------------------------------------------------------------------
-        LGR.debug('SparseExtentExtractor.extract()')
-
         if self.df.is_monolithic():
             return self.__extract_monolithic_sparse()
 

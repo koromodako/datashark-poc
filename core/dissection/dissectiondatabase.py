@@ -26,6 +26,7 @@
 # =============================================================================
 from multiprocessing import Lock
 from utils.logging import get_logger
+from utils.wrapper import trace_static
 from utils.action_group import ActionGroup
 import dissection.database_adapters.json_adapter as json_adapter
 import dissection.database_adapters.sqlite_adapter as sqlite_adapter
@@ -51,19 +52,19 @@ class DissectionDatabase(object):
     __LOCK = Lock()
 
     @staticmethod
+    @trace_static(LGR, 'DissectionDatabase')
     def adapters():
         # ---------------------------------------------------------------------
         # adapters
         # ---------------------------------------------------------------------
-        LGR.debug('DissectionDatabase.adpaters()')
         return list(DissectionDatabase.__ADAPTERS.keys())
 
     @staticmethod
+    @trace_static(LGR, 'DissectionDatabase')
     def init(config):
         # ---------------------------------------------------------------------
         # init
         # ---------------------------------------------------------------------
-        LGR.debug('DissectionDatabase.init()')
         DissectionDatabase.__DB_ADAPTER = DissectionDatabase.__ADAPTERS.get(
             config.mode)
         DissectionDatabase.__VALID = DissectionDatabase.__DB_ADAPTER.init(
@@ -76,29 +77,29 @@ class DissectionDatabase(object):
         return DissectionDatabase.__VALID
 
     @staticmethod
+    @trace_static(LGR, 'DissectionDatabase')
     def term():
         # ---------------------------------------------------------------------
         # term
         # ---------------------------------------------------------------------
-        LGR.debug('DissectionDatabase.term()')
         DissectionDatabase.__DB_ADAPTER.term()
         DissectionDatabase.__DB_ADAPTER = None
         DissectionDatabase.__VALID = False
 
     @staticmethod
+    @trace_static(LGR, 'DissectionDatabase')
     def is_valid():
         # ---------------------------------------------------------------------
         # is_valid
         # ---------------------------------------------------------------------
-        LGR.debug('DissectionDatabase.is_valid()')
         return DissectionDatabase.__VALID
 
     @staticmethod
+    @trace_static(LGR, 'DissectionDatabase')
     def persist_container(container):
         # ---------------------------------------------------------------------
         # persist_container
         # ---------------------------------------------------------------------
-        LGR.debug('DissectionDatabase.persist_container()')
         DissectionDatabase.__LOCK.acquire()
         status = DissectionDatabase.__DB_ADAPTER.persist(container)
         DissectionDatabase.__LOCK.release()
@@ -119,6 +120,7 @@ class DissectionDatabaseActionGroup(ActionGroup):
         })
 
     @staticmethod
+    @trace_static(LGR, 'DissectionDatabaseActionGroup')
     def list(keywords, args):
         # ---------------------------------------------------------------------
         # list

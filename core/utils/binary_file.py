@@ -27,7 +27,9 @@
 # =============================================================================
 import os
 import io
+from utils.wrapper import trace
 from utils.logging import get_logger
+from utils.wrapper import trace_static
 # =============================================================================
 # GLOBALS
 # =============================================================================
@@ -46,11 +48,11 @@ class BinaryFile(object):
     # \param mode: can be 'r' or 'w'
     # -------------------------------------------------------------------------
     @staticmethod
+    @trace_static(LGR, 'BinaryFile')
     def exists(path):
         # ---------------------------------------------------------------------
         # exists
         # ---------------------------------------------------------------------
-        LGR.debug('BinaryFile.exists()')
         return os.path.isfile(path)
 
     def __init__(self, fpath, mode):
@@ -67,67 +69,66 @@ class BinaryFile(object):
             self.fp = open(fpath, mode+'b')
             self.valid = True
 
+    # @trace(LGR)
     def stat(self):
         # ---------------------------------------------------------------------
         # stat
         # ---------------------------------------------------------------------
-        LGR.debug('BinaryFile.stat()')
         return os.stat(self.abspath)
 
+    # @trace(LGR)
     def size(self):
         # ---------------------------------------------------------------------
         # size
         # ---------------------------------------------------------------------
-        LGR.debug('BinaryFile.size()')
         return self.stat().st_size
 
+    # @trace(LGR)
     def seek(self, offset, whence=io.SEEK_SET):
         # ---------------------------------------------------------------------
         # seek
         # ---------------------------------------------------------------------
-        LGR.debug('BinaryFile.seek()')
         return self.fp.seek(offset, whence)
 
+    # @trace(LGR)
     def read_text(self, n=-1, encoding='utf-8'):
         # ---------------------------------------------------------------------
         # read_text
         # ---------------------------------------------------------------------
-        LGR.debug('BinaryFile.read_text()')
         return self.read(n).decode(encoding)
 
+    # @trace(LGR)
     def read(self, n=-1):
         # ---------------------------------------------------------------------
         # read
         # ---------------------------------------------------------------------
-        LGR.debug('BinaryFile.read()')
         return self.fp.read(n)
 
+    # @trace(LGR)
     def readinto(self, b):
         # ---------------------------------------------------------------------
         # readinto
         # ---------------------------------------------------------------------
-        LGR.debug('BinaryFile.readinto()')
         return self.fp.readinto(b)
 
+    # @trace(LGR)
     def write_text(self, text, encoding='utf-8'):
         # ---------------------------------------------------------------------
         # write_text
         # ---------------------------------------------------------------------
-        LGR.debug('BinaryFile.write_text()')
         return self.fp.write(text.encode('utf-8'))
 
+    # @trace(LGR)
     def write(self, data):
         # ---------------------------------------------------------------------
         # write
         # ---------------------------------------------------------------------
-        LGR.debug('BinaryFile.write()')
         return self.fp.write(data)
 
+    @trace(LGR)
     def close(self):
         # ---------------------------------------------------------------------
         # close
         # ---------------------------------------------------------------------
-        LGR.debug('BinaryFile.close()')
         self.valid = False
         self.fp.close()
-

@@ -25,10 +25,12 @@
 # IMPORTS
 # =============================================================================
 from utils.logging import get_logger
+from utils.wrapper import trace_func
 from utils.binary_file import BinaryFile
 from utils.action_group import ActionGroup
 from dissection.container import Container
 from helpers.vhd.vhd_disk import VhdDisk
+from helpers.vhd.vhd_extractor import VhdExtractor
 # =============================================================================
 # GLOBAL
 # =============================================================================
@@ -41,6 +43,7 @@ LGR = get_logger(__name__)
 # =============================================================================
 
 
+@trace_func(LGR)
 def mimes():
     # -------------------------------------------------------------------------
     # mimes
@@ -48,12 +51,12 @@ def mimes():
     #   \brief returns a list of mime types that this dissector can handle
     #   \return [list(str)]
     # -------------------------------------------------------------------------
-    LGR.debug('mimes()')
     return [
         'application/octet-stream'
     ]
 
 
+@trace_func(LGR)
 def configure(config):
     # -------------------------------------------------------------------------
     # configure
@@ -63,10 +66,10 @@ def configure(config):
     #       configuration taken from Datashark's INI file if found.
     #       config might be None or empty.
     # -------------------------------------------------------------------------
-    LGR.debug('configure()')
     return True
 
 
+@trace_func(LGR)
 def can_dissect(container):
     # -------------------------------------------------------------------------
     # can_dissect
@@ -76,8 +79,6 @@ def can_dissect(container):
     #   \param [Container] container
     #   \return [bool]
     # -------------------------------------------------------------------------
-    LGR.debug('can_dissect()')
-
     if 'Microsoft Disk Image' not in container.mime_text:
         return False
 
@@ -92,6 +93,7 @@ def can_dissect(container):
     return True
 
 
+@trace_func(LGR)
 def dissect(container):
     # -------------------------------------------------------------------------
     # dissect
@@ -101,17 +103,30 @@ def dissect(container):
     #   \param
     #   \return [list(Container)]
     # -------------------------------------------------------------------------
-    LGR.debug('dissect()')
-    raise NotImplementedError
-    return []
+    containers = []
+
+    obf = container.obf()
+    ibf = container.ibf()
+
+    extractor = VhdExtractor(container.wdir(), VhdDisk(ibf), obf)
+    if extractor.extract():
+        containers.append(Container(obf.abspath, 'disk.raw'))
+    else:
+        LGR.error("failed to extract data from VDI.")
+
+    obf.close()
+    ibf.close()
+    return containers
 
 
+@trace_func(LGR)
 def action_group():
     # -------------------------------------------------------------------------
     # action_group()
     #   /!\ public mandatory function that the module must define /!\
     #   \brief returns module action group
     # -------------------------------------------------------------------------
+    @trace_func(LGR)
     def __action_header(keywords, args):
         # ---------------------------------------------------------------------
         # __action_header
@@ -133,7 +148,7 @@ def action_group():
 
             LGR.info(hdr.to_str())
 
-
+    @trace_func(LGR)
     def __action_footer(keywords, args):
         # ---------------------------------------------------------------------
         # __action_footer

@@ -27,6 +27,7 @@
 import os.path
 from utils.logging import todo
 from utils.logging import get_logger
+from utils.wrapper import trace_func
 from utils.binary_file import BinaryFile
 from utils.action_group import ActionGroup
 from dissection.container import Container
@@ -44,13 +45,12 @@ LGR = get_logger(__name__)
 # =============================================================================
 
 
+@trace_func(LGR)
 def __dissect_from_vmdk(wdir, vmdk, obf):
     # -------------------------------------------------------------------------
     # __dissect_from_vmdk
     #   handles both Hosted Sparse Extent & ESX Server Sparse Extent dissection
     # -------------------------------------------------------------------------
-    LGR.debug('__dissect()')
-
     df = vmdk.descriptor_file()
 
     if not df.is_valid():
@@ -84,17 +84,18 @@ def __dissect_from_vmdk(wdir, vmdk, obf):
     return True
 
 
+@trace_func(LGR)
 def __dissect_from_vmx(wdir, df, obf):
     # -------------------------------------------------------------------------
     # __dissect_from_vmx
     # -------------------------------------------------------------------------
-    LGR.debug('__dissect_from_vmx()')
     todo(LGR, 'implement dissection from vmx file.')
 # =============================================================================
 # PUBLIC FUNCTIONS
 # =============================================================================
 
 
+@trace_func(LGR)
 def mimes():
     # -------------------------------------------------------------------------
     # mimes
@@ -102,13 +103,13 @@ def mimes():
     #   \brief returns a list of mime types that this dissector can handle
     #   \return [list(str)]
     # -------------------------------------------------------------------------
-    LGR.debug('mimes()')
     return [
         'application/octet-stream',     # .vmdk files
         'text/plain'                    # .vmx files
     ]
 
 
+@trace_func(LGR)
 def configure(config):
     # -------------------------------------------------------------------------
     # configure
@@ -118,10 +119,10 @@ def configure(config):
     #       configuration taken from Datashark's INI file if found.
     #       config might be None or empty.
     # -------------------------------------------------------------------------
-    LGR.debug('configure()')
     return True
 
 
+@trace_func(LGR)
 def can_dissect(container):
     # -------------------------------------------------------------------------
     # can_dissect
@@ -131,7 +132,6 @@ def can_dissect(container):
     #   \param [Container] container
     #   \return [bool]
     # -------------------------------------------------------------------------
-    LGR.debug('can_dissect()')
     if 'VMware4 disk image' in container.mime_text:
         bf = container.ibf()
         vmdk = VmdkDisk(bf)
@@ -148,6 +148,7 @@ def can_dissect(container):
     return False
 
 
+@trace_func(LGR)
 def dissect(container):
     # -------------------------------------------------------------------------
     # dissect
@@ -157,8 +158,6 @@ def dissect(container):
     #   \param
     #   \return [list(Container)]
     # -------------------------------------------------------------------------
-    LGR.debug('dissect()')
-
     containers = []
     wdir = container.wdir()
     ibf = container.ibf()
@@ -185,19 +184,18 @@ def dissect(container):
     return containers
 
 
+@trace_func(LGR)
 def action_group():
     # -------------------------------------------------------------------------
     # action_group()
     #   /!\ public mandatory function that the module must define /!\
     #   \brief returns module action group
     # -------------------------------------------------------------------------
-    LGR.debug('action_group()')
-
+    @trace_func(LGR)
     def __action_header(keywords, args):
         # ---------------------------------------------------------------------
         # __action_header
         # ---------------------------------------------------------------------
-        LGR.debug('__action_header()')
         for f in args.files:
 
             if not BinaryFile.exists(f):
@@ -214,11 +212,11 @@ def action_group():
 
             LGR.info(hdr.to_str())
 
+    @trace_func(LGR)
     def __action_descfile(keywords, args):
         # ---------------------------------------------------------------------
         # __action_descfile
         # ---------------------------------------------------------------------
-        LGR.debug('__action_descfile()')
         for f in args.files:
             if not BinaryFile.exists(f):
                 continue
