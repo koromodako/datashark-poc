@@ -350,7 +350,7 @@ class DissectionActionGroup(ActionGroup):
             'list': ActionGroup.action(DissectionActionGroup.dissectors,
                                        "list dissectors."),
             'dissector': ActionGroup.action(DissectionActionGroup.dissector,
-                                            "forward actions to given"
+                                            "forward actions to given "
                                             "dissector."),
             'dissect': ActionGroup.action(DissectionActionGroup.dissect,
                                           "dissect given container.")

@@ -44,8 +44,7 @@ PROG_VERSION = '{}.{}.{}{}'.format(VERS_MAJOR, VERS_MINOR, VERS_FIX, VERS_TAG)
 #
 LICENSE = """
 Datashark  Copyright (C) 2017  Paul Dautry
-This program comes with ABSOLUTELY NO WARRANTY; for details use command
-`--warranty'.
+This program comes with ABSOLUTELY NO WARRANTY; for details use command `--warranty'.
 This is free software, and you are welcome to redistribute it
 under certain conditions; use command `--conditions' for details.
 """
