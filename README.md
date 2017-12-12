@@ -27,8 +27,8 @@ Get some help about datashark actions:
 
 ## Features Docs
 
- + [Core Features](core/FEATURES.md)
- + [GUI Features](ui/FEATURES.md)
+ + [Core Features](core/docs/FEATURES.md)
+ + [GUI Features](ui/docs/FEATURES.md)
 
 ## Actions
 
