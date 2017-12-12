@@ -16,7 +16,7 @@
 
 ## HashDB
 
-A HashDB is a database containing a dictionnary of hashes and associated file.
+A HashDB is a database containing a dictionary of hashes and associated file.
 
 It can be used as:
 
