@@ -99,8 +99,8 @@ class ActionGroup(object):
             help_txt += "\n{}{}:".format(ActionGroup.SEP if depth > 0 else "",
                                          keyword)
             if isinstance(action, ActionGroup):
-                help_txt += action.help(keywords, args, depth+1)
-                help_txt = help_txt.replace("\n", "\n\t")
+                subhelp_txt = action.help(keywords, args, depth+1)
+                help_txt += subhelp_txt.replace("\n", "\n\t")
             else:
                 help_txt += " " + action[ActionGroup.K_HELP]
         if depth > 0:

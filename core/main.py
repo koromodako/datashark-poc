@@ -106,7 +106,7 @@ def parse_args():
                         help="Do not hash containers. Warning: using this "
                         "option prevents the use of white/blacklists.")
     # positional arguments
-    parser.add_argument('action', nargs='?', type=str,
+    parser.add_argument('action', nargs='?', type=str, default=None,
                         help='Action to perform.')
     parser.add_argument('files', nargs='*', help='Files to process.')
     return parser.parse_args()
@@ -130,6 +130,9 @@ def handle_action(args):
     LGR.info('configuration loaded.')
     # execute action
     LGR.debug('running action: {}'.format(args.action))
+    if args.action is None:
+        LGR.error("start with command `datashark help` ;)")
+        return 1
     ACTIONS.perform_action(args.action.split(ActionGroup.SEP), args)
     return 0
 
