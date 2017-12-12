@@ -28,8 +28,8 @@ from multiprocessing import Lock
 from utils.logging import get_logger
 from utils.wrapper import trace_static
 from utils.action_group import ActionGroup
-import dissection.database_adapters.json_adapter as json_adapter
-import dissection.database_adapters.sqlite_adapter as sqlite_adapter
+import dissectiondb.adapters.json_adapter as json_adapter
+import dissectiondb.adapters.sqlite_adapter as sqlite_adapter
 # =============================================================================
 # GLOBAL
 # =============================================================================
@@ -39,9 +39,9 @@ LGR = get_logger(__name__)
 # =============================================================================
 
 
-class DissectionDatabase(object):
+class DissectionDB(object):
     # -------------------------------------------------------------------------
-    # DissectionDatabase
+    # DissectionDB
     # -------------------------------------------------------------------------
     __ADAPTERS = {
         "json": json_adapter,
@@ -52,81 +52,81 @@ class DissectionDatabase(object):
     __LOCK = Lock()
 
     @staticmethod
-    @trace_static(LGR, 'DissectionDatabase')
+    @trace_static(LGR, 'DissectionDB')
     def adapters():
         # ---------------------------------------------------------------------
         # adapters
         # ---------------------------------------------------------------------
-        return list(DissectionDatabase.__ADAPTERS.keys())
+        return list(DissectionDB.__ADAPTERS.keys())
 
     @staticmethod
-    @trace_static(LGR, 'DissectionDatabase')
+    @trace_static(LGR, 'DissectionDB')
     def init(config):
         # ---------------------------------------------------------------------
         # init
         # ---------------------------------------------------------------------
-        DissectionDatabase.__DB_ADAPTER = DissectionDatabase.__ADAPTERS.get(
+        DissectionDB.__DB_ADAPTER = DissectionDB.__ADAPTERS.get(
             config.mode)
-        DissectionDatabase.__VALID = DissectionDatabase.__DB_ADAPTER.init(
+        DissectionDB.__VALID = DissectionDB.__DB_ADAPTER.init(
             config)
 
-        if not DissectionDatabase.__VALID:
+        if not DissectionDB.__VALID:
             LGR.error("database initialization failed.")
-            DissectionDatabase.__DB_ADAPTER = None
+            DissectionDB.__DB_ADAPTER = None
 
-        return DissectionDatabase.__VALID
+        return DissectionDB.__VALID
 
     @staticmethod
-    @trace_static(LGR, 'DissectionDatabase')
+    @trace_static(LGR, 'DissectionDB')
     def term():
         # ---------------------------------------------------------------------
         # term
         # ---------------------------------------------------------------------
-        DissectionDatabase.__DB_ADAPTER.term()
-        DissectionDatabase.__DB_ADAPTER = None
-        DissectionDatabase.__VALID = False
+        DissectionDB.__DB_ADAPTER.term()
+        DissectionDB.__DB_ADAPTER = None
+        DissectionDB.__VALID = False
 
     @staticmethod
-    @trace_static(LGR, 'DissectionDatabase')
+    @trace_static(LGR, 'DissectionDB')
     def is_valid():
         # ---------------------------------------------------------------------
         # is_valid
         # ---------------------------------------------------------------------
-        return DissectionDatabase.__VALID
+        return DissectionDB.__VALID
 
     @staticmethod
-    @trace_static(LGR, 'DissectionDatabase')
+    @trace_static(LGR, 'DissectionDB')
     def persist_container(container):
         # ---------------------------------------------------------------------
         # persist_container
         # ---------------------------------------------------------------------
-        DissectionDatabase.__LOCK.acquire()
-        status = DissectionDatabase.__DB_ADAPTER.persist(container)
-        DissectionDatabase.__LOCK.release()
+        DissectionDB.__LOCK.acquire()
+        status = DissectionDB.__DB_ADAPTER.persist(container)
+        DissectionDB.__LOCK.release()
         return status
 
 
-class DissectionDatabaseActionGroup(ActionGroup):
+class DissectionDBActionGroup(ActionGroup):
     # -------------------------------------------------------------------------
-    # DissectionDatabaseActionGroup
+    # DissectionDBActionGroup
     # -------------------------------------------------------------------------
     def __init__(self):
         # ---------------------------------------------------------------------
         # __init__
         # ---------------------------------------------------------------------
-        super(DissectionDatabaseActionGroup, self).__init__('dissectiondb', {
-            'list': ActionGroup.action(DissectionDatabaseActionGroup.list,
+        super(DissectionDBActionGroup, self).__init__('dissectiondb', {
+            'list': ActionGroup.action(DissectionDBActionGroup.list,
                                        "list of available database adapters.")
         })
 
     @staticmethod
-    @trace_static(LGR, 'DissectionDatabaseActionGroup')
+    @trace_static(LGR, 'DissectionDBActionGroup')
     def list(keywords, args):
         # ---------------------------------------------------------------------
         # list
         # ---------------------------------------------------------------------
         text = '\nAdaptaters:'
-        for adapter in DissectionDatabase.adapters():
+        for adapter in DissectionDB.adapters():
             text += '\n\t+ {}'.format(adapter)
         text += '\n'
         LGR.info(text)

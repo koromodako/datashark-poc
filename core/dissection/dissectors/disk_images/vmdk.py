@@ -30,7 +30,7 @@ from utils.logging import get_logger
 from utils.wrapper import trace_func
 from utils.binary_file import BinaryFile
 from utils.action_group import ActionGroup
-from dissection.container import Container
+from container.container import Container
 # dissection helpers
 from helpers.vmdk.vmdk_disk import VmdkDisk
 from helpers.vmdk.descriptor_file import DescriptorFile

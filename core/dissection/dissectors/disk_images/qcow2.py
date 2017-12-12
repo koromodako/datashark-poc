@@ -27,8 +27,8 @@
 from utils.logging import todo
 from utils.logging import get_logger
 from utils.wrapper import trace_func
-from dissection.container import Container
 from utils.action_group import ActionGroup
+from container.container import Container
 # =============================================================================
 # GLOBALS / CONFIG
 # =============================================================================

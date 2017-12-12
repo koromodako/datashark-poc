@@ -129,9 +129,9 @@ class SparseExtentExtractor(object):
             return self.__extract_monolithic_sparse()
 
         elif self.df.is_2gb_splitted():
-            todo(LGR, 'implement flat 2GB splitted disk extraction.')
+            todo(LGR, 'implement sparse 2GB splitted disk extraction.')
 
         elif self.df.is_esx_disk():
-            todo(LGR, 'implement flat ESX disk extraction.')
+            todo(LGR, 'implement sparse ESX disk extraction.')
 
         return False

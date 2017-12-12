@@ -27,7 +27,7 @@
 import os
 from magic import Magic
 from utils.config import config
-from dissection.workspace import workspace
+from workspace.workspace import workspace
 from utils.crypto import randstr
 from utils.crypto import hashbuf
 from utils.crypto import hashfile

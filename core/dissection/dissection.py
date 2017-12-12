@@ -34,11 +34,11 @@ from utils.wrapper import trace
 from utils.logging import get_logger
 from utils.wrapper import trace_func
 from utils.wrapper import trace_static
+from hashdb.hashdb import HashDB
 from utils.workerpool import WorkerPool
 from utils.action_group import ActionGroup
-from dissection.container import Container
-from dissection.hashdatabase import HashDatabase
-from dissection.dissectiondatabase import DissectionDatabase
+from container.container import Container
+from dissectiondb.dissectiondb import DissectionDB
 # =============================================================================
 # GLOBAL
 # =============================================================================
@@ -83,20 +83,20 @@ def dissection_routine(container, whitelist, blacklist, dissectors):
         if whitelist.contains(container):
             LGR.info("matching whitelisted container. skipping!")
             new_container.whitelisted = True
-            DissectionDatabase.persist_container(new_container)
+            DissectionDB.persist_container(new_container)
             continue    # skip processing (whitelisted)
 
         elif blacklist.contains(container):
             LGR.warn("matching blacklisted container. flagged!")
             new_container.flagged = True
             new_container.blacklisted = True
-            DissectionDatabase.persist_container(new_container)
+            DissectionDB.persist_container(new_container)
             continue    # skip processing (blacklisted)
 
         else:
             iq.append(new_container)    # processing needed
 
-    DissectionDatabase.persist_container(container)
+    DissectionDB.persist_container(container)
     return (iq, oq)
 # =============================================================================
 # CLASSES
@@ -185,14 +185,14 @@ class Dissection(object):
         # ---------------------------------------------------------------------
         # __init_dissection_db
         # ---------------------------------------------------------------------
-        return DissectionDatabase.init(section_config('dissectiondb'))
+        return DissectionDB.init(section_config('dissectiondb'))
 
     @trace(LGR)
     def __term_dissection_db(self):
         # ---------------------------------------------------------------------
         # __term_dissection_db
         # ---------------------------------------------------------------------
-        DissectionDatabase.term()
+        DissectionDB.term()
 
     @trace(LGR)
     def load_dissectors(self):
@@ -233,10 +233,10 @@ class Dissection(object):
         # load_hashdatabases
         # ---------------------------------------------------------------------
         LGR.info("loading whitelist database...")
-        self.__whitelist = HashDatabase('whitelist', config('whitelist'))
+        self.__whitelist = HashDB('whitelist', config('whitelist'))
 
         LGR.info("loading blacklist database...")
-        self.__blacklist = HashDatabase('blacklist', config('blacklist'))
+        self.__blacklist = HashDB('blacklist', config('blacklist'))
 
     @trace(LGR)
     def dissectors(self):

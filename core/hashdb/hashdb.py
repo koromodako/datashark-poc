@@ -35,7 +35,7 @@ from utils.wrapper import trace_static
 from utils.workerpool import WorkerPool
 from utils.binary_file import BinaryFile
 from utils.action_group import ActionGroup
-from dissection.container import Container
+from container.container import Container
 # =============================================================================
 # GLOBALS / CONFIG
 # =============================================================================
@@ -57,9 +57,9 @@ def hashing_routine(fpath):
 # =============================================================================
 
 
-class HashDatabase(object):
+class HashDB(object):
     # -------------------------------------------------------------------------
-    # HashDatabase
+    # HashDB
     # -------------------------------------------------------------------------
     def __init__(self, name, fpath):
         # ---------------------------------------------------------------------
@@ -96,7 +96,7 @@ class HashDatabase(object):
         return (self.valid and self.db.get(container.hashed) is not None)
 
     @staticmethod
-    @trace_static(LGR, 'HashDatabase')
+    @trace_static(LGR, 'HashDB')
     def create(path, dirs, recursive, dir_filter, file_filter):
         # ---------------------------------------------------------------------
         # create
@@ -139,7 +139,7 @@ class HashDatabase(object):
         LGR.info('done.')
 
     @staticmethod
-    @trace_static(LGR, 'HashDatabase')
+    @trace_static(LGR, 'HashDB')
     def merge(fpath, files):
         # ---------------------------------------------------------------------
         # merge
@@ -160,12 +160,12 @@ class HashDatabase(object):
         LGR.info('done.')
 
 
-class HashDatabaseActionGroup(ActionGroup):
+class HashDBActionGroup(ActionGroup):
     # -------------------------------------------------------------------------
-    # HashDatabaseActionGroup
+    # HashDBActionGroup
     # -------------------------------------------------------------------------
     @staticmethod
-    @trace_static(LGR, 'HashDatabaseActionGroup')
+    @trace_static(LGR, 'HashDBActionGroup')
     def create(keywords, args):
         # ---------------------------------------------------------------------
         # create
@@ -181,14 +181,14 @@ class HashDatabaseActionGroup(ActionGroup):
                     LGR.error("<{}> must be an existing directory.".format(
                         dpath))
             # create database
-            HashDatabase.create(fpath, dirs, args.recursive, args.dir_filter,
+            HashDB.create(fpath, dirs, args.recursive, args.dir_filter,
                                 args.file_filter)
         else:
             LGR.warning("this action expect at least these args: output.json "
                         "dir [dir ...]")
 
     @staticmethod
-    @trace_static(LGR, 'HashDatabaseActionGroup')
+    @trace_static(LGR, 'HashDBActionGroup')
     def merge(keywords, args):
         # ---------------------------------------------------------------------
         # merge
@@ -211,15 +211,15 @@ class HashDatabaseActionGroup(ActionGroup):
                 LGR.error("<{}> must be an existing file.".format(f))
                 return
         # merge db files
-        HashDatabase.merge(fpath, files)
+        HashDB.merge(fpath, files)
 
     def __init__(self):
         # ---------------------------------------------------------------------
         # __init__
         # ---------------------------------------------------------------------
-        super(HashDatabaseActionGroup, self).__init__('hashdb', {
-            'create': ActionGroup.action(HashDatabaseActionGroup.create,
+        super(HashDBActionGroup, self).__init__('hashdb', {
+            'create': ActionGroup.action(HashDBActionGroup.create,
                                          "create a hash-database."),
-            'merge': ActionGroup.action(HashDatabaseActionGroup.merge,
+            'merge': ActionGroup.action(HashDBActionGroup.merge,
                                         "merge given hash-databases")
         })

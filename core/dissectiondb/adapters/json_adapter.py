@@ -29,7 +29,7 @@ from utils.logging import todo
 from utils.logging import get_logger
 from utils.wrapper import trace
 from utils.wrapper import trace_func
-from dissection.workspace import workspace
+from workspace.workspace import workspace
 # =============================================================================
 # GLOBALS / CONFIG
 # =============================================================================

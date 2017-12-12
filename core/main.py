@@ -30,7 +30,7 @@
 # modules imports
 import os
 import utils.logging as logging
-import dissection.workspace as workspace
+import workspace.workspace as workspace
 # functions imports
 from utils.config import config
 from utils.config import load_config
@@ -40,12 +40,12 @@ from utils.config import get_arg_parser
 from utils.config import print_license_warranty
 from utils.config import print_license_conditions
 from utils.logging import get_logger
+from hashdb.hashdb import HashDBActionGroup
 from utils.filtering import FSEntryFilter
 from utils.action_group import ActionGroup
-from dissection.container import ContainerActionGroup
+from container.container import ContainerActionGroup
 from dissection.dissection import DissectionActionGroup
-from dissection.hashdatabase import HashDatabaseActionGroup
-from dissection.dissectiondatabase import DissectionDatabaseActionGroup
+from dissectiondb.dissectiondb import DissectionDBActionGroup
 # =============================================================================
 # GLOBALS
 # =============================================================================
@@ -57,10 +57,10 @@ if not logging.init(workspace.workspace().logdir()):
     exit(102)
 #
 LGR = logging.get_logger(__name__)
-HASHDB_ACT_GRP = HashDatabaseActionGroup()
+HASHDB_ACT_GRP = HashDBActionGroup()
 CONTAINER_ACT_GRP = ContainerActionGroup()
 DISSECTION_ACT_GRP = DissectionActionGroup()
-DISSECTION_DB_ACT_GRP = DissectionDatabaseActionGroup()
+DISSECTION_DB_ACT_GRP = DissectionDBActionGroup()
 WORKSPACE_ACT_GRP = workspace.action_group()
 ACTIONS = ActionGroup('datashark', {
     HASHDB_ACT_GRP.name: HASHDB_ACT_GRP,

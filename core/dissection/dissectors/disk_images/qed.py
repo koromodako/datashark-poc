@@ -26,8 +26,8 @@
 # =============================================================================
 from utils.logging import get_logger
 from utils.wrapper import trace_func
-from dissection.container import Container
 from utils.action_group import ActionGroup
+from container.container import Container
 # =============================================================================
 # GLOBALS / CONFIG
 # =============================================================================
@@ -73,7 +73,10 @@ def can_dissect(container):
     #   \param [Container] container
     #   \return [bool]
     # -------------------------------------------------------------------------
-    return ('QEMU QED Image' in container.mime_text)
+    todo(LGR, 'implement qed.can_dissect(),'
+         'for now will always return False.',
+         no_raise=True)
+    return False
 
 
 @trace_func(LGR)
