@@ -1,5 +1,5 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#     file: extent.py
+#     file: gd_stack.py
 #     date: 2017-12-04
 #   author: paul.dautry
 #  purpose:
@@ -25,8 +25,12 @@
 # =============================================================================
 #  IMPORTS
 # =============================================================================
+import os.path
 from utils.wrapper import trace
 from utils.logging import get_logger
+from utils.binary_file import BinaryFile
+from dissection.helpers.vmdk.gd import GrainDirectory
+from dissection.helpers.vmdk.vmdk_disk import VmdkDisk
 # =============================================================================
 #  GLOBALS / CONFIG
 # =============================================================================
@@ -36,86 +40,54 @@ LGR = get_logger(__name__)
 # =============================================================================
 
 
-class Extent(object):
+class GrainDirectoryStack(object):
     # -------------------------------------------------------------------------
-    # Extent
+    # GrainDirectoryStack
     # -------------------------------------------------------------------------
-    ACCESS_KWDS = [
-        'RW',
-        'RDONLY',
-        'NOACCESS'
-    ]
-    FLAT_TYPES = [
-        'FLAT',
-        'VMFS',
-        'VMFSRDM',
-        'VMFSRAW'
-    ]
-    TYPE_KWDS = FLAT_TYPES + [
-        'SPARSE',
-        'ZERO',
-        'VMFSSPARSE'
-    ]
 
-    def __init__(self, line):
+    def __init__(self, wdir, vmdk):
         # ---------------------------------------------------------------------
         # __init__
         # ---------------------------------------------------------------------
-        super(Extent, self).__init__()
-        self.__valid = self.__parse(line)
+        super(GrainDirectoryStack, self).__init__()
+        self.wdir = wdir
+        self.base_gd = self.__build_gd(vmdk)
 
-    @trace(LGR)
-    def __parse(self, line):
+    @trace()
+    def __build_gd(self, vmdk):
         # ---------------------------------------------------------------------
-        # __parse
+        # __build_gd
         # ---------------------------------------------------------------------
-        pts = line.split(' ')
+        df = vmdk.descriptor_file()
 
-        if len(pts) < 4:
-            LGR.warning('invalid extent: {}'.format(line))
-            return False
+        parent_filename = df.parent_filename()
 
-        self.access = pts[0]
+        if parent_filename is not None:
+            parent_path = os.path.join(self.wdir, parent_filename)
 
-        if self.access not in Extent.ACCESS_KWDS:
-            LGR.warning('invalid extent access: {}'.format(self.access))
-            return False
+            if BinaryFile.exists(parent_path):
+                parent_bf = BinaryFile(parent_path)
+                parent_vmdk = VmdkDisk(parent_bf)
+                parent_gd = self.__build_gd(parent_vmdk)
 
-        self.size = int(pts[1])
-        self.type = pts[2]
+            else:
+                LGR.warning("could not find parent disk. Disk image will be "
+                            "incomplete.")
+        else:
+            parent_gd = None
 
-        if self.type not in Extent.TYPE_KWDS:
-            LGR.warning('invalid extent type: {}'.format(self.type))
-            return False
+        return GrainDirectory(vmdk, parent_gd)
 
-        self.filename = pts[3][1:-1]
-        self.offset = None  # invalid offset
-
-        if len(pts) == 5:
-            self.offset = int(pts[4])
-
-        return True
-
-    @trace(LGR)
-    def is_valid(self):
+    @trace()
+    def base(self):
         # ---------------------------------------------------------------------
-        # is_valid
+        # base
         # ---------------------------------------------------------------------
-        return self.__valid
+        return self.base_gd
 
-    @trace(LGR)
-    def is_flat(self):
+    @trace()
+    def term(self):
         # ---------------------------------------------------------------------
-        # is_flat
+        # term
         # ---------------------------------------------------------------------
-        return (self.type in Extent.FLAT_TYPES)
-
-    @trace(LGR)
-    def to_str(self):
-        # ---------------------------------------------------------------------
-        # to_str
-        # ---------------------------------------------------------------------
-        offset = '' if self.offset is None else self.offset
-
-        return '{} {} {} {} {}'.format(self.access, self.size, self.type,
-                                       self.filename, offset)
+        self.base_gd.term()

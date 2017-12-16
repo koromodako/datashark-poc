@@ -44,7 +44,7 @@ class CLI(object):
     # CLI
     # -------------------------------------------------------------------------
     @staticmethod
-    @trace_static(LGR, 'CLI')
+    @trace_static('CLI')
     def read_input(prompt, allow_empty=False, expect_digit=False):
         # ---------------------------------------------------------------------
         # read_input
@@ -65,7 +65,7 @@ class CLI(object):
         return uinput
 
     @staticmethod
-    @trace_static(LGR, 'CLI')
+    @trace_static('CLI')
     def read_input_loop(prompt, subprompt, expect_digit=False):
         # ---------------------------------------------------------------------
         # read_input_loop
@@ -79,7 +79,7 @@ class CLI(object):
         return out
 
     @staticmethod
-    @trace_static(LGR, 'CLI')
+    @trace_static('CLI')
     def confirm(question):
         # ---------------------------------------------------------------------
         # confirm
@@ -88,7 +88,7 @@ class CLI(object):
         return (resp == "y")
 
     @staticmethod
-    @trace_static(LGR, 'CLI')
+    @trace_static('CLI')
     def choose_one(prompt, among):
         # ---------------------------------------------------------------------
         # choose_one
@@ -105,7 +105,7 @@ class CLI(object):
         return among[uinput]
 
     @staticmethod
-    @trace_static(LGR, 'CLI')
+    @trace_static('CLI')
     def look_for_commands(commands):
         # ---------------------------------------------------------------------
         # look_for_commands
@@ -120,7 +120,7 @@ class CLI(object):
         return True
 
     @staticmethod
-    @trace_static(LGR, 'CLI')
+    @trace_static('CLI')
     def exec(args):
         # ---------------------------------------------------------------------
         # exec
@@ -129,7 +129,7 @@ class CLI(object):
         call(args)
 
     @staticmethod
-    @trace_static(LGR, 'CLI')
+    @trace_static('CLI')
     def exec_shell(cmd):
         # ---------------------------------------------------------------------
         # exec_shell
@@ -138,7 +138,7 @@ class CLI(object):
         call(cmd, shell=True)
 
     @staticmethod
-    @trace_static(LGR, 'CLI')
+    @trace_static('CLI')
     def start_proc(args, wait=True, capture_outputs=False, cwd=None):
         # ---------------------------------------------------------------------
         # start_proc

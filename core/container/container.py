@@ -26,8 +26,8 @@
 # =============================================================================
 import os
 import enum
+import utils.config as config
 from magic import Magic
-from utils.config import config
 from workspace.workspace import workspace
 from utils.crypto import randstr
 from utils.crypto import hashbuf
@@ -66,20 +66,20 @@ class Container(object):
         CARVING_REQUIRED = 0x20
 
     @staticmethod
-    @trace_static(LGR, 'Container')
+    @trace_static('Container')
     def hash(path):
         # ---------------------------------------------------------------------
         # hash
         # ---------------------------------------------------------------------
         if BinaryFile.exists(path):
-            hash_func = config('hash_func', 'sha256')
+            hash_func = config.value('hash_func', 'sha256')
             LGR.info("computing <{}> {}... please wait...".format(path,
                                                                   hash_func))
             return hashfile(hash_func, path).hex()
         return None
 
     @staticmethod
-    @trace_static(LGR, 'Container')
+    @trace_static('Container')
     def mimes(magic_file, path):
         # ---------------------------------------------------------------------
         # mimes
@@ -97,7 +97,7 @@ class Container(object):
         self.realname = realname
         # file information
         self.hashed = ''
-        if not config('skip_hash', False):
+        if not config.value('skip_hash', False):
             self.hashed = Container.hash(path)
         (self.mime_text, self.mime_type) = Container.mimes(magic_file, path)
         # properties
@@ -107,7 +107,7 @@ class Container(object):
         # unexpected dissection results will fill this list of errors
         self.__errors = []
 
-    @trace(LGR)
+    @trace()
     def to_dict(self):
         # ---------------------------------------------------------------------
         # to_dict
@@ -126,42 +126,42 @@ class Container(object):
             'blacklisted': self.has_flag(Container.Flag.BLACKLISTED)
         }
 
-    @trace(LGR)
+    @trace()
     def set_parent(self, container):
         # ---------------------------------------------------------------------
         # set_parent
         # ---------------------------------------------------------------------
         self.parent = container.realname
 
-    @trace(LGR)
+    @trace()
     def set_flag(self, flag):
         # ---------------------------------------------------------------------
         # set_flag
         # ---------------------------------------------------------------------
         self.flags |= flag
 
-    @trace(LGR)
+    @trace()
     def unset_flag(self, flag):
         # ---------------------------------------------------------------------
         # unset_flag
         # ---------------------------------------------------------------------
         self.flags &= ~flag
 
-    @trace(LGR)
+    @trace()
     def has_flag(self, flag):
         # ---------------------------------------------------------------------
         # has_flag
         # ---------------------------------------------------------------------
         return (self.flags & flag) != Container.Flag.NONE
 
-    @trace(LGR)
+    @trace()
     def wdir(self):
         # ---------------------------------------------------------------------
         # wdir
         # ---------------------------------------------------------------------
         return os.path.dirname(self.path)
 
-    @trace(LGR)
+    @trace()
     def virtual_path(self):
         # ---------------------------------------------------------------------
         # virtual_path
@@ -173,14 +173,14 @@ class Container(object):
             parent = parent.__parent
         return os.path.join(*path)
 
-    @trace(LGR)
+    @trace()
     def ibf(self):
         # ---------------------------------------------------------------------
         # ibf
         # ---------------------------------------------------------------------
         return BinaryFile(self.path, 'r')
 
-    @trace(LGR)
+    @trace()
     def obf(self, suffix='ds'):
         # ---------------------------------------------------------------------
         # obf
@@ -205,7 +205,7 @@ class ContainerActionGroup(ActionGroup):
         })
 
     @staticmethod
-    @trace_static(LGR, 'ContainerActionGroup')
+    @trace_static('ContainerActionGroup')
     def hash(keywords, args):
         # ---------------------------------------------------------------------
         # hash
@@ -220,7 +220,7 @@ class ContainerActionGroup(ActionGroup):
             LGR.error("this action expects at least one input file.")
 
     @staticmethod
-    @trace_static(LGR, 'ContainerActionGroup')
+    @trace_static('ContainerActionGroup')
     def mimes(keywords, args):
         # ---------------------------------------------------------------------
         # mimes
@@ -235,7 +235,7 @@ class ContainerActionGroup(ActionGroup):
                 LGR.error("{}: invalid path.".format(f))
                 return
 
-            mimes = Container.mimes(config('magic_file'), f)
+            mimes = Container.mimes(config.value('magic_file'), f)
             LGR.info('{}:\n'
                      '\tmime: {}\n'
                      '\ttext: {}'.format(f, mimes[1], mimes[0]))

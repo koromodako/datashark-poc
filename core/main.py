@@ -31,15 +31,15 @@
 import os
 import utils.logging as logging
 import workspace.workspace as workspace
+import utils.config as config
 # functions imports
-from utils.config import config
-from utils.config import load_config
 from utils.config import print_license
 from utils.config import print_version
 from utils.config import get_arg_parser
 from utils.config import print_license_warranty
 from utils.config import print_license_conditions
 from utils.logging import get_logger
+from utils.wrapper import trace_func
 from hashdb.hashdb import HashDBActionGroup
 from utils.filtering import FSEntryFilter
 from utils.action_group import ActionGroup
@@ -51,12 +51,19 @@ from dissectiondb.dissectiondb import DissectionDBActionGroup
 # =============================================================================
 #
 if not workspace.init():
-    exit(101)
+    print("FATAL: failed to initialize workspace.")
+    exit(100)
 #
 if not logging.init(workspace.workspace().logdir()):
-    exit(102)
+    print("FATAL: failed to initialize logger.")
+    exit(101)
 #
 LGR = logging.get_logger(__name__)
+#
+if not config.load():
+    print("FATAL: failed to load config from file.")
+    exit(102)
+#
 HASHDB_ACT_GRP = HashDBActionGroup()
 CONTAINER_ACT_GRP = ContainerActionGroup()
 DISSECTION_ACT_GRP = DissectionActionGroup()
@@ -74,80 +81,98 @@ ACTIONS = ActionGroup('datashark', {
 # =============================================================================
 
 
+@trace_func(__name__)
 def parse_args():
     # -------------------------------------------------------------------------
     # parse_args
     # -------------------------------------------------------------------------
-    LGR.debug('parse_args()')
     parser = get_arg_parser()
     # optional arguments
     parser.add_argument('-r', '--recursive', action='store_true',
-                        help="Affects only hdb_create. "
+                        help="Affects only <hashdb.create> action."
                         "Tells it to recurse inside given directories.")
+
     parser.add_argument('-n', '--num-workers', type=int,
                         help="Number of workers to be used to dissect "
                         "containers.")
-    parser.add_argument('-m', '--magic-file', type=str, default=None,
-                        help='Magic file to be used internally.')
-    parser.add_argument('--include-dirs', type=str, default='',
-                        help='Comma-separated list of patterns.')
-    parser.add_argument('--exclude-dirs', type=str, default='',
-                        help='Comma-separated list of patterns.')
-    parser.add_argument('--include-files', type=str, default='',
-                        help='Comma-separated list of patterns.')
-    parser.add_argument('--exclude-files', type=str, default='',
-                        help='Comma-separated list of patterns.')
+
+    parser.add_argument('-m', '--magic-file', type=str,
+                        help="Magic file to be used internally.")
+
+    parser.add_argument('--whitelist-config', type=str,
+                        help="Specify a different whitelist db configuration "
+                        "file.")
+    parser.add_argument('--blacklist-config', type=str,
+                        help="Specify a different blacklist db configuration "
+                        "file.")
+    parser.add_argument('--dissection-config', type=str,
+                        help="Specify a different dissection configuration "
+                        "file.")
+
+    parser.add_argument('--include-dirs', type=str,
+                        help="Comma-separated list of patterns.")
+    parser.add_argument('--exclude-dirs', type=str,
+                        help="Comma-separated list of patterns.")
+    parser.add_argument('--include-files', type=str,
+                        help="Comma-separated list of patterns.")
+    parser.add_argument('--exclude-files', type=str,
+                        help="Comma-separated list of patterns.")
+
     # optional processing
-    parser.add_argument('--cleanup', action='store_true',
+    parser.add_argument('--cleanup',
+                        action='store_true',
                         help="Cleanup workspace after processing.")
-    parser.add_argument('--skip-failing-import', action='store_true',
-                        help='Ignore dissectors that failed to be imported.')
-    parser.add_argument('--skip-hash', action='store_true',
+    parser.add_argument('--skip-failing-import',
+                        action='store_true',
+                        help="Ignore dissectors that failed to be imported.")
+    parser.add_argument('--skip-hash',
+                        action='store_true',
                         help="Do not hash containers. Warning: using this "
                         "option prevents the use of white/blacklists.")
+
     # positional arguments
-    parser.add_argument('action', nargs='?', type=str, default=None,
-                        help='Action to perform.')
-    parser.add_argument('files', nargs='*', help='Files to process.')
+    parser.add_argument('action',
+                        nargs='?',
+                        type=str,
+                        default=None,
+                        help="Action to perform.")
+    parser.add_argument('files',
+                        nargs='*',
+                        help="Files to process.")
+
     return parser.parse_args()
 
 
+@trace_func(__name__)
 def handle_action(args):
     # -------------------------------------------------------------------------
     # handle_action
     # -------------------------------------------------------------------------
-    LGR.debug('handle_action()')
+    config.set_args(args)
     # create FS entry filters
     args.dir_filter = FSEntryFilter(args.include_dirs, args.exclude_dirs)
     args.file_filter = FSEntryFilter(args.include_files, args.exclude_files)
-    # load datashark configuration
-    LGR.info('loading configuration...')
-    conf = load_config(args)
-    if conf is None:
-        LGR.debug('no configuration file found.')
-    else:
-        LGR.debug('config loaded from: {}'.format(conf))
-    LGR.info('configuration loaded.')
     # execute action
     LGR.debug('running action: {}'.format(args.action))
     if args.action is None:
-        LGR.error("start with command `datashark help` ;)")
+        LGR.error("get started with: `datashark help` ;)")
         return 1
+
     ACTIONS.perform_action(args.action.split(ActionGroup.SEP), args)
     return 0
 
 
+@trace_func(__name__)
 def main():
     # -------------------------------------------------------------------------
     # main
     # -------------------------------------------------------------------------
-    LGR.debug('main()')
     # parse input arguments
     args = parse_args()
-    # reconfigure logging module
+
     logging.reconfigure(args.silent, args.verbose, args.debug)
     LGR.debug('args: {}'.format(args))
-    # process specific options
+
     if args.version:
         print_version()
         return 0
@@ -159,7 +184,7 @@ def main():
     if args.conditions:
         print_license_conditions()
         return 0
-    # print license if required
+
     if not args.silent:
         print_license()
 

@@ -1,0 +1,14 @@
+{
+	"num_workers": 2,
+	"magic_file": null,
+	"whitelist_config": "~/.config/datashark/whitelist.conf",
+	"blacklist_config": "~/.config/datashark/blacklist.conf",
+	"dissection_config": "~/.config/datashark/dissection.conf",
+	"include_files": [],
+	"exclude_files": [],
+	"include_dirs": [],
+	"exclude_dirs": [],
+	"cleanup": false,
+        "skip_failing_import": false,
+	"skip_hash": true
+}

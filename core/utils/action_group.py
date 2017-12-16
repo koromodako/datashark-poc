@@ -53,7 +53,7 @@ class ActionGroup(object):
         self.actions['help'] = ActionGroup.action(self.help, "prints help.")
 
     @staticmethod
-    @trace_static(LGR, 'ActionGroup')
+    @trace_static('ActionGroup')
     def action(func, help=''):
         # ---------------------------------------------------------------------
         # action
@@ -63,7 +63,7 @@ class ActionGroup(object):
             ActionGroup.K_HELP: help
         }
 
-    @trace(LGR)
+    @trace()
     def perform_action(self, keywords, args=[]):
         # ---------------------------------------------------------------------
         # perform_action
@@ -82,14 +82,14 @@ class ActionGroup(object):
             else:
                 action[ActionGroup.K_FUNC](subkeywords, args)
 
-    @trace(LGR)
+    @trace()
     def has_action(self, keywords):
         # ---------------------------------------------------------------------
         # has_action
         # ---------------------------------------------------------------------
         return (self.actions.get(keywords[0], None) is not None)
 
-    @trace(LGR)
+    @trace()
     def help(self, keywords, args, depth=0):
         # ---------------------------------------------------------------------
         # help

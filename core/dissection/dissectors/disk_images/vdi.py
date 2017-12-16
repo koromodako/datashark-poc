@@ -29,8 +29,8 @@ from utils.wrapper import trace_func
 from utils.binary_file import BinaryFile
 from utils.action_group import ActionGroup
 from container.container import Container
-from helpers.vdi.vdi_disk import VdiDisk
-from helpers.vdi.vdi_extractor import VdiExtractor
+from dissection.helpers.vdi.vdi_disk import VdiDisk
+from dissection.helpers.vdi.vdi_extractor import VdiExtractor
 # =============================================================================
 # GLOBALS / CONFIG
 # =============================================================================
@@ -40,7 +40,7 @@ LGR = get_logger(__name__)
 # =============================================================================
 
 
-@trace_func(LGR)
+@trace_func(__name__)
 def mimes():
     # -------------------------------------------------------------------------
     # mimes
@@ -53,7 +53,7 @@ def mimes():
     ]
 
 
-@trace_func(LGR)
+@trace_func(__name__)
 def configure(config):
     # -------------------------------------------------------------------------
     # configure
@@ -66,7 +66,7 @@ def configure(config):
     return True
 
 
-@trace_func(LGR)
+@trace_func(__name__)
 def can_dissect(container):
     # -------------------------------------------------------------------------
     # can_dissect
@@ -90,7 +90,7 @@ def can_dissect(container):
     return True
 
 
-@trace_func(LGR)
+@trace_func(__name__)
 def dissect(container):
     # -------------------------------------------------------------------------
     # dissect
@@ -116,14 +116,14 @@ def dissect(container):
     return containers
 
 
-@trace_func(LGR)
+@trace_func(__name__)
 def action_group():
     # -------------------------------------------------------------------------
     # action_group()
     #   /!\ public mandatory function that the module must define /!\
     #   \brief returns module action group
     # -------------------------------------------------------------------------
-    @trace_func(LGR)
+    @trace_func(__name__)
     def __action_header(keywords, args):
         # ---------------------------------------------------------------------
         # __action_header

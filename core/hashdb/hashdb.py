@@ -25,9 +25,9 @@
 # IMPORTS
 # =============================================================================
 import os
-from utils.config import config
-from utils.json import json_load
-from utils.json import json_dump
+import copy
+import utils.fs as fs
+import utils.config as config
 from utils.wrapper import trace
 from utils.logging import get_logger
 from utils.wrapper import trace_func
@@ -36,6 +36,7 @@ from utils.workerpool import WorkerPool
 from utils.binary_file import BinaryFile
 from utils.action_group import ActionGroup
 from container.container import Container
+from utils.plugin_importer import PluginImporter
 # =============================================================================
 # GLOBALS / CONFIG
 # =============================================================================
@@ -44,120 +45,123 @@ LGR = get_logger(__name__)
 # FUNCTIONS
 # =============================================================================
 
-@trace_func(LGR)
-def hashing_routine(fpath):
+@trace_func(__name__)
+def hashing_routine(fpath, hashdb_conf):
     # -------------------------------------------------------------------------
     # hashing_routine
     # -------------------------------------------------------------------------
-    LGR.info('processing file: {}'.format(fpath))
+    LGR.info("connecting to database...")
+    hdb = HashDB(hashdb_conf)
+    if not hdb.init('w'):
+        LGR.error("failed to init database.")
+        return False
+
+    LGR.info("hashing <{}>...".format(fpath))
     container = Container(fpath, os.path.basename(fpath))
-    return ([], [(container.hashed, container.path)])
+
+    hdb.persist(container)
+    hdb.term()
+
+    return ([], [])
 # =============================================================================
 # CLASSES
 # =============================================================================
 
 
 class HashDB(object):
+    ADAPTERS = None
     # -------------------------------------------------------------------------
     # HashDB
     # -------------------------------------------------------------------------
-    def __init__(self, name, fpath):
+    def __init__(self, name, conf):
         # ---------------------------------------------------------------------
         # __init__
         # ---------------------------------------------------------------------
-        self.fpath = fpath
+        super(HashDB, self).__init__()
         self.name = name
+        self.conf = conf
         self.valid = False
-        self.db = self.__load_db()
+        self.adapter = None
+        if HashDB.ADAPTERS is None:
+            pi = PluginImporter('hashdb.adapters',
+                            __file__, 'adapters',
+                            expected_funcs=set(['instance']))
 
-    @trace(LGR)
-    def __load_db(self):
+            if not pi.load_plugins():
+                LGR.warning("some adapters failed to be loaded.")
+
+
+            HashDB.ADAPTERS = copy.deepcopy(pi.plugins)
+
+    @trace()
+    def init(self, mode):
         # ---------------------------------------------------------------------
-        # __load_db
+        # init
         # ---------------------------------------------------------------------
-        # check if path is valid
-        if self.fpath is None or not BinaryFile.exists(self.fpath):
-            warn = 'cannot load <{}> hash database, invalid path: {}'.format(
-                self.name, self.fpath)
-            LGR.warning(warn)
-            return {}
-        # read database from file
-        with open(self.fpath, 'r') as f:
-            dat = json_load(f)
-        # set valid and return data
+        if not self.conf.has('adapter'):
+            LGR.error("invalid configuration of hashdb adapter or missing "
+                      "value.")
+            return False
+
+        adapter_mod = self.ADAPTERS.get(self.conf.adapter)
+        if adapter_mod is None:
+            LGR.error("failed to load adapter: <{}>".format(self.conf.adapter))
+            return False
+
+        self.adapter = adapter_mod.instance(self.conf)
+        self.adapter.init(mode)
+        if not self.adapter.is_valid():
+            LGR.error("invalid adapter instance.")
+            return False
+
         self.valid = True
-        return dat
+        return True
 
-    @trace(LGR)
+    @trace()
+    def term(self):
+        # ---------------------------------------------------------------------
+        # term
+        # ---------------------------------------------------------------------
+        if self.valid:
+            self.adapter.term()
+            self.adapter = None
+            self.valid = False
+
+    @trace()
     def contains(self, container):
         # ---------------------------------------------------------------------
         # contains
         # ---------------------------------------------------------------------
-        return (self.valid and self.db.get(container.hashed) is not None)
+        if not self.valid:
+            return None
 
-    @staticmethod
-    @trace_static(LGR, 'HashDB')
-    def create(path, dirs, recursive, dir_filter, file_filter):
+        return (self.adapter.lookup(container.hashed) is not None)
+
+    @trace()
+    def persist(self, container):
         # ---------------------------------------------------------------------
-        # create
-        #   /!\ assumes caller will check input parameters /!\
+        # insert
         # ---------------------------------------------------------------------
-        # scan for files iterating over directories (recursively if required)
-        LGR.info('scanning for files...')
-        fpaths = []
-        for dpath in dirs:
-            adpath = os.path.abspath(dpath)
+        if not self.valid:
+            return False
 
-            if recursive:
-                # recursive listing from given directory
-                for root, dirs, files in os.walk(adpath):
-                    dirs[:] = [d for d in dirs if dir_filter.keep(d)]
-                    for f in files:
-                        if file_filter.keep(f):
-                            fpaths.append(os.path.join(root, f))
-            else:
-                # listing only inside given directory
-                for entry in os.listdir(adpath):
-                    fpath = os.path.join(adpath, entry)
-                    if BinaryFile.exists(fpath):
-                        if file_filter.keep(entry):
-                            fpaths.append(fpath)
+        if not self.adapter.insert(container.hashed, container.path):
+            return False
 
-        LGR.info('start hashing processes...')
-        pool = WorkerPool(config('num_workers', default=1))
-        results = pool.map(hashing_routine, {}, tasks=fpaths)
+        return True
 
-        LGR.info('aggregating results...')
-        db = {}
-        for result in results:
-            db[result[0]] = result[1]
-        # write database
-        with open(path, 'w') as f:
-            LGR.info('writing database...')
-            json_dump(db, f)
-
-        LGR.info('done.')
-
-    @staticmethod
-    @trace_static(LGR, 'HashDB')
-    def merge(fpath, files):
+    @trace()
+    def merge(self, other):
         # ---------------------------------------------------------------------
         # merge
-        #   /!\ assumes caller will check input parameters /!\
         # ---------------------------------------------------------------------
-        # merging files
-        LGR.info('merging databases...')
-        db = {}
-        for f in files:
-            with open(f, 'r') as f:
-                pdb = json_load(f)
-                db.update(pdb)
-        # writing output file
-        with open(fpath, 'w') as f:
-            LGR.info('writing database...')
-            json_dump(db, f)
+        if not self.valid or not other.valid:
+            return False
 
-        LGR.info('done.')
+        if not self.adapter.merge(other.adapter):
+            return False
+
+        return True
 
 
 class HashDBActionGroup(ActionGroup):
@@ -165,61 +169,102 @@ class HashDBActionGroup(ActionGroup):
     # HashDBActionGroup
     # -------------------------------------------------------------------------
     @staticmethod
-    @trace_static(LGR, 'HashDBActionGroup')
+    @trace_static('HashDBActionGroup')
+    def list(keywords, args):
+        hdb = HashDB(None, None)
+        adapters = sorted(HashDB.ADAPTERS.keys())
+
+        text = "\nadapters:"
+
+        if len(adapters) > 0:
+            for adapter in adapters:
+                text += "\n\t+ {}".format(adapter)
+        else:
+            text += "\n\tno adapter available."
+
+        text += "\n"
+        LGR.info(text)
+
+    @staticmethod
+    @trace_static('HashDBActionGroup')
     def create(keywords, args):
         # ---------------------------------------------------------------------
         # create
         # ---------------------------------------------------------------------
         # check arguments
-        if len(args.files) > 1:
-            fpath = args.files[0]
-            dirs = args.files[1:]
-            if os.path.isdir(fpath):
-                LGR.error("<{}> is an existing directory.".format(fpath))
-            for dpath in dirs:
-                if not os.path.isdir(dpath):
-                    LGR.error("<{}> must be an existing directory.".format(
-                        dpath))
-            # create database
-            HashDB.create(fpath, dirs, args.recursive, args.dir_filter,
-                                args.file_filter)
-        else:
-            LGR.warning("this action expect at least these args: output.json "
-                        "dir [dir ...]")
+        if len(args.files) < 2:
+            LGR.error("this action expect at least these args: hashdb.conf "
+                      "dir [dir ...]")
+            return False
+        # try to load configuration file
+        conf = config.load_from_file(args.files[0])
+        if conf is None:
+            LGR.error("")
+            return False
+        # check if remaining arguments are directories
+        dirs = args.files[1:]
+        for dpath in dirs:
+            if not os.path.isdir(dpath):
+                LGR.error("<{}> must be an existing directory.".format(dpath))
+                return False
+        # create database
+        LGR.info("enumerating files...")
+        fpaths = fs.enumerate_files(dirs, args.dir_filter, args.file_filter,
+                                    args.recursive)
+
+        LGR.info("start hashing processes...")
+        pool = WorkerPool(config.value('num_workers', 1))
+        kwargs = {
+            'hashdb_conf': conf
+        }
+        pool.map(hashing_routine, kwargs, tasks=fpaths)
+
+        LGR.info("done.")
+        return True
+
 
     @staticmethod
-    @trace_static(LGR, 'HashDBActionGroup')
+    @trace_static('HashDBActionGroup')
     def merge(keywords, args):
         # ---------------------------------------------------------------------
         # merge
         # ---------------------------------------------------------------------
         # check arguments
         if len(args.files) < 2:
-            LGR.error("this action expect at least these args: output.json "
-                      "db.part1.json db.part2.json [... db.partN.json]")
-            return
+            LGR.error("this action expect at least these args: outdb.conf "
+                      "db.0.conf [db.1.conf ... db.N.conf]")
+            return False
 
-        fpath = args.files[0]
-        files = args.files[1:]
+        odbf = args.files[0]
+        oconf = config.load_from_file(odbf)
+        odb = HashDB(odbf, oconf)
+        if not odb.init('w'):
+            LGR.error("failed to open <{}> db for writing.".format(odb.name))
+            return False
 
-        if os.path.isdir(fpath):
-            LGR.error("<{}> is an existing directory.".format(fpath))
-            return
+        for f in args.files[1:]:
+            iconf = config.load_from_file(f)
+            idb = HashDB(f, iconf)
+            if not idb.init('r'):
+                LGR.warning("failed to open <{}> for reading => "
+                            "skipped.".format(idb.name))
+                continue
+            LGR.info("merging <{}> into <{}>...".format(idb.name, odb.name))
+            odb.merge(idb)
+            idb.term()
 
-        for f in files:
-            if not BinaryFile.exists(f):
-                LGR.error("<{}> must be an existing file.".format(f))
-                return
-        # merge db files
-        HashDB.merge(fpath, files)
+        LGR.info("done.")
+        odb.term()
 
     def __init__(self):
         # ---------------------------------------------------------------------
         # __init__
         # ---------------------------------------------------------------------
         super(HashDBActionGroup, self).__init__('hashdb', {
+            'list': ActionGroup.action(HashDBActionGroup.list,
+                                       "list hash database adapters."),
             'create': ActionGroup.action(HashDBActionGroup.create,
-                                         "create a hash-database."),
+                                         "create a new hash database."),
             'merge': ActionGroup.action(HashDBActionGroup.merge,
-                                        "merge given hash-databases")
+                                        "merge given hash databases.")
         })

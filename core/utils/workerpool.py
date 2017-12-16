@@ -36,7 +36,7 @@ LGR = get_logger(__name__)
 # FUNCTIONS
 # =============================================================================
 
-@trace_func(LGR)
+@trace_func(__name__)
 def worker_routine(iqueue, oqueue, routine, kwargs):
     # -------------------------------------------------------------------------
     # worker_routine
@@ -86,7 +86,7 @@ class WorkerPool(object):
         self.iqueue = mp.JoinableQueue()
         self.oqueue = mp.Queue()
 
-    @trace(LGR)
+    @trace()
     def map(self, routine, kwargs, tasks):
         # --------------------------------------------------------------------------
         # map

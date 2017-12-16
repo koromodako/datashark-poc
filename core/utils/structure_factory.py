@@ -50,7 +50,7 @@ class StructFactory:
     K_MEMBERS = 'members'
 
     @staticmethod
-    @trace_static(LGR, 'StructFactory')
+    @trace_static('StructFactory')
     def st_exists(st_type, log=False):
         # ---------------------------------------------------------------------
         # st_exists
@@ -62,7 +62,7 @@ class StructFactory:
         return (st is not None)
 
     @staticmethod
-    @trace_static(LGR, 'StructFactory')
+    @trace_static('StructFactory')
     def st_size(st_type):
         # ---------------------------------------------------------------------
         # st_size
@@ -73,7 +73,7 @@ class StructFactory:
         return StructFactory.STRUCTS[st_type][StructFactory.K_SIZE]
 
     @staticmethod
-    @trace_static(LGR, 'StructFactory')
+    @trace_static('StructFactory')
     def st_register(st_specif):
         # ---------------------------------------------------------------------
         # st_register
@@ -100,7 +100,7 @@ class StructFactory:
         return False
 
     @staticmethod
-    @trace_static(LGR, 'StructFactory')
+    @trace_static('StructFactory')
     def st_from_bytes(st_type, data):
         # ---------------------------------------------------------------------
         # st_from_bytes
@@ -130,7 +130,7 @@ class StructFactory:
         return st
 
     @staticmethod
-    @trace_static(LGR, 'StructFactory')
+    @trace_static('StructFactory')
     def st_from_file(st_type, fp, oft=0):
         # ---------------------------------------------------------------------
         # st_from_file

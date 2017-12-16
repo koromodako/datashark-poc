@@ -1,17 +1,43 @@
-#/usr/bin/env bash
+#!/usr/bin/env bash
+# -!- encoding:utf8 -!-
 #
 # ENVARS
 #
-BIN_DIR="~/bin"
-CONF_DIR="~/.config/datashark"
+PWD=$(pwd)
+CONF_SRC_DIR="core/config"
+CONF_DST_DIR="${HOME}/.config/datashark"
+BIN_DST_DIR="${HOME}/bin"
 #
-# Copy configuration file
+# FUNCTIONS
 #
-mkdir -p ${CONF_DIR}
-cp core/datashark.conf.dist ${CONF_DIR}/datashark.conf
+function makedirs {
+	echo "making directory <${1}>..."
+	mkdir -p ${1}
+}
+
+function deploy_conf {
+	echo "deploying <${1}> configuration file..."
+	cp -i ${CONF_SRC_DIR}/${1}.conf.dist ${CONF_DST_DIR}/${1}.conf
+}
+
+function deploy_command {
+	echo "deploying <${1}> command..."
+	ln -s -i ${PWD}/${1} ${BIN_DST_DIR}/${1}
+}
 #
-# Create symlinks
+# SCRIPT
 #
-mkdir -p ${BIN_DIR}
-ln -s datashark ${BIN_DIR}/datashark
-ln -s datashark-gui ${BIN_DIR}/datashark-gui
+##
+## Copy configuration file
+##
+makedirs ${CONF_DST_DIR}
+deploy_conf datashark
+deploy_conf whitelist
+deploy_conf blacklist
+deploy_conf dissection
+##
+## Create symlinks
+##
+makedirs ${BIN_DST_DIR}
+deploy_command datashark
+deploy_command datashark-gui

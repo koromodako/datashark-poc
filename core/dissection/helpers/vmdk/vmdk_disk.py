@@ -35,7 +35,7 @@ from utils.structure_specif import StructMember
 from utils.structure_specif import StructSpecif
 from utils.structure_specif import ByteArrayMember
 from utils.structure_factory import StructFactory
-from helpers.vmdk.descriptor_file import DescriptorFile
+from dissection.helpers.vmdk.descriptor_file import DescriptorFile
 # =============================================================================
 # GLOBALS / CONFIG
 # =============================================================================
@@ -156,7 +156,7 @@ class VmdkDisk(object):
         self.bf = bf  # never close this bf you dont have the ownership
 
     @lazy_getter('_hdr')
-    @trace(LGR)
+    @trace()
     def header(self):
         # ---------------------------------------------------------------------
         # header
@@ -174,7 +174,7 @@ class VmdkDisk(object):
         return None
 
     @lazy_getter('_has_ftr')
-    @trace(LGR)
+    @trace()
     def has_footer(self):   # LAZY METHOD
         # ---------------------------------------------------------------------
         # has_footer
@@ -198,7 +198,7 @@ class VmdkDisk(object):
         return True
 
     @lazy_getter('_ftr')
-    @trace(LGR)
+    @trace()
     def footer(self):
         # ---------------------------------------------------------------------
         # footer
@@ -217,7 +217,7 @@ class VmdkDisk(object):
         return ftr
 
     @lazy_getter('_df')
-    @trace(LGR)
+    @trace()
     def descriptor_file(self):
         # ---------------------------------------------------------------------
         # descriptor_file
@@ -238,7 +238,7 @@ class VmdkDisk(object):
 
         return DescriptorFile(df_str)
 
-    @trace(LGR)
+    @trace()
     def metadata(self):
         # ---------------------------------------------------------------------
         # metadata

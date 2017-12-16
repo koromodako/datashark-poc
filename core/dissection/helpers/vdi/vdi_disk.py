@@ -84,7 +84,7 @@ class VdiDisk(object):
         self.bf = bf
 
     @lazy_getter('_hdr')
-    @trace(LGR)
+    @trace()
     def header(self):
         # ---------------------------------------------------------------------
         # header
@@ -99,7 +99,7 @@ class VdiDisk(object):
         return hdr
 
     @lazy_getter('_blk_map')
-    @trace(LGR)
+    @trace()
     def block_map(self):
         # ---------------------------------------------------------------------
         # block_map
@@ -111,7 +111,7 @@ class VdiDisk(object):
         self.bf.seek(self._hdr.oftBlk)
         return self.bf.read(4 * self._hdr.numBlkInHdd)
 
-    @trace(LGR)
+    @trace()
     def read_block(self, n):
         # ---------------------------------------------------------------------
         # read_block

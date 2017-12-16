@@ -142,7 +142,7 @@ class VhdDisk(object):
         self.bf = bf
 
     @lazy_getter('_ftr')
-    @trace(LGR)
+    @trace()
     def footer(self):
         # ---------------------------------------------------------------------
         # footer
@@ -150,7 +150,7 @@ class VhdDisk(object):
         return StructFactory.st_from_file(S_VHD_FOOTER, self.bf)
 
     @lazy_getter('_type')
-    @trace(LGR)
+    @trace()
     def type(self):
         # ---------------------------------------------------------------------
         # type
@@ -162,7 +162,7 @@ class VhdDisk(object):
         return VhdDiskType(self._ftr.diskType)
 
     @lazy_getter('_hdr')
-    @trace(LGR)
+    @trace()
     def header(self):
         # ---------------------------------------------------------------------
         # header
@@ -179,7 +179,7 @@ class VhdDisk(object):
         return StructFactory.st_from_file(S_VHD_HEADER, self.bf, oft=512)
 
     @lazy_getter('_bat')
-    @trace(LGR)
+    @trace()
     def block_allocation_table(self):
         # ---------------------------------------------------------------------
         # block_allocation_table
@@ -192,7 +192,7 @@ class VhdDisk(object):
         return self.bf.read(self._hdr.maxTableEntries * 4)
 
     @lazy_getter('_blk_cnt')
-    @trace(LGR)
+    @trace()
     def block_count(self):
         # ---------------------------------------------------------------------
         # block_count
@@ -215,7 +215,7 @@ class VhdDisk(object):
         LGR.error("unsupported vhd type.")
         return None
 
-    @trace(LGR)
+    @trace()
     def __read_dynamic_vhd_block(self, n):
         # ---------------------------------------------------------------------
         # __read_dynamic_vhd_block
@@ -239,7 +239,7 @@ class VhdDisk(object):
 
         return data
 
-    @trace(LGR)
+    @trace()
     def read_block(self, n):
         # ---------------------------------------------------------------------
         # read_block

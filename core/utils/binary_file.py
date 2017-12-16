@@ -48,7 +48,7 @@ class BinaryFile(object):
     # \param mode: can be 'r' or 'w'
     # -------------------------------------------------------------------------
     @staticmethod
-    @trace_static(LGR, 'BinaryFile')
+    @trace_static('BinaryFile')
     def exists(path):
         # ---------------------------------------------------------------------
         # exists
@@ -69,63 +69,63 @@ class BinaryFile(object):
             self.fp = open(fpath, mode+'b')
             self.valid = True
 
-    # @trace(LGR)
+    # @trace()
     def stat(self):
         # ---------------------------------------------------------------------
         # stat
         # ---------------------------------------------------------------------
         return os.stat(self.abspath)
 
-    # @trace(LGR)
+    # @trace()
     def size(self):
         # ---------------------------------------------------------------------
         # size
         # ---------------------------------------------------------------------
         return self.stat().st_size
 
-    # @trace(LGR)
+    # @trace()
     def seek(self, offset, whence=io.SEEK_SET):
         # ---------------------------------------------------------------------
         # seek
         # ---------------------------------------------------------------------
         return self.fp.seek(offset, whence)
 
-    # @trace(LGR)
+    # @trace()
     def read_text(self, n=-1, encoding='utf-8'):
         # ---------------------------------------------------------------------
         # read_text
         # ---------------------------------------------------------------------
         return self.read(n).decode(encoding)
 
-    # @trace(LGR)
+    # @trace()
     def read(self, n=-1):
         # ---------------------------------------------------------------------
         # read
         # ---------------------------------------------------------------------
         return self.fp.read(n)
 
-    # @trace(LGR)
+    # @trace()
     def readinto(self, b):
         # ---------------------------------------------------------------------
         # readinto
         # ---------------------------------------------------------------------
         return self.fp.readinto(b)
 
-    # @trace(LGR)
+    # @trace()
     def write_text(self, text, encoding='utf-8'):
         # ---------------------------------------------------------------------
         # write_text
         # ---------------------------------------------------------------------
         return self.fp.write(text.encode('utf-8'))
 
-    # @trace(LGR)
+    # @trace()
     def write(self, data):
         # ---------------------------------------------------------------------
         # write
         # ---------------------------------------------------------------------
         return self.fp.write(data)
 
-    @trace(LGR)
+    @trace()
     def close(self):
         # ---------------------------------------------------------------------
         # close

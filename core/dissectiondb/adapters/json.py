@@ -25,109 +25,89 @@
 # IMPORTS
 # =============================================================================
 from utils.json import json_dumps
-from utils.logging import todo
 from utils.logging import get_logger
 from utils.wrapper import trace
 from utils.wrapper import trace_func
-from workspace.workspace import workspace
+from utils.binary_file import BinaryFile
+from dissectiondb.adapters.dissectiondb_adapter import DissectionDBAdapter
 # =============================================================================
 # GLOBALS / CONFIG
 # =============================================================================
 LGR = get_logger(__name__)
-JSON_FILE = None
-BEGIN = '{"containers":['
-END = ']}'
 # =============================================================================
 # CLASSES
 # =============================================================================
 
 
-class JsonFile(object):
+class JsonDB(DissectionDBAdapter):
     # -------------------------------------------------------------------------
-    # JsonFile
+    # JsonDB
     # -------------------------------------------------------------------------
-    def __init__(self, name):
+    JSON_BEGIN = '{"containers":['
+    JSON_END = ']}'
+
+    def __init__(self, conf):
         # ---------------------------------------------------------------------
         # __init__
         # ---------------------------------------------------------------------
-        super(JsonFile, self).__init__()
-        self.name = name
-        self.__sz = 0
-        self.__bf = None
+        super(JsonDB, self).__init__()
+        self.conf = conf
+        self.bf = None
 
-    @trace(LGR)
-    def open(self):
+    @trace()
+    def _check_conf(self):
         # ---------------------------------------------------------------------
-        # open
+        # _check_conf
         # ---------------------------------------------------------------------
-        self.__sz = 0
-        self.__bf = workspace().datfile(self.name, 'json')
+        if self.conf.get('path') is None:
+            return False
 
-    @trace(LGR)
-    def close(self):
-        # ---------------------------------------------------------------------
-        # close
-        # ---------------------------------------------------------------------
-        self.__sz = 0
-        self.__bf.close()
-        self.__bf = None
+        return True
 
-    @trace(LGR)
-    def write(self, data):
+    @trace()
+    def _init_r(self):
         # ---------------------------------------------------------------------
-        # write
+        # _init_r
         # ---------------------------------------------------------------------
-        self.__sz += len(data)
-        self.__bf.write_text(data)
+        if not BinaryFile.exists(self.conf.path):
+            return False
 
-    @trace(LGR)
-    def seek(self, offset):
-        # ---------------------------------------------------------------------
-        # seek
-        # ---------------------------------------------------------------------
-        self.__bf.seek(offset)
+        self.bf = BinaryFile(self.conf.path, 'r')
 
-    @trace(LGR)
-    def size(self):
+    @trace()
+    def _init_w(self):
         # ---------------------------------------------------------------------
-        # size
+        # _init_w
         # ---------------------------------------------------------------------
-        return self.__sz
+        self.bf = BinaryFile(self.conf.path, 'w')
+        self.bf.write(self.JSON_BEGIN)
+
+    @trace()
+    def _term_r(self):
+        # ---------------------------------------------------------------------
+        # _term_r
+        # ---------------------------------------------------------------------
+        self.bf.close()
+
+    @trace()
+    def _term_w(self):
+        # ---------------------------------------------------------------------
+        # _term_w
+        # ---------------------------------------------------------------------
+        self.bf.write(self.JSON_END)
+        self.bf.close()
+
+    @trace()
+    def insert(self, container_dict):
+        # ---------------------------------------------------------------------
+        # insert
+        # ---------------------------------------------------------------------
+        self.bf.write_text(json_dumps(container_dict))
+
 # =============================================================================
 # FUNCTIONS
 # =============================================================================
 
-@trace_func(LGR)
-def init(config):
-    # -------------------------------------------------------------------------
-    # init
-    # -------------------------------------------------------------------------
-    global JSON_FILE
-
-    JSON_FILE = JsonFile(config.get('filename', 'db'))
-    JSON_FILE.open()
-    JSON_FILE.write(BEGIN)
-
-    return True
-
-@trace_func(LGR)
-def term():
-    # -------------------------------------------------------------------------
-    # term
-    # -------------------------------------------------------------------------
-    sz = JSON_FILE.size()
-
-    if sz > len(BEGIN):
-        JSON_FILE.seek(sz - 2)
-
-    JSON_FILE.write(END)
-    JSON_FILE.close()
-
-@trace_func(LGR)
-def persist(container):
-    # -------------------------------------------------------------------------
-    # persist
-    # -------------------------------------------------------------------------
-    json = json_dumps(container.to_dict())
-    json += ','
-    JSON_FILE.write(json)
+@trace_func(__name__)
+def instance(conf):
+    return JsonDB(conf)

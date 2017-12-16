@@ -29,7 +29,7 @@ from struct import calcsize
 from utils.wrapper import trace
 from utils.logging import get_logger
 from utils.converting import unpack_one
-from helpers.vmdk.vmdk_disk import VmdkDisk
+from dissection.helpers.vmdk.vmdk_disk import VmdkDisk
 # =============================================================================
 # GLOBALS
 # =============================================================================
@@ -61,7 +61,7 @@ class GrainDirectory(object):
 
         self.gt_coverage = self.hdr.numGTEsPerGT * self.hdr.grainSize
 
-    @trace(LGR)
+    @trace()
     def __read_metadata(self, offset, skip=0):
         # ---------------------------------------------------------------------
         # read_metadata
@@ -72,7 +72,7 @@ class GrainDirectory(object):
         data = self.metadata[start:start+sz]
         return unpack_one(fmt, data)
 
-    @trace(LGR)
+    @trace()
     def __read_file_grain(self, gte):
         # ---------------------------------------------------------------------
         # __read_file_grain
@@ -80,7 +80,7 @@ class GrainDirectory(object):
         self.bf.seek(gte * SECTOR_SZ)
         return self.bf.read(self.hdr.grainSize * SECTOR_SZ)
 
-    @trace(LGR)
+    @trace()
     def read_grain(self, sector):
         # ---------------------------------------------------------------------
         # read_grain
@@ -104,7 +104,7 @@ class GrainDirectory(object):
 
         return data
 
-    @trace(LGR)
+    @trace()
     def read_sector(self, n):
         # ---------------------------------------------------------------------
         # read_sector
@@ -114,7 +114,7 @@ class GrainDirectory(object):
 
         return grain[start:start+SECTOR_SZ]
 
-    @trace(LGR)
+    @trace()
     def term(self):
         # ---------------------------------------------------------------------
         # term

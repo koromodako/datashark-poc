@@ -61,7 +61,7 @@ class FSEntryFilter(object):
         self.include = include
         self.exclude = exclude
 
-    @trace(LGR)
+    @trace()
     def keep(self, path):
         # ---------------------------------------------------------------------
         # keep

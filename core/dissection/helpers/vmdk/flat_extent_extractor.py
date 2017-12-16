@@ -1,6 +1,6 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#     file: vdi_extractor.py
-#     date: 2017-12-08
+#     file: flat_extent_extractor.py
+#     date: 2017-12-04
 #   author: paul.dautry
 #  purpose:
 #
@@ -25,10 +25,11 @@
 # =============================================================================
 #  IMPORTS
 # =============================================================================
+from utils.logging import todo
 from utils.wrapper import trace
 from utils.logging import get_logger
 # =============================================================================
-#  GLOBALS / CONFIG
+#  GLOBALS
 # =============================================================================
 LGR = get_logger(__name__)
 # =============================================================================
@@ -36,34 +37,29 @@ LGR = get_logger(__name__)
 # =============================================================================
 
 
-class VdiExtractor(object):
+class FlatExtentExtractor(object):
     # -------------------------------------------------------------------------
-    # VdiExtractor
+    # FlatExtentExtractor
     # -------------------------------------------------------------------------
-    def __init__(self, wdir, vdi, obf):
+
+    def __init__(self, wdir, vmdk, obf):
+        # ---------------------------------------------------------------------
+        # __init__
+        # ---------------------------------------------------------------------
+        super(FlatExtentExtractor, self).__init__()
         self.wdir = wdir
-        self.vdi = vdi
+        self.vmdk = vmdk
         self.obf = obf
 
-    @trace(LGR)
+    @trace()
     def extract(self):
         # ---------------------------------------------------------------------
         # extract
         # ---------------------------------------------------------------------
-        vdi_blk_cnt = self.vdi.header().numBlkInHdd
+        if self.df.is_monolithic():
+            todo(LGR, 'implement flat monolithic disk extraction.')
 
-        LGR.info("extracting {} 1MB blocks...".format(vdi_blk_cnt))
-        for n in range(vdi_blk_cnt):
+        elif self.df.is_2gb_splitted():
+            todo(LGR, 'implement flat 2GB splitted disk extraction.')
 
-            data = self.vdi.read_block(n)
-            if data is None:
-                LGR.error("failed to read block.")
-                return False
-
-            self.obf.write(data)
-
-            if (n+1) % 100 == 0:
-                LGR.info("{}/{} blocks extracted.".format(n+1, vdi_blk_cnt))
-
-        LGR.info("extraction completed.")
-        return True
+        return False

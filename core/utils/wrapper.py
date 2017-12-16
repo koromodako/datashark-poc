@@ -53,21 +53,21 @@ def lazy_getter(cls_member_name):
     return wrapper
 
 
-def __in(lgr, called, *args, **kwds):
+def __in(called, *args, **kwds):
     # -------------------------------------------------------------------------
     # __in
     # -------------------------------------------------------------------------
-    lgr.debug("I> {}(...)".format(called))
+    LGR.debug("I> {}(...)".format(called))
 
 
-def __out(lgr, called, ret):
+def __out(called, ret):
     # -------------------------------------------------------------------------
     # __out
     # -------------------------------------------------------------------------
-    lgr.debug("O> {}(...) => ...".format(called))
+    LGR.debug("O> {}(...) => ...".format(called))
 
 
-def trace(lgr):
+def trace():
     # -------------------------------------------------------------------------
     # trace
     # -------------------------------------------------------------------------
@@ -77,11 +77,11 @@ def trace(lgr):
             cls_name = type(self).__name__
             method_name = f.__name__
             called = "{}.{}".format(cls_name, method_name)
-            __in(lgr, called, args, kwds)
+            __in(called, args, kwds)
 
             ret = f(self, *args, **kwds)
 
-            __out(lgr, called, ret)
+            __out(called, ret)
             return ret
 
         return wrapped
@@ -89,20 +89,19 @@ def trace(lgr):
     return wrapper
 
 
-def trace_static(lgr, cls_name):
+def trace_static(cls_name):
     # -------------------------------------------------------------------------
     # trace_static
     # -------------------------------------------------------------------------
     def wrapper(f):
         @wraps(f)
         def wrapped(*args, **kwds):
-            method_name = f.__name__
-            called = "{}.{}".format(cls_name, method_name)
-            __in(lgr, called, args, kwds)
+            called = "{}.{}".format(cls_name, f.__name__)
+            __in(called, args, kwds)
 
             ret = f(*args, **kwds)
 
-            __out(lgr, called, ret)
+            __out(called, ret)
             return ret
 
         return wrapped
@@ -110,19 +109,19 @@ def trace_static(lgr, cls_name):
     return wrapper
 
 
-def trace_func(lgr):
+def trace_func(module_name):
     # -------------------------------------------------------------------------
     # trace_func
     # -------------------------------------------------------------------------
     def wrapper(f):
         @wraps(f)
         def wrapped(*args, **kwds):
-            called = f.__name__
-            __in(lgr, called, args, kwds)
+            called = "{}.{}".format(module_name, f.__name__)
+            __in(called, args, kwds)
 
             ret = f(*args, **kwds)
 
-            __out(lgr, called, ret)
+            __out(called, ret)
             return ret
 
         return wrapped

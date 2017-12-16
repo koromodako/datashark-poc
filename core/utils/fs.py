@@ -1,6 +1,6 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#     file: flat_extent_extractor.py
-#     date: 2017-12-04
+#     file: fs.py
+#     date: 2017-12-16
 #   author: paul.dautry
 #  purpose:
 #
@@ -25,41 +25,42 @@
 # =============================================================================
 #  IMPORTS
 # =============================================================================
-from utils.logging import todo
-from utils.wrapper import trace
+import os
 from utils.logging import get_logger
+from utils.wrapper import trace_func
+from utils.binary_file import BinaryFile
 # =============================================================================
-#  GLOBALS
+#  GLOBALS / CONFIG
 # =============================================================================
 LGR = get_logger(__name__)
 # =============================================================================
-#  CLASSES
+#  FUNCTIONS
 # =============================================================================
 
 
-class FlatExtentExtractor(object):
+@trace_func(__name__)
+def enumerate_files(dirs, dir_filter, file_filter, recursive):
     # -------------------------------------------------------------------------
-    # FlatExtentExtractor
+    # enumerate_files
     # -------------------------------------------------------------------------
+    fpaths = []
 
-    def __init__(self, wdir, vmdk, obf):
-        # ---------------------------------------------------------------------
-        # __init__
-        # ---------------------------------------------------------------------
-        super(FlatExtentExtractor, self).__init__()
-        self.wdir = wdir
-        self.vmdk = vmdk
-        self.obf = obf
+    for dpath in dirs:
+        adpath = os.path.abspath(dpath)
 
-    @trace(LGR)
-    def extract(self):
-        # ---------------------------------------------------------------------
-        # extract
-        # ---------------------------------------------------------------------
-        if self.df.is_monolithic():
-            todo(LGR, 'implement flat monolithic disk extraction.')
+        if recursive:
+            # recursive listing from given directory
+            for root, dirs, files in os.walk(adpath):
+                dirs[:] = [d for d in dirs if dir_filter.keep(d)]
+                for f in files:
+                    if file_filter.keep(f):
+                        fpaths.append(os.path.join(root, f))
+        else:
+            # listing only inside given directory
+            for entry in os.listdir(adpath):
+                fpath = os.path.join(adpath, entry)
+                if BinaryFile.exists(fpath):
+                    if file_filter.keep(entry):
+                        fpaths.append(fpath)
 
-        elif self.df.is_2gb_splitted():
-            todo(LGR, 'implement flat 2GB splitted disk extraction.')
-
-        return False
+    return fpaths

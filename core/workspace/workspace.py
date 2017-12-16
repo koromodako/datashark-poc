@@ -62,7 +62,7 @@ class Workspace(object):
         self.__ws_tmpdir = os.path.join(self.__ws_root, 'tmp')
         self.__ws_datdir = os.path.join(self.__ws_root, 'data')
 
-    @trace(LGR)
+    @trace()
     def __mkdir(self, abspath):
         # --------------------------------------------------------------------------
         # __mkdir
@@ -70,7 +70,7 @@ class Workspace(object):
         os.makedirs(abspath, exist_ok=True)
         return abspath
 
-    @trace(LGR)
+    @trace()
     def __filename(self, prefix, suffix, randomize):
         # --------------------------------------------------------------------------
         # __filename
@@ -79,7 +79,7 @@ class Workspace(object):
         parts = list(filter(None, parts))
         return '.'.join(parts)
 
-    @trace(LGR)
+    @trace()
     def __file(self, absdir, prefix, suffix, isdir=False, randomize=True):
         # --------------------------------------------------------------------------
         # __file
@@ -91,7 +91,7 @@ class Workspace(object):
 
         return BinaryFile(full_path, 'w')
 
-    @trace(LGR)
+    @trace()
     def init(self):
         # --------------------------------------------------------------------------
         # init
@@ -100,7 +100,7 @@ class Workspace(object):
         self.__mkdir(self.__ws_datdir)
         self.__mkdir(self.__ws_tmpdir)
 
-    @trace(LGR)
+    @trace()
     def cleanup(self):
         # --------------------------------------------------------------------------
         # cleanup
@@ -108,28 +108,28 @@ class Workspace(object):
         if os.path.isdir(self.__ws_tmpdir):
             rmtree(self.__ws_tmpdir)  # remove temporary directory (cleanup)
 
-    @trace(LGR)
+    @trace()
     def term(self):
         # --------------------------------------------------------------------------
         # term
         # --------------------------------------------------------------------------
         pass
 
-    @trace(LGR)
+    @trace()
     def logdir(self):
         # --------------------------------------------------------------------------
         # logdir
         # --------------------------------------------------------------------------
         return self.__ws_logdir
 
-    @trace(LGR)
+    @trace()
     def logfile(self, name):
         # --------------------------------------------------------------------------
         # logfile
         # --------------------------------------------------------------------------
         return self.__file(self.__ws_logdir, name, '', randomize=False)
 
-    @trace(LGR)
+    @trace()
     def datdir(self, subdir=False, prefix='', suffix=''):
         # --------------------------------------------------------------------------
         # datdir
@@ -139,14 +139,14 @@ class Workspace(object):
 
         return self.__ws_datdir
 
-    @trace(LGR)
+    @trace()
     def datfile(self, prefix='', suffix=''):
         # --------------------------------------------------------------------------
         # datfile
         # --------------------------------------------------------------------------
         return self.__file(self.__ws_datdir, prefix, suffix)
 
-    @trace(LGR)
+    @trace()
     def tmpdir(self, subdir=False, prefix='', suffix=''):
         # --------------------------------------------------------------------------
         # tmpdir
@@ -156,14 +156,14 @@ class Workspace(object):
 
         return self.__ws_tmpdir
 
-    @trace(LGR)
+    @trace()
     def tmpfile(self, prefix='', suffix=''):
         # --------------------------------------------------------------------------
         # tmpfile
         # --------------------------------------------------------------------------
         return self.__file(self.__ws_tmpdir, prefix, suffix)
 
-    @trace(LGR)
+    @trace()
     def filepath(self, fp):
         # ---------------------------------------------------------------------
         # filepath
@@ -173,7 +173,7 @@ class Workspace(object):
 # FUNCTIONS
 # ==============================================================================
 
-@trace_func(LGR)
+@trace_func(__name__)
 def init():
     # ------------------------------------------------------------------------------
     # init
@@ -191,7 +191,7 @@ def init():
 
     return False
 
-@trace_func(LGR)
+@trace_func(__name__)
 def cleanup():
     # -------------------------------------------------------------------------
     # cleanup
@@ -202,7 +202,7 @@ def cleanup():
 
     return False
 
-@trace_func(LGR)
+@trace_func(__name__)
 def term():
     # ------------------------------------------------------------------------------
     # term
@@ -213,19 +213,19 @@ def term():
 
     return False
 
-@trace_func(LGR)
+@trace_func(__name__)
 def workspace():
     # ------------------------------------------------------------------------------
     # workspace
     # ------------------------------------------------------------------------------
     return WORKSPACE
 
-@trace_func(LGR)
+@trace_func(__name__)
 def action_group():
     # ------------------------------------------------------------------------------
     # action_group
     # ------------------------------------------------------------------------------
-    @trace_func(LGR)
+    @trace_func(__name__)
     def __action_list(keywords, args):
         # --------------------------------------------------------------------------
         # __action_list
@@ -245,7 +245,7 @@ def action_group():
         text += '\ntotal: {}\n'.format(total)
         LGR.info(text)
 
-    @trace_func(LGR)
+    @trace_func(__name__)
     def __action_clean(keywords, args):
         # --------------------------------------------------------------------------
         # __action_clean

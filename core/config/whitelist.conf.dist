@@ -1,0 +1,6 @@
+{
+    "adapter": "sqlite",
+    "sqlite": {
+        "path": "~/ds.whitelist.db"
+    }
+}

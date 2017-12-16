@@ -26,8 +26,8 @@
 #  IMPORTS
 # =============================================================================
 import os
-from importlib import import_module
-from utils.config import config
+import importlib as implib
+import utils.config as config
 from utils.logging import get_logger
 from utils.wrapper import trace
 # =============================================================================
@@ -47,21 +47,21 @@ class PluginImporter(object):
     # -------------------------------------------------------------------------
     # PluginImporter
     # -------------------------------------------------------------------------
-    def __init__(self, import_root=[], search_root='.', recursively=True,
+    def __init__(self, import_root, caller, subdir, recursive=True,
                  expected_funcs=set()):
         # ---------------------------------------------------------------------
         # __init__
         # ---------------------------------------------------------------------
         super(PluginImporter, self).__init__()
-        self.skip_failing_import = config('skip_failing_import', False)
+        self.skip_failing_import = config.value('skip_failing_import', False)
         self.expected_funcs = expected_funcs
         self.import_root = import_root
-        self.search_root = search_root
-        self.recursively = recursively
+        self.search_root = os.path.join(os.path.dirname(caller), subdir)
+        self.recursive = recursive
         self.plugins = {}
         self.valid = None
 
-    @trace(LGR)
+    @trace()
     def __import_failure(self, error):
         # ---------------------------------------------------------------------
         # __import_failure
@@ -71,7 +71,7 @@ class PluginImporter(object):
         if not self.skip_failing_import:
             raise PluginImportException(error)
 
-    @trace(LGR)
+    @trace()
     def __register_plugin(self, plugin, plugin_name):
         plugin_funcs = set(dir(plugin))
         missing_funcs = plugin_funcs.intersection(self.expected_funcs)
@@ -86,10 +86,11 @@ class PluginImporter(object):
             return error
 
         self.plugins[plugin_name] = plugin
+        LGR.info("plugin <{}> registered.".format(plugin_name))
 
         return None
 
-    @trace(LGR)
+    @trace()
     def load_plugins(self):
         # ---------------------------------------------------------------------
         # load_plugins
@@ -99,7 +100,7 @@ class PluginImporter(object):
         LGR.info("loading plugins from <{}>".format(self.search_root))
         for root, dirs, files in os.walk(self.search_root):
 
-            if not self.recursively:
+            if not self.recursive:
                 dirs[:] = []
 
             relroot = root.replace(self.search_root, '').split(os.sep)
@@ -113,11 +114,11 @@ class PluginImporter(object):
                         self.__import_failure("plugin name contains at least "
                                               "one dot...")
 
-                    import_parts = self.import_root + relroot + [plugin]
+                    import_parts = [self.import_root] + relroot + [plugin]
                     import_path = '.'.join(import_parts)
 
                     try:
-                        imported_plugin = import_module(import_path)
+                        imported_plugin = implib.import_module(import_path)
                         imported_plugin.name = plugin
                     except Exception as e:
                         error = "failed to import <{}>".format(import_path)

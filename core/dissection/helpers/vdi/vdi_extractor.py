@@ -1,6 +1,6 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#     file: vhd_extractor.py
-#     date: 2017-12-09
+#     file: vdi_extractor.py
+#     date: 2017-12-08
 #   author: paul.dautry
 #  purpose:
 #
@@ -27,7 +27,6 @@
 # =============================================================================
 from utils.wrapper import trace
 from utils.logging import get_logger
-from helpers.vhd.vhd_disk import VhdDiskType
 # =============================================================================
 #  GLOBALS / CONFIG
 # =============================================================================
@@ -37,39 +36,34 @@ LGR = get_logger(__name__)
 # =============================================================================
 
 
-class VhdExtractor(object):
+class VdiExtractor(object):
     # -------------------------------------------------------------------------
-    # VhdExtractor
+    # VdiExtractor
     # -------------------------------------------------------------------------
-    def __init__(self, wdir, vhd, obf):
-        # ---------------------------------------------------------------------
-        # __init__
-        # ---------------------------------------------------------------------
-        super(VhdExtractor, self).__init__()
+    def __init__(self, wdir, vdi, obf):
         self.wdir = wdir
-        self.vhd = vhd
+        self.vdi = vdi
         self.obf = obf
 
-    @trace(LGR)
+    @trace()
     def extract(self):
         # ---------------------------------------------------------------------
         # extract
         # ---------------------------------------------------------------------
-        blk_cnt = self.vhd.block_count()
+        vdi_blk_cnt = self.vdi.header().numBlkInHdd
 
-        LGR.info("extracting {} blocks...".format(blk_cnt))
+        LGR.info("extracting {} 1MB blocks...".format(vdi_blk_cnt))
+        for n in range(vdi_blk_cnt):
 
-        for n in range(blk_cnt):
-            data = self.vhd.read_block(n)
-
+            data = self.vdi.read_block(n)
             if data is None:
-                LGR.error("an error occured while extracting data.")
+                LGR.error("failed to read block.")
                 return False
 
             self.obf.write(data)
 
-            if (n+1) % 50 == 0:
-                LGR.info("{}/{} blocks extracted.".format(n+1, blk_cnt))
+            if (n+1) % 100 == 0:
+                LGR.info("{}/{} blocks extracted.".format(n+1, vdi_blk_cnt))
 
         LGR.info("extraction completed.")
         return True

@@ -32,10 +32,10 @@ from utils.binary_file import BinaryFile
 from utils.action_group import ActionGroup
 from container.container import Container
 # dissection helpers
-from helpers.vmdk.vmdk_disk import VmdkDisk
-from helpers.vmdk.descriptor_file import DescriptorFile
-from helpers.vmdk.flat_extent_extractor import FlatExtentExtractor
-from helpers.vmdk.sparse_extent_extractor import SparseExtentExtractor
+from dissection.helpers.vmdk.vmdk_disk import VmdkDisk
+from dissection.helpers.vmdk.descriptor_file import DescriptorFile
+from dissection.helpers.vmdk.flat_extent_extractor import FlatExtentExtractor
+from dissection.helpers.vmdk.sparse_extent_extractor import SparseExtentExtractor
 # =============================================================================
 # GLOBALS / CONFIG
 # =============================================================================
@@ -45,7 +45,7 @@ LGR = get_logger(__name__)
 # =============================================================================
 
 
-@trace_func(LGR)
+@trace_func(__name__)
 def __dissect_from_vmdk(wdir, vmdk, obf):
     # -------------------------------------------------------------------------
     # __dissect_from_vmdk
@@ -84,7 +84,7 @@ def __dissect_from_vmdk(wdir, vmdk, obf):
     return True
 
 
-@trace_func(LGR)
+@trace_func(__name__)
 def __dissect_from_vmx(wdir, df, obf):
     # -------------------------------------------------------------------------
     # __dissect_from_vmx
@@ -95,7 +95,7 @@ def __dissect_from_vmx(wdir, df, obf):
 # =============================================================================
 
 
-@trace_func(LGR)
+@trace_func(__name__)
 def mimes():
     # -------------------------------------------------------------------------
     # mimes
@@ -109,7 +109,7 @@ def mimes():
     ]
 
 
-@trace_func(LGR)
+@trace_func(__name__)
 def configure(config):
     # -------------------------------------------------------------------------
     # configure
@@ -122,7 +122,7 @@ def configure(config):
     return True
 
 
-@trace_func(LGR)
+@trace_func(__name__)
 def can_dissect(container):
     # -------------------------------------------------------------------------
     # can_dissect
@@ -148,7 +148,7 @@ def can_dissect(container):
     return False
 
 
-@trace_func(LGR)
+@trace_func(__name__)
 def dissect(container):
     # -------------------------------------------------------------------------
     # dissect
@@ -184,14 +184,14 @@ def dissect(container):
     return containers
 
 
-@trace_func(LGR)
+@trace_func(__name__)
 def action_group():
     # -------------------------------------------------------------------------
     # action_group()
     #   /!\ public mandatory function that the module must define /!\
     #   \brief returns module action group
     # -------------------------------------------------------------------------
-    @trace_func(LGR)
+    @trace_func(__name__)
     def __action_header(keywords, args):
         # ---------------------------------------------------------------------
         # __action_header
@@ -212,7 +212,7 @@ def action_group():
 
             LGR.info(hdr.to_str())
 
-    @trace_func(LGR)
+    @trace_func(__name__)
     def __action_descfile(keywords, args):
         # ---------------------------------------------------------------------
         # __action_descfile

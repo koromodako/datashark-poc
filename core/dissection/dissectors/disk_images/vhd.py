@@ -29,8 +29,8 @@ from utils.wrapper import trace_func
 from utils.binary_file import BinaryFile
 from utils.action_group import ActionGroup
 from container.container import Container
-from helpers.vhd.vhd_disk import VhdDisk
-from helpers.vhd.vhd_extractor import VhdExtractor
+from dissection.helpers.vhd.vhd_disk import VhdDisk
+from dissection.helpers.vhd.vhd_extractor import VhdExtractor
 # =============================================================================
 # GLOBAL
 # =============================================================================
@@ -43,7 +43,7 @@ LGR = get_logger(__name__)
 # =============================================================================
 
 
-@trace_func(LGR)
+@trace_func(__name__)
 def mimes():
     # -------------------------------------------------------------------------
     # mimes
@@ -56,7 +56,7 @@ def mimes():
     ]
 
 
-@trace_func(LGR)
+@trace_func(__name__)
 def configure(config):
     # -------------------------------------------------------------------------
     # configure
@@ -69,7 +69,7 @@ def configure(config):
     return True
 
 
-@trace_func(LGR)
+@trace_func(__name__)
 def can_dissect(container):
     # -------------------------------------------------------------------------
     # can_dissect
@@ -93,7 +93,7 @@ def can_dissect(container):
     return True
 
 
-@trace_func(LGR)
+@trace_func(__name__)
 def dissect(container):
     # -------------------------------------------------------------------------
     # dissect
@@ -119,14 +119,14 @@ def dissect(container):
     return containers
 
 
-@trace_func(LGR)
+@trace_func(__name__)
 def action_group():
     # -------------------------------------------------------------------------
     # action_group()
     #   /!\ public mandatory function that the module must define /!\
     #   \brief returns module action group
     # -------------------------------------------------------------------------
-    @trace_func(LGR)
+    @trace_func(__name__)
     def __action_header(keywords, args):
         # ---------------------------------------------------------------------
         # __action_header
@@ -148,7 +148,7 @@ def action_group():
 
             LGR.info(hdr.to_str())
 
-    @trace_func(LGR)
+    @trace_func(__name__)
     def __action_footer(keywords, args):
         # ---------------------------------------------------------------------
         # __action_footer

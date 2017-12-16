@@ -35,7 +35,7 @@ LGR = get_logger(__name__)
 # FUNCTIONS
 # =============================================================================
 
-@trace_func(LGR)
+@trace_func(__name__)
 def str_to_int(s):
     # -------------------------------------------------------------------------
     # str_to_int
@@ -52,7 +52,7 @@ def str_to_int(s):
     # fallback on base 10
     return int(s)
 
-@trace_func(LGR)
+@trace_func(__name__)
 def unpack_one(fmt, data):
     # -------------------------------------------------------------------------
     # unpack_one

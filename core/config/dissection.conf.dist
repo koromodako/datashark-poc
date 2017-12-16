@@ -1,0 +1,12 @@
+{
+    "adapter": "json",
+    "adapters": {
+        "json": {}
+    },
+    "dissectors": {
+        "vmdk": {},
+        "vhd": {},
+        "vdi": {}
+    },
+    "carvers": {}
+}

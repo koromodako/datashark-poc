@@ -27,8 +27,8 @@ import os
 import logging
 import logging.handlers
 from termcolor import colored
-from utils.config import PROG_NAME
 from utils.ms import assert_ms_windows
+from utils.constants import PROG_NAME
 # =============================================================================
 # CONFIGURATION
 # =============================================================================

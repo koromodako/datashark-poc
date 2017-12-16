@@ -30,9 +30,9 @@ from utils.logging import todo
 from utils.wrapper import trace
 from utils.logging import get_logger
 from utils.binary_file import BinaryFile
-from helpers.vmdk.gd_stack import GrainDirectoryStack
-from helpers.vmdk.vmdk_disk import VmdkDisk
-from helpers.vmdk.vmdk_disk import S_SPARSE_EXTENT_HDR
+from dissection.helpers.vmdk.gd_stack import GrainDirectoryStack
+from dissection.helpers.vmdk.vmdk_disk import VmdkDisk
+from dissection.helpers.vmdk.vmdk_disk import S_SPARSE_EXTENT_HDR
 # =============================================================================
 #  GLOBALS
 # =============================================================================
@@ -58,7 +58,7 @@ class SparseExtentExtractor(object):
         self.obf = obf
         self.df = vmdk.descriptor_file()
 
-    @trace(LGR)
+    @trace()
     def __extract_sparse_extent(self, extent):
         # ---------------------------------------------------------------------
         # __extract_sparse_extent
@@ -96,7 +96,7 @@ class SparseExtentExtractor(object):
         ebf.close()
         return True
 
-    @trace(LGR)
+    @trace()
     def __extract_monolithic_sparse(self):
         # ---------------------------------------------------------------------
         # __extract_monolithic_sparse
@@ -120,7 +120,7 @@ class SparseExtentExtractor(object):
         LGR.info("extraction completed.")
         return True
 
-    @trace(LGR)
+    @trace()
     def extract(self):
         # ---------------------------------------------------------------------
         # extract

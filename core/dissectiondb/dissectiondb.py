@@ -24,12 +24,11 @@
 # =============================================================================
 # IMPORTS
 # =============================================================================
-from multiprocessing import Lock
+import utils.config as config
 from utils.logging import get_logger
+from utils.wrapper import trace
 from utils.wrapper import trace_static
 from utils.action_group import ActionGroup
-import dissectiondb.adapters.json_adapter as json_adapter
-import dissectiondb.adapters.sqlite_adapter as sqlite_adapter
 # =============================================================================
 # GLOBAL
 # =============================================================================
@@ -40,71 +39,75 @@ LGR = get_logger(__name__)
 
 
 class DissectionDB(object):
+    ADAPTERS = None
     # -------------------------------------------------------------------------
-    # DissectionDB
+    # HashDB
     # -------------------------------------------------------------------------
-    __ADAPTERS = {
-        "json": json_adapter,
-        "sqlite": sqlite_adapter
-    }
-    __DB_ADAPTER = None
-    __VALID = False
-    __LOCK = Lock()
-
-    @staticmethod
-    @trace_static(LGR, 'DissectionDB')
-    def adapters():
+    def __init__(self, name, conf):
         # ---------------------------------------------------------------------
-        # adapters
+        # __init__
         # ---------------------------------------------------------------------
-        return list(DissectionDB.__ADAPTERS.keys())
+        super(HashDB, self).__init__()
+        self.name = name
+        self.conf = conf
+        self.valid = False
+        self.adapter = None
+        if DissectionDB.ADAPTERS is None:
+            pi = PluginImporter('dissectiondb.adapters',
+                                __file__, 'adapters',
+                                expected_funcs=set(['instance']))
 
-    @staticmethod
-    @trace_static(LGR, 'DissectionDB')
-    def init(config):
+            if not pi.load_plugins():
+                LGR.warning("some adapters failed to be loaded.")
+
+            DissectionDB.ADAPTERS = copy.deepcopy(pi.plugins)
+
+    @trace()
+    def init(self, mode):
         # ---------------------------------------------------------------------
         # init
         # ---------------------------------------------------------------------
-        DissectionDB.__DB_ADAPTER = DissectionDB.__ADAPTERS.get(
-            config.mode)
-        DissectionDB.__VALID = DissectionDB.__DB_ADAPTER.init(
-            config)
+        if not self.conf.has('adapter'):
+            LGR.error("invalid configuration of dissectiondb adapter or "
+                      "missing value.")
+            return False
 
-        if not DissectionDB.__VALID:
-            LGR.error("database initialization failed.")
-            DissectionDB.__DB_ADAPTER = None
+        adapter_mod = self.ADAPTERS.get(self.conf.adapter)
+        if adapter_mod is None:
+            LGR.error("failed to load adapter: <{}>".format(self.conf.adapter))
+            return False
 
-        return DissectionDB.__VALID
+        self.adapter = adapter_mod.instance(self.conf)
+        self.adapter.init(mode)
+        if not self.adapter.is_valid():
+            LGR.error("invalid adapter instance.")
+            return False
 
-    @staticmethod
-    @trace_static(LGR, 'DissectionDB')
-    def term():
+        self.valid = True
+        return True
+
+    @trace()
+    def term(self):
         # ---------------------------------------------------------------------
         # term
         # ---------------------------------------------------------------------
-        DissectionDB.__DB_ADAPTER.term()
-        DissectionDB.__DB_ADAPTER = None
-        DissectionDB.__VALID = False
+        if self.valid:
+            self.adapter.term()
+            self.adapter = None
+            self.valid = False
 
-    @staticmethod
-    @trace_static(LGR, 'DissectionDB')
-    def is_valid():
+    @trace()
+    def persist(self, container):
         # ---------------------------------------------------------------------
-        # is_valid
+        # insert
         # ---------------------------------------------------------------------
-        return DissectionDB.__VALID
+        if not self.valid:
+            return False
 
-    @staticmethod
-    @trace_static(LGR, 'DissectionDB')
-    def persist_container(container):
-        # ---------------------------------------------------------------------
-        # persist_container
-        # ---------------------------------------------------------------------
-        DissectionDB.__LOCK.acquire()
-        status = DissectionDB.__DB_ADAPTER.persist(container)
-        DissectionDB.__LOCK.release()
-        return status
+        if not self.adapter.insert(container.to_dict()):
+            return False
 
+        return True
 
 class DissectionDBActionGroup(ActionGroup):
     # -------------------------------------------------------------------------
@@ -120,13 +123,22 @@ class DissectionDBActionGroup(ActionGroup):
         })
 
     @staticmethod
-    @trace_static(LGR, 'DissectionDBActionGroup')
+    @trace_static('DissectionDBActionGroup')
     def list(keywords, args):
         # ---------------------------------------------------------------------
         # list
         # ---------------------------------------------------------------------
-        text = '\nAdaptaters:'
-        for adapter in DissectionDB.adapters():
-            text += '\n\t+ {}'.format(adapter)
-        text += '\n'
+        conf = config.load_from_value('dissection_db')
+        dissection_db = DissectionDB(None, None)
+        adapters = sorted(DissectionDB.ADAPTERS.keys())
+
+        text = "\nadapters:"
+
+        if len(adapters) > 0:
+            for adapter in adapters:
+                text += "\n\t+ {}".format(adapter)
+        else:
+            text += "\n\tno adapter available."
+
+        text += "\n"
         LGR.info(text)

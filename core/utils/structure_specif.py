@@ -354,7 +354,7 @@ class StructSpecif(object):
         self.members = members
         self.valid = self.__validate()
 
-    @trace(LGR)
+    @trace()
     def __validate(self):
         # ---------------------------------------------------------------------
         # __validate

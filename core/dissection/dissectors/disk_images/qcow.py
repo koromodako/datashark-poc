@@ -38,7 +38,7 @@ LGR = get_logger(__name__)
 # =============================================================================
 
 
-@trace_func(LGR)
+@trace_func(__name__)
 def mimes():
     # -------------------------------------------------------------------------
     # mimes
@@ -51,7 +51,7 @@ def mimes():
     ]
 
 
-@trace_func(LGR)
+@trace_func(__name__)
 def configure(config):
     # -------------------------------------------------------------------------
     # configure
@@ -64,7 +64,7 @@ def configure(config):
     return True
 
 
-@trace_func(LGR)
+@trace_func(__name__)
 def can_dissect(container):
     # -------------------------------------------------------------------------
     # can_dissect
@@ -80,7 +80,7 @@ def can_dissect(container):
     return False
 
 
-@trace_func(LGR)
+@trace_func(__name__)
 def dissect(container):
     # -------------------------------------------------------------------------
     # dissect
@@ -94,7 +94,7 @@ def dissect(container):
     return []
 
 
-@trace_func(LGR)
+@trace_func(__name__)
 def action_group():
     # -------------------------------------------------------------------------
     # action_group()

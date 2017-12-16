@@ -89,7 +89,7 @@ class Struct(object):
         setattr(self, Struct.K_ST_TYPE, st_type)
         setattr(self, Struct.K_ST_SIZE, st_size)
 
-    @trace(LGR)
+    @trace()
     def set_member(self, name, value):
         # ---------------------------------------------------------------------
         # set_member
@@ -100,21 +100,21 @@ class Struct(object):
         setattr(self, name, value)
         return True
 
-    @trace(LGR)
+    @trace()
     def set_size(self, st_size):
         # ---------------------------------------------------------------------
         # set_size
         # ---------------------------------------------------------------------
         setattr(self, Struct.K_ST_SIZE, st_size)
 
-    @trace(LGR)
+    @trace()
     def type(self):
         # ---------------------------------------------------------------------
         # name
         # ---------------------------------------------------------------------
         return getattr(self, Struct.K_ST_TYPE)
 
-    @trace(LGR)
+    @trace()
     def size(self):
         # ---------------------------------------------------------------------
         # size
@@ -122,7 +122,7 @@ class Struct(object):
         return getattr(self, Struct.K_ST_SIZE)
 
     @staticmethod
-    @trace_static(LGR, 'Struct')
+    @trace_static('Struct')
     def __kv_to_str(key, value):
         # ---------------------------------------------------------------------
         # __kv_to_str
@@ -141,7 +141,7 @@ class Struct(object):
 
         return s
 
-    @trace(LGR)
+    @trace()
     def to_str(self):
         # ---------------------------------------------------------------------
         # to_str

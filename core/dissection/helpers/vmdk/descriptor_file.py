@@ -26,7 +26,7 @@
 # =============================================================================
 from utils.wrapper import trace
 from utils.logging import get_logger
-from helpers.vmdk.extent import Extent
+from dissection.helpers.vmdk.extent import Extent
 # =============================================================================
 # GLOBALS / CONFIG
 # =============================================================================
@@ -88,7 +88,7 @@ class DescriptorFile(object):
         self.ddb = {}
         self.__valid = (self.__parse(s) and self.__check())
 
-    @trace(LGR)
+    @trace()
     def __parse(self, s):
         # ---------------------------------------------------------------------
         # __parse
@@ -125,7 +125,7 @@ class DescriptorFile(object):
         # descriptor file parsing step is valid
         return True
 
-    @trace(LGR)
+    @trace()
     def __check(self):
         # ---------------------------------------------------------------------
         # __check
@@ -151,56 +151,56 @@ class DescriptorFile(object):
         # descriptor file check step is valid
         return True
 
-    @trace(LGR)
+    @trace()
     def is_valid(self):
         # --------------------------------------------------------------------------
         # is_valid
         # --------------------------------------------------------------------------
         return self.__valid
 
-    @trace(LGR)
+    @trace()
     def has_parent(self):
         # --------------------------------------------------------------------------
         # has_parent
         # --------------------------------------------------------------------------
         return (getattr(self, self.K_PARENT_CID) != self.CID_NOPARENT)
 
-    @trace(LGR)
+    @trace()
     def is_monolithic(self):
         # --------------------------------------------------------------------------
         # is_monolithic
         # --------------------------------------------------------------------------
         return ('monolithic' in getattr(self, self.K_CREATE_TYPE).lower())
 
-    @trace(LGR)
+    @trace()
     def is_2gb_splitted(self):
         # --------------------------------------------------------------------------
         # is_2gb_splitted
         # --------------------------------------------------------------------------
         return ('twogbmaxextent' in getattr(self, self.K_CREATE_TYPE).lower())
 
-    @trace(LGR)
+    @trace()
     def is_sparse(self):
         # --------------------------------------------------------------------------
         # is_sparse
         # --------------------------------------------------------------------------
         return ('sparse' in getattr(self, self.K_CREATE_TYPE).lower())
 
-    @trace(LGR)
+    @trace()
     def is_esx_disk(self):
         # --------------------------------------------------------------------------
         # is_esx_disk
         # --------------------------------------------------------------------------
         return ('vmfs' in getattr(self, self.K_CREATE_TYPE).lower())
 
-    @trace(LGR)
+    @trace()
     def is_using_physical_disk(self):
         # --------------------------------------------------------------------------
         # is_using_physical_disk
         # --------------------------------------------------------------------------
         return (getattr(self, self.K_CREATE_TYPE) in self.PHY_CREATE_TYPES)
 
-    @trace(LGR)
+    @trace()
     def is_using_raw_device_mapping(self):
         # --------------------------------------------------------------------------
         # is_using_raw_device_mapping
@@ -208,7 +208,7 @@ class DescriptorFile(object):
         createType = getattr(self, self.K_CREATE_TYPE)
         return (createType in self.RAW_DEV_MAP_CREATE_TYPES)
 
-    @trace(LGR)
+    @trace()
     def is_stream_optimized(self):
         # --------------------------------------------------------------------------
         # is_stream_optimized
@@ -216,7 +216,7 @@ class DescriptorFile(object):
         createType = getattr(self, self.K_CREATE_TYPE)
         return (createType in self.STREAM_OPTIM_CREATE_TYPES)
 
-    @trace(LGR)
+    @trace()
     def parent_filename(self):
         # --------------------------------------------------------------------------
         # parent_filename
@@ -226,7 +226,7 @@ class DescriptorFile(object):
 
         return getattr(self, self.K_PARENT_FILENAME_HINT)
 
-    @trace(LGR)
+    @trace()
     def to_str(self):
         # --------------------------------------------------------------------------
         # to_str

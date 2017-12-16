@@ -45,7 +45,7 @@ def __printable(byte):
     return chr(byte)
 
 
-@trace_func(LGR)
+@trace_func(__name__)
 def hexdump(data, col_sz=2, col_num=4, human=True, max_lines=10):
     # -------------------------------------------------------------------------
     # hexdump
