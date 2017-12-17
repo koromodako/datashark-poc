@@ -25,7 +25,8 @@
 # =============================================================================
 #  IMPORTS
 # =============================================================================
-from multiprocess import Lock
+import multiprocessing
+from utils.wrapper import trace
 from utils.logging import get_logger
 # =============================================================================
 #  GLOBALS / CONFIG
@@ -44,7 +45,7 @@ class HashDBAdapter(object):
         super(HashDBAdapter, self).__init__()
 
         self._conf = conf
-        self._lock = Lock()
+        self._lock = multiprocessing.Lock()
 
         self.__mode = None
         self.__valid = False

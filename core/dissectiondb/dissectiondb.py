@@ -29,6 +29,7 @@ from utils.logging import get_logger
 from utils.wrapper import trace
 from utils.wrapper import trace_static
 from utils.action_group import ActionGroup
+from utils.plugin_importer import PluginImporter
 # =============================================================================
 # GLOBAL
 # =============================================================================
@@ -47,7 +48,7 @@ class DissectionDB(object):
         # ---------------------------------------------------------------------
         # __init__
         # ---------------------------------------------------------------------
-        super(HashDB, self).__init__()
+        super(DissectionDB, self).__init__()
         self.name = name
         self.conf = conf
         self.valid = False
@@ -60,7 +61,7 @@ class DissectionDB(object):
             if not pi.load_plugins():
                 LGR.warning("some adapters failed to be loaded.")
 
-            DissectionDB.ADAPTERS = copy.deepcopy(pi.plugins)
+            DissectionDB.ADAPTERS = pi.plugins
 
     @trace()
     def init(self, mode):
@@ -113,18 +114,9 @@ class DissectionDBActionGroup(ActionGroup):
     # -------------------------------------------------------------------------
     # DissectionDBActionGroup
     # -------------------------------------------------------------------------
-    def __init__(self):
-        # ---------------------------------------------------------------------
-        # __init__
-        # ---------------------------------------------------------------------
-        super(DissectionDBActionGroup, self).__init__('dissectiondb', {
-            'list': ActionGroup.action(DissectionDBActionGroup.list,
-                                       "list of available database adapters.")
-        })
-
     @staticmethod
     @trace_static('DissectionDBActionGroup')
-    def list(keywords, args):
+    def adapters(keywords, args):
         # ---------------------------------------------------------------------
         # list
         # ---------------------------------------------------------------------
@@ -142,3 +134,14 @@ class DissectionDBActionGroup(ActionGroup):
 
         text += "\n"
         LGR.info(text)
+
+    def __init__(self):
+        # ---------------------------------------------------------------------
+        # __init__
+        # ---------------------------------------------------------------------
+        super(DissectionDBActionGroup, self).__init__('dissectiondb', {
+            'adapters': ActionGroup.action(DissectionDBActionGroup.adapters,
+                                           "list of available database "
+                                           "adapters.")
+        })
+

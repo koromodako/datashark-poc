@@ -25,7 +25,6 @@
 # IMPORTS
 # =============================================================================
 import os
-import copy
 import utils.fs as fs
 import utils.config as config
 from utils.wrapper import trace
@@ -91,7 +90,7 @@ class HashDB(object):
                 LGR.warning("some adapters failed to be loaded.")
 
 
-            HashDB.ADAPTERS = copy.deepcopy(pi.plugins)
+            HashDB.ADAPTERS = pi.plugins
 
     @trace()
     def init(self, mode):
@@ -170,7 +169,7 @@ class HashDBActionGroup(ActionGroup):
     # -------------------------------------------------------------------------
     @staticmethod
     @trace_static('HashDBActionGroup')
-    def list(keywords, args):
+    def adapters(keywords, args):
         hdb = HashDB(None, None)
         adapters = sorted(HashDB.ADAPTERS.keys())
 
@@ -261,8 +260,8 @@ class HashDBActionGroup(ActionGroup):
         # __init__
         # ---------------------------------------------------------------------
         super(HashDBActionGroup, self).__init__('hashdb', {
-            'list': ActionGroup.action(HashDBActionGroup.list,
-                                       "list hash database adapters."),
+            'adapters': ActionGroup.action(HashDBActionGroup.adapters,
+                                           "list hash database adapters."),
             'create': ActionGroup.action(HashDBActionGroup.create,
                                          "create a new hash database."),
             'merge': ActionGroup.action(HashDBActionGroup.merge,

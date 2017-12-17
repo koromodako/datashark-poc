@@ -29,7 +29,7 @@ import sqlite3
 from utils.wrapper import trace
 from utils.wrapper import trace_func
 from utils.logging import get_logger
-from hashdb.adapters.hashdb_adapter import HashDBAdapter
+from hashdb.hashdb_adapter import HashDBAdapter
 # =============================================================================
 #  GLOBALS / CONFIG
 # =============================================================================
@@ -46,7 +46,15 @@ class SQLiteDB(HashDBAdapter):
     # -------------------------------------------------------------------------
     def __init__(self, conf):
         super(SQLiteDB, self).__init__(conf)
-        if conf.has('fpath'):
+
+    def _check_conf(self):
+        # ---------------------------------------------------------------------
+        # _check_conf
+        # ---------------------------------------------------------------------
+        if not self._conf.has('path'):
+            return False
+
+        return True
 
     def insert(self, hexdigest, path):
         c = self.conn.cursor()
@@ -76,7 +84,7 @@ class SQLiteDB(HashDBAdapter):
 
     def _init_r(self):
         try:
-            uri = 'file:{}?mode=ro'.format(self.conf.path)
+            uri = 'file:{}?mode=ro'.format(self._conf.path)
             self.conn = sqlite3.connect(uri, uri=True)
         except Exception as e:
             LGR.exception("failed to init sqlite3 database.")
@@ -86,7 +94,7 @@ class SQLiteDB(HashDBAdapter):
 
     def _init_w(self):
         try:
-            uri = 'file:{}'.format(self.conf.path)
+            uri = 'file:{}'.format(self._conf.path)
             self.conn = sqlite3.connect(uri, uri=True)
         except Exception as e:
             LGR.exception("failed to init sqlite3 database.")

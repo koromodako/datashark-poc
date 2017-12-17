@@ -29,7 +29,7 @@ from utils.logging import get_logger
 from utils.wrapper import trace
 from utils.wrapper import trace_func
 from utils.binary_file import BinaryFile
-from dissectiondb.adapters.dissectiondb_adapter import DissectionDBAdapter
+from dissectiondb.dissectiondb_adapter import DissectionDBAdapter
 # =============================================================================
 # GLOBALS / CONFIG
 # =============================================================================
