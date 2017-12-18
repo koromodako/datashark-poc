@@ -245,6 +245,8 @@ def action_group():
         text += '\ntotal: {}\n'.format(total)
         LGR.info(text)
 
+        return True
+
     @trace_func(__name__)
     def __action_clean(keywords, args):
         # --------------------------------------------------------------------------
@@ -265,6 +267,8 @@ def action_group():
                 if entry.startswith(Workspace.WS_PREFIX):
                     LGR.info('removing {}...'.format(full_path))
                     rmtree(full_path)
+
+        return True
     # -------------------------------------------------------------------------
     # ActionGroup
     # -------------------------------------------------------------------------

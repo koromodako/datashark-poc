@@ -172,7 +172,7 @@ class VhdDisk(object):
             return None
 
         if self._type not in [VhdDiskType.DYNAMIC, VhdDiskType.DIFFERENCING]:
-            LGR.warning("cannot read header if disk is not dynamic nor "
+            LGR.warn("cannot read header if disk is not dynamic nor "
                         "differencing.")
             return None
 

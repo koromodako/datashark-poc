@@ -56,8 +56,9 @@ def dissect(container, dissectors):
     #
     dissection_mods = dissectors.get(container.mime_type, None)
     if dissection_mods is None:
-        LGR.warn('cannot find dissector for: {}'.format(container.mime_type))
-        container.flagged = True
+        LGR.warn("cannot find dissector for: {} => flagged.".format(
+            container.mime_type))
+        container.set_flag(Container.Flag.FLAGGED)
         return []
     #
     for dissector in dissection_mods:
@@ -83,9 +84,9 @@ def carve(container, carvers):
 
 @trace_func(__name__)
 def dissection_routine(container,
-                       whitelist_conf,
-                       blacklist_conf,
-                       dissection_conf,
+                       whitelist_db,
+                       blacklist_db,
+                       dissection_db,
                        dissectors,
                        carvers):
     # -------------------------------------------------------------------------
@@ -94,64 +95,42 @@ def dissection_routine(container,
     iq = []
     oq = []
 
-    dissection_db = DissectionDB(dissection_conf)
-    if not dissection_db.init('w'):
-        LGR.error("failed to init dissection db.")
-        return (iq, oq)
-
-    whitelist_db = HashDB(whitelist_conf)
-    if not whitelist_db.init('r'):
-        LGR.warning("failed to init whitelist db.")
-
-    blacklist_db = HashDB(blacklist_conf)
-    if not blacklist_db.init('r'):
-        LGR.warning("failed to init blacklist db.")
-
-    try:
-        # is the container whitelisted ?
-        if whitelist_db.contains(container):
-            LGR.info("matching whitelisted container. skipping!")
-            container.set_flag(Container.Flag.WHITELISTED)
-            dissection_db.persist(container)
-            return (iq, oq)     # interrupt dissection process here
-
-        # is the container blacklisted ?
-        if blacklist_db.contains(container):
-            LGR.warn("matching blacklisted container. flagged!")
-            container.set_flag(Container.Flag.BLACKLISTED)
-            dissection_db.persist(container)
-            return (iq, oq)     # interrupt dissection process here
-
-        # is dissection required ?
-        if not container.has_flag(Container.Flag.DISSECTED):
-            # dissect container and iterate over children
-            for new_container in dissect(container, dissectors):
-                new_container.set_parent(container)
-                iq.append(new_container)
-            # container dissection: OK => carving might be required
-            container.set_flag(Container.Flag.DISSECTED)
-
-        # is carving required ?
-        if (container.has_flag(Container.Flag.CARVING_REQUIRED) and
-           not container.has_flag(Container.Flag.CARVED)):
-            # carve container and iterate over carving results
-            for new_container in carve(container, carvers):
-                new_container.set_parent(container)
-                iq.append(new_container)
-            # container carving: OK
-
-        # finally persist container
+    # is the container whitelisted ?
+    if whitelist_db.contains(container):
+        LGR.info("matching whitelisted container. skipping!")
+        container.set_flag(Container.Flag.WHITELISTED)
         dissection_db.persist(container)
-    except Exception as e:
-        whitelist_db.term()
-        blacklist_db.term()
-        dissection_db.term()
-        raise e
-    else:
-        whitelist_db.term()
-        blacklist_db.term()
-        dissection_db.term()
-        return (iq, oq)
+        return (iq, oq)     # interrupt dissection process here
+
+    # is the container blacklisted ?
+    if blacklist_db.contains(container):
+        LGR.warn("matching blacklisted container. flagged!")
+        container.set_flag(Container.Flag.BLACKLISTED)
+        dissection_db.persist(container)
+        return (iq, oq)     # interrupt dissection process here
+
+    # is dissection required ?
+    if not container.has_flag(Container.Flag.DISSECTED):
+        # dissect container and iterate over children
+        for new_container in dissect(container, dissectors):
+            new_container.set_parent(container)
+            iq.append(new_container)
+        # container dissection: OK => carving might be required
+        container.set_flag(Container.Flag.DISSECTED)
+
+    # is carving required ?
+    if (container.has_flag(Container.Flag.CARVING_REQUIRED) and
+       not container.has_flag(Container.Flag.CARVED)):
+        # carve container and iterate over carving results
+        for new_container in carve(container, carvers):
+            new_container.set_parent(container)
+            iq.append(new_container)
+        # container carving: OK
+
+    # finally persist container
+    dissection_db.persist(container)
+
+    return (iq, oq)
 # =============================================================================
 # CLASSES
 # =============================================================================
@@ -179,7 +158,7 @@ class Dissection(object):
         # __init__
         # ---------------------------------------------------------------------
         super(Dissection, self).__init__()
-        self.conf = config.load_from_value('dissection_conf')
+        self.conf = config.load_from_value('dissection_config')
         self._dissectors = {}
         self._carvers = []
         self.__whitelist = None
@@ -205,7 +184,7 @@ class Dissection(object):
         for dissector in pi.plugins.values():
 
             if not dissector.configure(conf.get(dissector.name)):
-                LGR.warning("failed to configure dissector, see errors above.")
+                LGR.warn("failed to configure dissector, see errors above.")
                 noerr = False
 
             for mime in dissector.mimes():
@@ -255,7 +234,7 @@ class Dissection(object):
         for carver in pi.plugins.values():
 
             if not carver.configure(conf.get(carver.name)):
-                LGR.warning("failed to configure dissector, see errors above.")
+                LGR.warn("failed to configure dissector, see errors above.")
                 noerr = False
 
             self._carvers.append(carver)
@@ -276,24 +255,46 @@ class Dissection(object):
         # dissect
         # ---------------------------------------------------------------------
         LGR.info('starting dissection processes...')
-        if not DissectionDB.init():
+
+        LGR.info('preparing dissection database...')
+        dissection_db = DissectionDB(self.conf)
+        if not dissection_db.init('w'):
+            LGR.error("failed to init dissection db.")
             return False
 
+        LGR.info('preparing whitelist database...')
+        whitelist_conf = config.load_from_value('whitelist_config')
+        whitelist_db = HashDB(whitelist_conf)
+        if not whitelist_db.init('r'):
+            LGR.warn("failed to init whitelist db.")
+
+        LGR.info('preparing blacklist database...')
+        blacklist_conf = config.load_from_value('blacklist_config')
+        blacklist_db = HashDB(blacklist_conf)
+        if not blacklist_db.init('r'):
+            LGR.warn("failed to init blacklist db.")
+
+        LGR.info('preparing first container...')
         container = Container(path, os.path.basename(path))
 
         kwargs = {
             'carvers': self._carvers,
             'dissectors': self._dissectors,
-            'whitelist_conf': config.load_from_value('whitelist_config'),
-            'blacklist_conf': config.load_from_value('blacklist_config'),
-            'dissection_conf': self.conf
+            'whitelist_db': whitelist_db,
+            'blacklist_db': blacklist_db,
+            'dissection_db': dissection_db
         }
 
+        LGR.info("starting recursive processing of containers...")
         pool = WorkerPool(config.value('num_workers', 1))
         pool.map(dissection_routine, kwargs, tasks=[container])
 
+        LGR.info('closing databases...')
+        whitelist_db.term()
+        blacklist_db.term()
+        dissection_db.term()
         LGR.info('dissection done.')
-        DissectionDB.term()
+
         return True
 
 
@@ -312,14 +313,16 @@ class DissectionActionGroup(ActionGroup):
         dissectors = dissection.dissectors()
 
         if len(dissectors) == 0:
-            LGR.error("no dissector registered.")
-            return
+            LGR.warn("no dissector registered.")
+            return True
 
         LGR.info('dissectors:')
         for mime in dissectors:
             LGR.info('\t+ {}'.format(mime[0]))
             for dissector in mime[1]:
                 LGR.info('\t\t+ {}'.format(dissector))
+
+        return True
 
     @staticmethod
     @trace_static('DissectionActionGroup')
@@ -332,12 +335,14 @@ class DissectionActionGroup(ActionGroup):
         carvers = dissection.carvers()
 
         if len(carvers) == 0:
-            LGR.error("no carver registered.")
-            return
+            LGR.warn("no carver registered.")
+            return True
 
         LGR.info('carvers:')
         for carver in carvers:
             LGR.info('\t+ {}'.format(carver))
+
+        return True
 
     @staticmethod
     @trace_static('DissectionActionGroup')
@@ -346,20 +351,21 @@ class DissectionActionGroup(ActionGroup):
         # dissector
         # ---------------------------------------------------------------------
         # check args
-        if len(keywords) > 0:
-            # create a dissection and load dissectors
-            dissection = Dissection()
-            dissection.load_dissectors()
-            # create action group mapping
-            actions = {}
-            for dissectors in dissection._dissectors.values():
-                for dissector in dissectors:
-                    act_grp = dissector.action_group()
-                    actions[act_grp.name] = act_grp
-            # create action group to perform action
-            ActionGroup('dissector', actions).perform_action(keywords, args)
-        else:
+        if len(keywords) == 0:
             LGR.error("missing keyword.")
+            return False
+
+        dissection = Dissection()
+        dissection.load_dissectors()
+
+        actions = {}
+        for dissectors in dissection._dissectors.values():
+            for dissector in dissectors:
+                act_grp = dissector.action_group()
+                actions[act_grp.name] = act_grp
+
+        return ActionGroup('dissector', actions).perform_action(keywords, args)
+
 
     @staticmethod
     @trace_static('DissectionActionGroup')
@@ -368,20 +374,21 @@ class DissectionActionGroup(ActionGroup):
         # carver
         # ---------------------------------------------------------------------
         # check args
-        if len(keywords) > 0:
-            # create a dissection and load dissectors
-            dissection = Dissection()
-            dissection.load_carvers()
-            # create action group mapping
-            actions = {}
-            for dissectors in dissection._carvers:
-                for carver in carvers:
-                    act_grp = carver.action_group()
-                    actions[act_grp.name] = act_grp
-            # create action group to perform action
-            ActionGroup('carver', actions).perform_action(keywords, args)
-        else:
+        if len(keywords) == 0:
             LGR.error("missing keyword.")
+            return False
+
+        dissection = Dissection()
+        dissection.load_carvers()
+
+        actions = {}
+        for dissectors in dissection._carvers:
+            for carver in carvers:
+                act_grp = carver.action_group()
+                actions[act_grp.name] = act_grp
+
+        return ActionGroup('carver', actions).perform_action(keywords, args)
+
 
     @staticmethod
     @trace_static('DissectionActionGroup')
@@ -394,10 +401,13 @@ class DissectionActionGroup(ActionGroup):
         dissection.load_dissectors()
         if len(args.files) == 0:
             LGR.error("give at least one file to dissect.")
-            return
+            return False
 
         for f in args.files:
-            dissection.dissect(f)
+            if not dissection.dissect(f):
+                return False
+
+        return True
 
     def __init__(self):
         # ---------------------------------------------------------------------

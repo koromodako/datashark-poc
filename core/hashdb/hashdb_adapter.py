@@ -65,7 +65,7 @@ class HashDBAdapter(object):
     def _term_w(self):
         raise NotImplementedError
 
-    def merge(self, other):
+    def merge_into(self, other):
         raise NotImplementedError
 
     def lookup(self, hexdigest):

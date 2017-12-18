@@ -121,7 +121,7 @@ class DescriptorFile(object):
                 continue
             # unhandled line
             if not ok:
-                LGR.warning("unhandled descriptor file line: {}".format(l))
+                LGR.warn("unhandled descriptor file line: {}".format(l))
         # descriptor file parsing step is valid
         return True
 

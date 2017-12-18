@@ -27,6 +27,7 @@
 # =============================================================================
 #  IMPORTS
 # =============================================================================
+from os import makedirs
 from shutil import which
 from subprocess import getstatusoutput
 from termcolor import colored, cprint
@@ -35,16 +36,47 @@ from termcolor import colored, cprint
 # =============================================================================
 
 
-class Test(object):
+def stub():
+    # -------------------------------------------------------------------------
+    # stub
+    # -------------------------------------------------------------------------
+    return True
 
-    def __init__(self, name, cmd):
+
+class Test(object):
+    # -------------------------------------------------------------------------
+    # Test
+    # -------------------------------------------------------------------------
+
+    @staticmethod
+    def exec_cmd(cmd, expect_code=0):
+        # ---------------------------------------------------------------------
+        # exec_cmd
+        # ---------------------------------------------------------------------
+        (exit_code, output) = getstatusoutput(' '.join(cmd))
+        return (exit_code == expect_code, exit_code, output)
+
+    def __init__(self, name, cmd, init=stub, term=stub, expect_code=0):
+        # ---------------------------------------------------------------------
+        # __init__
+        # ---------------------------------------------------------------------
         super(Test, self).__init__()
         self.name = name
-        self.cmd = ' '.join(cmd)
+        self.cmd = cmd
+        self.init = init
+        self.term = term
+        self.expect_code = expect_code
 
     def run(self):
-        (status, out) = getstatusoutput(self.cmd)
-        return (status == 0, out)
+        # ---------------------------------------------------------------------
+        # run
+        # ---------------------------------------------------------------------
+        if not self.init():
+            return (False, "init() failed.")
+        (exit_ok, exit_code, output) = self.exec_cmd(self.cmd,
+                                                     self.expect_code)
+        self.term()
+        return (exit_ok, exit_code, output)
 
 # =============================================================================
 #  FUNCTIONS
@@ -52,10 +84,18 @@ class Test(object):
 
 
 def pout(msg):
+    # -------------------------------------------------------------------------
+    # pout
+    # -------------------------------------------------------------------------
     cprint(msg, 'magenta')
 
 
 def run_tests(tests):
+    # -------------------------------------------------------------------------
+    # run_tests
+    # -------------------------------------------------------------------------
+    makedirs('tmp', exist_ok=True)
+    makedirs('logs', exist_ok=True)
     failure = colored("FAILURE", 'red')
     success = colored("SUCCESS", 'green')
     success_ctr = 0
@@ -63,32 +103,53 @@ def run_tests(tests):
 
     pout((">" * 30) + " RUNNING TESTS " + ("<" * 30))
     for test in tests:
-        exit_0, out = test.run()
+        exit_ok, exit_code, output = test.run()
 
-        if exit_0:
+        if exit_ok:
             status = success
             success_ctr += 1
         else:
             status = failure
             failure_ctr += 1
 
-        print("{}: {}".format(test.name, status))
+        print("{}: {} (code={})".format(test.name, status, exit_code))
 
-        if not exit_0:
-            cprint(">" * 80, 'magenta')
-            print(out)
-            cprint("<" * 80, 'magenta')
+        with open('logs/{}.log'.format(test.name), 'w') as f:
+            f.write(output)
 
     pout((">" * 30) + " TESTING REPORT " + ("<" * 30))
     pout("count:")
     pout("\t{}: {}".format(failure, failure_ctr))
     pout("\t{}: {}".format(success, success_ctr))
     pout("\ttotal: {}".format(failure_ctr + success_ctr))
+
 # =============================================================================
 #  GLOBALS
 # ============================================================================
 DATA_DIR = 'data/'
+SUBDIR_DIR = '{}subdir'.format(DATA_DIR)
 RENZIK_JPG = '{}renzik_sm.jpg'.format(DATA_DIR)
+# =============================================================================
+# TEST FUNCTIONS
+# =============================================================================
+def hashdb_merge_init():
+    # -------------------------------------------------------------------------
+    # hashdb_merge_init
+    # -------------------------------------------------------------------------
+    (exit_0, _, output) = Test.exec_cmd(['datashark', 'hashdb.create',
+                                      'config/bhdb-1.conf', DATA_DIR])
+    if not exit_0:
+        return False
+
+    (exit_0, _, output) = Test.exec_cmd(['datashark', 'hashdb.create',
+                                      'config/bhdb-2.conf', SUBDIR_DIR])
+    if not exit_0:
+        return False
+
+    return True
+# =============================================================================
+# TESTS ARRAY
+# =============================================================================
 TESTS = [
     # -------------------------------------------------------------------------
     #  GENERIC
@@ -105,7 +166,8 @@ TESTS = [
          ['datashark', 'hashdb.create', 'config/whdb.conf', DATA_DIR]),
     Test("hashdb.merge",
          ['datashark', 'hashdb.merge',
-          'config/bhdb.conf', 'config/bhdb-1.conf', 'config/bhdb-2.conf']),
+          'config/bhdb.conf', 'config/bhdb-1.conf', 'config/bhdb-2.conf'],
+          init=hashdb_merge_init),
     # -------------------------------------------------------------------------
     #  CONTAINER
     # -------------------------------------------------------------------------
@@ -125,7 +187,9 @@ TESTS = [
     Test("dissection.dissectors",
          ['datashark', 'dissection.dissectors']),
     Test("dissection.dissect",
-         ['datashark', 'dissection.dissect', RENZIK_JPG]),
+         ['datashark',
+          '--dissection-config=config/dissection.conf',
+          'dissection.dissect', RENZIK_JPG]),
     # -------------------------------------------------------------------------
     #  DISSECTIONDB
     # -------------------------------------------------------------------------

@@ -150,15 +150,18 @@ def handle_action(args):
     # -------------------------------------------------------------------------
     config.set_args(args)
     # create FS entry filters
-    args.dir_filter = FSEntryFilter(args.include_dirs, args.exclude_dirs)
-    args.file_filter = FSEntryFilter(args.include_files, args.exclude_files)
+    args.dir_filter = FSEntryFilter(config.value('include_dirs'),
+                                    config.value('exclude_dirs'))
+    args.file_filter = FSEntryFilter(config.value('include_files'),
+                                     config.value('exclude_files'))
     # execute action
     LGR.debug('running action: {}'.format(args.action))
     if args.action is None:
         LGR.error("get started with: `datashark help` ;)")
         return 1
 
-    ACTIONS.perform_action(args.action.split(ActionGroup.SEP), args)
+    if not ACTIONS.perform_action(args.action.split(ActionGroup.SEP), args):
+        return 2
     return 0
 
 

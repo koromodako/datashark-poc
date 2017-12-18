@@ -69,3 +69,30 @@ class ConfigObj(object):
         if self.has(member):
             return getattr(self, member)
         return default
+
+    def __v_to_dict(self, v):
+        # ---------------------------------------------------------------------
+        # __v_to_dict
+        # ---------------------------------------------------------------------
+        if isinstance(v, ConfigObj):
+            return v.to_dict()
+
+        elif isinstance(v, dict):
+            d = {}
+            for key, val in v.items():
+                d[key] = self.__v_to_dict(val)
+            return d
+
+        elif isinstance(v, list):
+            nl = []
+            for e in v:
+                nl.append(self.__v_to_dict(e))
+            return nl
+
+        return v
+
+    def to_dict(self):
+        # ---------------------------------------------------------------------
+        # to_dict
+        # ---------------------------------------------------------------------
+        return self.__v_to_dict(vars(self))

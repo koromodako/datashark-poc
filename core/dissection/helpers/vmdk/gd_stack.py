@@ -71,7 +71,7 @@ class GrainDirectoryStack(object):
                 parent_gd = self.__build_gd(parent_vmdk)
 
             else:
-                LGR.warning("could not find parent disk. Disk image will be "
+                LGR.warn("could not find parent disk. Disk image will be "
                             "incomplete.")
         else:
             parent_gd = None

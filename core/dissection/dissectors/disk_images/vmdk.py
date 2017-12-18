@@ -171,13 +171,13 @@ def dissect(container):
         if __dissect_from_vmx(wdir, df, obf):
             containers.append(Container(obf.abspath, 'disk.raw'))
         else:
-            LGR.warning('failed to dissect from vmx file.')
+            LGR.warn('failed to dissect from vmx file.')
 
     else:
         if __dissect_from_vmdk(wdir, vmdk, obf):
             containers.append(Container(obf.abspath, 'disk.raw'))
         else:
-            LGR.warning('failed to dissect from vmdk file.')
+            LGR.warn('failed to dissect from vmdk file.')
 
     obf.close()
     ibf.close()
@@ -199,6 +199,7 @@ def action_group():
         for f in args.files:
 
             if not BinaryFile.exists(f):
+                LGR.warn("invalid path <{}> => skipped.".format(f))
                 continue
 
             bf = BinaryFile(f, 'r')
@@ -207,10 +208,12 @@ def action_group():
             bf.close()
 
             if hdr is None:
-                LGR.error("no valid header found.")
+                LGR.warn("no valid header found.")
                 continue
 
             LGR.info(hdr.to_str())
+
+        return True
 
     @trace_func(__name__)
     def __action_descfile(keywords, args):
@@ -218,14 +221,16 @@ def action_group():
         # __action_descfile
         # ---------------------------------------------------------------------
         for f in args.files:
+
             if not BinaryFile.exists(f):
+                LGR.warn("invalid path <{}> => skipped.".format(f))
                 continue
 
             bf = BinaryFile(f, 'r')
             vmdk = VmdkDisk(bf)
 
             if vmdk.header() is None:
-                LGR.error("no valid header found.")
+                LGR.warn("no valid header found.")
                 bf.close()
                 continue
 
@@ -233,15 +238,17 @@ def action_group():
             bf.close()
 
             if df is None:
-                LGR.warning("only sparse extents have an embedded "
+                LGR.warn("only sparse extents have an embedded "
                             "description file.")
                 continue
 
             if not df.is_valid():
-                LGR.error("invalid DescriptorFile found.")
+                LGR.warn("invalid DescriptorFile found.")
                 continue
 
             LGR.info(df.to_str())
+
+        return True
     # -------------------------------------------------------------------------
     # ActionGroup
     # -------------------------------------------------------------------------

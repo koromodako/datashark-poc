@@ -34,7 +34,6 @@ from hashdb.hashdb_adapter import HashDBAdapter
 #  GLOBALS / CONFIG
 # =============================================================================
 LGR = get_logger(__name__)
-INSTANCE = None
 # =============================================================================
 #  CLASSES
 # =============================================================================
@@ -44,6 +43,10 @@ class SQLiteDB(HashDBAdapter):
     # -------------------------------------------------------------------------
     # SQLiteDB
     # -------------------------------------------------------------------------
+    EXPECTED_CONF = {
+        'path': "path/to/database.db"
+    }
+
     def __init__(self, conf):
         super(SQLiteDB, self).__init__(conf)
 
@@ -51,26 +54,41 @@ class SQLiteDB(HashDBAdapter):
         # ---------------------------------------------------------------------
         # _check_conf
         # ---------------------------------------------------------------------
+        if self._conf is None:
+            return False
+
         if not self._conf.has('path'):
+            LGR.error("missing path in SQLiteDB adapter configuration.")
             return False
 
         return True
 
     def insert(self, hexdigest, path):
+        self._lock.acquire()
+
         c = self.conn.cursor()
         c.execute("INSERT INTO hashes VALUES (?, ?)", (hexdigest, path))
         c.close()
+
         self.conn.commit()
+
+        self._lock.release()
         return True
 
     def lookup(self, hexdigest):
+        self._lock()
+
         c = self.conn.cursor()
         c.execute("SELECT * FROM hashes WHERE hash=?", (hexdigest))
         record = c.fetchone()
         c.close()
+
+        self._lock.release()
         return record
 
-    def merge(self, other):
+    def merge_into(self, other):
+        self._lock.acquire()
+
         c = self.conn.cursor()
         c.execute("SELECT * FROM hashes")
 
@@ -80,6 +98,8 @@ class SQLiteDB(HashDBAdapter):
             v = c.fetchone()
 
         c.close()
+
+        self._lock.release()
         return True
 
     def _init_r(self):
@@ -94,14 +114,17 @@ class SQLiteDB(HashDBAdapter):
 
     def _init_w(self):
         try:
-            uri = 'file:{}'.format(self._conf.path)
+            uri = 'file:{}?mode=rwc'.format(self._conf.path)
             self.conn = sqlite3.connect(uri, uri=True)
         except Exception as e:
             LGR.exception("failed to init sqlite3 database.")
             return False
 
         c = self.conn.cursor()
-        c.execute("CREATE TABLE hashes (hash, abspath)")
+        c.execute("DROP INDEX IF EXISTS hashes_idx")
+        c.execute("DROP TABLE IF EXISTS hashes")
+        c.execute("CREATE TABLE hashes(hash, abspath)")
+        c.execute("CREATE INDEX hashes_idx ON hashes(hash)")
         c.close()
         self.conn.commit()
 

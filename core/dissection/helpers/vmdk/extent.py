@@ -72,20 +72,20 @@ class Extent(object):
         pts = line.split(' ')
 
         if len(pts) < 4:
-            LGR.warning('invalid extent: {}'.format(line))
+            LGR.warn('invalid extent: {}'.format(line))
             return False
 
         self.access = pts[0]
 
         if self.access not in Extent.ACCESS_KWDS:
-            LGR.warning('invalid extent access: {}'.format(self.access))
+            LGR.warn('invalid extent access: {}'.format(self.access))
             return False
 
         self.size = int(pts[1])
         self.type = pts[2]
 
         if self.type not in Extent.TYPE_KWDS:
-            LGR.warning('invalid extent type: {}'.format(self.type))
+            LGR.warn('invalid extent type: {}'.format(self.type))
             return False
 
         self.filename = pts[3][1:-1]

@@ -134,7 +134,7 @@ def action_group():
         for f in args.files:
 
             if not BinaryFile.exists(f):
-                LGR.error("cannot open inexistant file: <{}>".format(f))
+                LGR.warn("invalid path <{}> => skipped.".format(f))
                 continue
 
             bf = BinaryFile(f, 'r')
@@ -143,10 +143,12 @@ def action_group():
             bf.close()
 
             if hdr is None:
-                LGR.error("fail to read VHD header.")
+                LGR.warn("fail to read VHD header.")
                 continue
 
             LGR.info(hdr.to_str())
+
+        return True
 
     @trace_func(__name__)
     def __action_footer(keywords, args):
@@ -156,7 +158,7 @@ def action_group():
         for f in args.files:
 
             if not BinaryFile.exists(f):
-                LGR.error("cannot open inexistant file: <{}>".format(f))
+                LGR.warn("invalid path <{}> => skipped.".format(f))
                 continue
 
             bf = BinaryFile(f, 'r')
@@ -165,10 +167,12 @@ def action_group():
             bf.close()
 
             if ftr is None:
-                LGR.error("fail to read VHD footer.")
+                LGR.warn("fail to read VHD footer.")
                 continue
 
             LGR.info(ftr.to_str())
+
+        return True
 
     # -------------------------------------------------------------------------
     # ActionGroup

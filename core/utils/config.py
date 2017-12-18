@@ -120,17 +120,23 @@ def print_license_conditions():
 
 
 @trace_func(__name__)
-def load_from_file(f):
+def load_from_file(path):
     # -------------------------------------------------------------------------
     # load_from_file
     # -------------------------------------------------------------------------
-    if f.startswith('~'):
-        f = os.path.expanduser(f)
+    if path.startswith('~'):
+        path = os.path.expanduser(path)
 
-    if os.path.isfile(f):
-        with open(f, 'r') as f:
+    if not os.path.isfile(path):
+        LGR.warn("invalid path <{}> => skipped.".format(path))
+        return (None, None)
+
+    with open(path, 'r') as f:
+        try:
             config = ConfigObj(json_load(f))
-        return (config, f)
+            return (config, path)
+        except Exception as e:
+            LGR.exception("failed while loading <{}>".format(path))
 
     return (None, None)
 
@@ -180,13 +186,16 @@ def value(option, default=None):
     if ARGS is not None and option in dir(ARGS):
         val = getattr(ARGS, option, None)
         if val is not None:
+            LGR.debug("config_args['{}'] -> {}".format(option, val))
             return val
     # 2 - try configuration file option
     if CONFIG is not None:
         val = CONFIG.get(option, None)
         if val is not None:
+            LGR.debug("config_file['{}'] -> {}".format(option, val))
             return val
     # 3 - finally return default argument
+    LGR.debug("config_dflt['{}'] -> {}".format(option, default))
     return default
 
 
@@ -199,6 +208,6 @@ def load_from_value(option):
     if f is None:
         return None
 
-    (config, f) = load_from_file(f)
+    (config, path) = load_from_file(f)
 
     return config

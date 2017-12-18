@@ -44,12 +44,11 @@ class DissectionDB(object):
     # -------------------------------------------------------------------------
     # HashDB
     # -------------------------------------------------------------------------
-    def __init__(self, name, conf):
+    def __init__(self, conf):
         # ---------------------------------------------------------------------
         # __init__
         # ---------------------------------------------------------------------
         super(DissectionDB, self).__init__()
-        self.name = name
         self.conf = conf
         self.valid = False
         self.adapter = None
@@ -59,7 +58,7 @@ class DissectionDB(object):
                                 expected_funcs=set(['instance']))
 
             if not pi.load_plugins():
-                LGR.warning("some adapters failed to be loaded.")
+                LGR.warn("some adapters failed to be loaded.")
 
             DissectionDB.ADAPTERS = pi.plugins
 
@@ -68,9 +67,18 @@ class DissectionDB(object):
         # ---------------------------------------------------------------------
         # init
         # ---------------------------------------------------------------------
+        if self.conf is None:
+            LGR.error("invalid dissection database configuration.")
+            return False
+
         if not self.conf.has('adapter'):
-            LGR.error("invalid configuration of dissectiondb adapter or "
-                      "missing value.")
+            LGR.error("dissection database configuration must have 'adapter' "
+                      "key.")
+            return False
+
+        if not self.conf.has('adapters'):
+            LGR.error("dissection database configuration must have 'adapters' "
+                      "key.")
             return False
 
         adapter_mod = self.ADAPTERS.get(self.conf.adapter)
@@ -78,7 +86,8 @@ class DissectionDB(object):
             LGR.error("failed to load adapter: <{}>".format(self.conf.adapter))
             return False
 
-        self.adapter = adapter_mod.instance(self.conf)
+        adapter_conf = self.conf.adapters.get(self.conf.adapter)
+        self.adapter = adapter_mod.instance(adapter_conf)
         self.adapter.init(mode)
         if not self.adapter.is_valid():
             LGR.error("invalid adapter instance.")
@@ -121,7 +130,7 @@ class DissectionDBActionGroup(ActionGroup):
         # list
         # ---------------------------------------------------------------------
         conf = config.load_from_value('dissection_db')
-        dissection_db = DissectionDB(None, None)
+        dissection_db = DissectionDB(None)
         adapters = sorted(DissectionDB.ADAPTERS.keys())
 
         text = "\nadapters:"
@@ -134,6 +143,7 @@ class DissectionDBActionGroup(ActionGroup):
 
         text += "\n"
         LGR.info(text)
+        return True
 
     def __init__(self):
         # ---------------------------------------------------------------------

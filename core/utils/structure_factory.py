@@ -109,7 +109,7 @@ class StructFactory:
             return None
 
         if len(data) != StructFactory.st_size(st_type):
-            LGR.warning("given bytearray size does not match <{}> "
+            LGR.warn("given bytearray size does not match <{}> "
                         "size!".format(st_type))
             return None
 

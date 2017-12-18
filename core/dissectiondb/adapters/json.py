@@ -50,16 +50,19 @@ class JsonDB(DissectionDBAdapter):
         # ---------------------------------------------------------------------
         # __init__
         # ---------------------------------------------------------------------
-        super(JsonDB, self).__init__()
-        self.conf = conf
+        super(JsonDB, self).__init__(conf)
         self.bf = None
+        self.cnt = 0
 
     @trace()
     def _check_conf(self):
         # ---------------------------------------------------------------------
         # _check_conf
         # ---------------------------------------------------------------------
-        if self.conf.get('path') is None:
+        if self._conf is None:
+            return False
+
+        if not self._conf.has('path'):
             return False
 
         return True
@@ -69,18 +72,21 @@ class JsonDB(DissectionDBAdapter):
         # ---------------------------------------------------------------------
         # _init_r
         # ---------------------------------------------------------------------
-        if not BinaryFile.exists(self.conf.path):
+        if not BinaryFile.exists(self._conf.path):
             return False
 
-        self.bf = BinaryFile(self.conf.path, 'r')
+        self.bf = BinaryFile(self._conf.path, 'r')
+        return True
 
     @trace()
     def _init_w(self):
         # ---------------------------------------------------------------------
         # _init_w
         # ---------------------------------------------------------------------
-        self.bf = BinaryFile(self.conf.path, 'w')
-        self.bf.write(self.JSON_BEGIN)
+        self.bf = BinaryFile(self._conf.path, 'w')
+        self.bf.write_text(self.JSON_BEGIN)
+        self.bf.flush()
+        return True
 
     @trace()
     def _term_r(self):
@@ -94,7 +100,8 @@ class JsonDB(DissectionDBAdapter):
         # ---------------------------------------------------------------------
         # _term_w
         # ---------------------------------------------------------------------
-        self.bf.write(self.JSON_END)
+        self.bf.write_text(self.JSON_END)
+        self.bf.flush()
         self.bf.close()
 
     @trace()
@@ -102,7 +109,16 @@ class JsonDB(DissectionDBAdapter):
         # ---------------------------------------------------------------------
         # insert
         # ---------------------------------------------------------------------
-        self.bf.write_text(json_dumps(container_dict))
+        data = json_dumps(container_dict)
+        self._lock.acquire()
+        # protect counter increment
+        if self.cnt > 0:
+            data = ',' + data
+        self.cnt += 1
+        # protect file writing
+        self.bf.write_text(data)
+        self.bf.flush()
+        self._lock.release()
 
 # =============================================================================
 # FUNCTIONS

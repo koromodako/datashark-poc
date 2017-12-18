@@ -152,7 +152,7 @@ class Container(object):
         # ---------------------------------------------------------------------
         # has_flag
         # ---------------------------------------------------------------------
-        return (self.flags & flag) != Container.Flag.NONE
+        return (self.flags & flag) == flag
 
     @trace()
     def wdir(self):
@@ -210,14 +210,20 @@ class ContainerActionGroup(ActionGroup):
         # ---------------------------------------------------------------------
         # hash
         # ---------------------------------------------------------------------
-        if len(args.files) > 0:
-            for f in args.files:
-                if BinaryFile.exists(f):
-                    LGR.info('{}: {}'.format(f, Container.hash(f)))
-                else:
-                    LGR.error("{}: invalid path.".format(f))
-        else:
+        if len(args.files) == 0:
             LGR.error("this action expects at least one input file.")
+            return False
+
+        for f in args.files:
+
+            if not BinaryFile.exists(f):
+                LGR.warn("{}: invalid path => skipped.".format(f))
+                continue
+
+            LGR.info('{}: {}'.format(f, Container.hash(f)))
+
+        return True
+
 
     @staticmethod
     @trace_static('ContainerActionGroup')
@@ -227,15 +233,17 @@ class ContainerActionGroup(ActionGroup):
         # ---------------------------------------------------------------------
         if len(args.files) == 0:
             LGR.error("this action expects at least one input file.")
-            return
+            return False
 
         for f in args.files:
 
             if not BinaryFile.exists(f):
-                LGR.error("{}: invalid path.".format(f))
-                return
+                LGR.warn("{}: invalid path => skipped.".format(f))
+                continue
 
             mimes = Container.mimes(config.value('magic_file'), f)
             LGR.info('{}:\n'
                      '\tmime: {}\n'
                      '\ttext: {}'.format(f, mimes[1], mimes[0]))
+
+        return True

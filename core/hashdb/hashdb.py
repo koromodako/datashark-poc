@@ -45,21 +45,15 @@ LGR = get_logger(__name__)
 # =============================================================================
 
 @trace_func(__name__)
-def hashing_routine(fpath, hashdb_conf):
+def hashing_routine(fpath, hashdb):
     # -------------------------------------------------------------------------
     # hashing_routine
     # -------------------------------------------------------------------------
-    LGR.info("connecting to database...")
-    hdb = HashDB(hashdb_conf)
-    if not hdb.init('w'):
-        LGR.error("failed to init database.")
-        return False
-
     LGR.info("hashing <{}>...".format(fpath))
     container = Container(fpath, os.path.basename(fpath))
 
-    hdb.persist(container)
-    hdb.term()
+    hashdb.persist(container)
+    hashdb.term()
 
     return ([], [])
 # =============================================================================
@@ -72,13 +66,15 @@ class HashDB(object):
     # -------------------------------------------------------------------------
     # HashDB
     # -------------------------------------------------------------------------
-    def __init__(self, name, conf):
+    def __init__(self, conf):
         # ---------------------------------------------------------------------
         # __init__
         # ---------------------------------------------------------------------
         super(HashDB, self).__init__()
-        self.name = name
         self.conf = conf
+        self.name = None
+        if self.conf is not None:
+            self.name = self.conf.get('name')
         self.valid = False
         self.adapter = None
         if HashDB.ADAPTERS is None:
@@ -87,8 +83,7 @@ class HashDB(object):
                             expected_funcs=set(['instance']))
 
             if not pi.load_plugins():
-                LGR.warning("some adapters failed to be loaded.")
-
+                LGR.warn("some adapters failed to be loaded.")
 
             HashDB.ADAPTERS = pi.plugins
 
@@ -97,9 +92,12 @@ class HashDB(object):
         # ---------------------------------------------------------------------
         # init
         # ---------------------------------------------------------------------
+        if self.conf is None:
+            LGR.error("hashdb configuration is missing.")
+            return False
+
         if not self.conf.has('adapter'):
-            LGR.error("invalid configuration of hashdb adapter or missing "
-                      "value.")
+            LGR.error("hashdb configuration must have 'adapter' key.")
             return False
 
         adapter_mod = self.ADAPTERS.get(self.conf.adapter)
@@ -107,7 +105,7 @@ class HashDB(object):
             LGR.error("failed to load adapter: <{}>".format(self.conf.adapter))
             return False
 
-        self.adapter = adapter_mod.instance(self.conf)
+        self.adapter = adapter_mod.instance(self.conf.get(self.conf.adapter))
         self.adapter.init(mode)
         if not self.adapter.is_valid():
             LGR.error("invalid adapter instance.")
@@ -150,14 +148,14 @@ class HashDB(object):
         return True
 
     @trace()
-    def merge(self, other):
+    def merge_into(self, other):
         # ---------------------------------------------------------------------
         # merge
         # ---------------------------------------------------------------------
         if not self.valid or not other.valid:
             return False
 
-        if not self.adapter.merge(other.adapter):
+        if not self.adapter.merge_into(other.adapter):
             return False
 
         return True
@@ -170,7 +168,7 @@ class HashDBActionGroup(ActionGroup):
     @staticmethod
     @trace_static('HashDBActionGroup')
     def adapters(keywords, args):
-        hdb = HashDB(None, None)
+        hdb = HashDB(None)
         adapters = sorted(HashDB.ADAPTERS.keys())
 
         text = "\nadapters:"
@@ -184,6 +182,8 @@ class HashDBActionGroup(ActionGroup):
         text += "\n"
         LGR.info(text)
 
+        return True
+
     @staticmethod
     @trace_static('HashDBActionGroup')
     def create(keywords, args):
@@ -196,9 +196,9 @@ class HashDBActionGroup(ActionGroup):
                       "dir [dir ...]")
             return False
         # try to load configuration file
-        conf = config.load_from_file(args.files[0])
-        if conf is None:
-            LGR.error("")
+        (hashdb_conf, cf) = config.load_from_file(args.files[0])
+        if hashdb_conf is None:
+            LGR.error("failed to load hash database configuration.")
             return False
         # check if remaining arguments are directories
         dirs = args.files[1:]
@@ -211,10 +211,16 @@ class HashDBActionGroup(ActionGroup):
         fpaths = fs.enumerate_files(dirs, args.dir_filter, args.file_filter,
                                     args.recursive)
 
+        LGR.info("connecting to database...")
+        hashdb = HashDB(hashdb_conf)
+        if not hashdb.init('w'):
+            LGR.error("failed to init database.")
+            return False
+
         LGR.info("start hashing processes...")
         pool = WorkerPool(config.value('num_workers', 1))
         kwargs = {
-            'hashdb_conf': conf
+            'hashdb': hashdb
         }
         pool.map(hashing_routine, kwargs, tasks=fpaths)
 
@@ -235,25 +241,26 @@ class HashDBActionGroup(ActionGroup):
             return False
 
         odbf = args.files[0]
-        oconf = config.load_from_file(odbf)
-        odb = HashDB(odbf, oconf)
+        (oconf, ocf) = config.load_from_file(odbf)
+        odb = HashDB(oconf)
         if not odb.init('w'):
             LGR.error("failed to open <{}> db for writing.".format(odb.name))
             return False
 
         for f in args.files[1:]:
-            iconf = config.load_from_file(f)
-            idb = HashDB(f, iconf)
+            (iconf, icf) = config.load_from_file(f)
+            idb = HashDB(iconf)
             if not idb.init('r'):
-                LGR.warning("failed to open <{}> for reading => "
+                LGR.warn("failed to open <{}> for reading => "
                             "skipped.".format(idb.name))
                 continue
             LGR.info("merging <{}> into <{}>...".format(idb.name, odb.name))
-            odb.merge(idb)
+            idb.merge_into(odb)
             idb.term()
 
         LGR.info("done.")
         odb.term()
+        return True
 
     def __init__(self):
         # ---------------------------------------------------------------------
