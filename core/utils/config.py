@@ -43,23 +43,23 @@ CONFIG = None   # do not edit this value
 # =============================================================================
 # FUNCTIONS
 # =============================================================================
-
-
+##
+## @brief      Returns a string with program prompt
+##
+## @param      lvl   The level
+##
+## @return     { description_of_the_return_value }
+##
 @trace_func(__name__)
 def prog_prompt(lvl):
-    # -------------------------------------------------------------------------
-    # prog_prompt
-    #
-    # -------------------------------------------------------------------------
     return '({})[{}]> '.format(PROG_NAME, lvl)
-
-
+##
+## @brief      Gets the argument parser.
+##
+## @return     The argument parser.
+##
 @trace_func(__name__)
 def get_arg_parser():
-    # -------------------------------------------------------------------------
-    # get_arg_parser
-    #
-    # -------------------------------------------------------------------------
     parser = ArgumentParser()
     parser.add_argument('--version',
                         action='store_true',
@@ -81,49 +81,39 @@ def get_arg_parser():
                         action='store_true',
                         help="Start in debug mode.")
     return parser
-
-
+##
+## @brief      Prints program version
+##
 @trace_func(__name__)
 def print_version():
-    # -------------------------------------------------------------------------
-    # print_license
-    #
-    # -------------------------------------------------------------------------
     print(PROG_VERSION)
-
-
+##
+## @brief      Prints program license
+##
 @trace_func(__name__)
 def print_license():
-    # -------------------------------------------------------------------------
-    # print_license
-    #
-    # -------------------------------------------------------------------------
     print(LICENSE)
-
-
+##
+## @brief      Prints program license 'warranty' section
+##
 @trace_func(__name__)
 def print_license_warranty():
-    # -------------------------------------------------------------------------
-    # print_license_warranty
-    #
-    # -------------------------------------------------------------------------
     print(LICENSE_WARRANTY)
-
-
+##
+## @brief      Prints program license 'conditions' section
+##
 @trace_func(__name__)
 def print_license_conditions():
-    # -------------------------------------------------------------------------
-    # print_license_conditions
-    #
-    # -------------------------------------------------------------------------
     print(LICENSE_CONDITIONS)
-
-
+##
+## @brief      Loads configuration object a from file.
+##
+## @param      path  The path
+##
+## @return     { description_of_the_return_value }
+##
 @trace_func(__name__)
 def load_from_file(path):
-    # -------------------------------------------------------------------------
-    # load_from_file
-    # -------------------------------------------------------------------------
     if path.startswith('~'):
         path = os.path.expanduser(path)
 
@@ -139,14 +129,13 @@ def load_from_file(path):
             LGR.exception("failed while loading <{}>".format(path))
 
     return (None, None)
-
-
+##
+## @brief      Loads program configuration
+##
+## @return     True if a configuration file was successfully loaded else False
+##
 @trace_func(__name__)
 def load():
-    # -------------------------------------------------------------------------
-    # load
-    #
-    # -------------------------------------------------------------------------
     global CONFIG
 
     conf_fname = '{}.conf'.format(PROG_NAME)
@@ -164,23 +153,25 @@ def load():
             return True
 
     return False
-
-
+##
+## @brief      Overrides some configuration elements by setting arguments.
+##
+## @param      args  The arguments
+##
 @trace_func(__name__)
 def set_args(args):
-    # -------------------------------------------------------------------------
-    # set_args
-    # -------------------------------------------------------------------------
     global ARGS
     ARGS = args
-
-
+##
+## @brief      Returns configuration value for given option
+##
+## @param      option   Option's name
+## @param      default  Default value
+##
+## @return     Whatever value is found or default
+##
 @trace_func(__name__)
 def value(option, default=None):
-    # -------------------------------------------------------------------------
-    # value
-    #   \brief returns application configuration value
-    # -------------------------------------------------------------------------
     # read option following priority order
     # 1 - try command line option
     if ARGS is not None and option in dir(ARGS):
@@ -197,13 +188,16 @@ def value(option, default=None):
     # 3 - finally return default argument
     LGR.debug("config_dflt['{}'] -> {}".format(option, default))
     return default
-
-
+##
+## @brief      Loads configuration object from a value being a path to a
+##             configuration file
+##
+## @param      option  The option
+##
+## @return     ConfigObj or None
+##
 @trace_func(__name__)
 def load_from_value(option):
-    # -------------------------------------------------------------------------
-    # load_from_value
-    # -------------------------------------------------------------------------
     f = value(option)
     if f is None:
         return None

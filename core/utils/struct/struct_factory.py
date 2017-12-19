@@ -31,7 +31,7 @@ import re
 import struct
 from utils.logging import get_logger
 from utils.wrapper import trace_static
-from utils.structure import Struct
+from utils.struct.struct import Struct
 # =============================================================================
 # GLOBAL
 # =============================================================================

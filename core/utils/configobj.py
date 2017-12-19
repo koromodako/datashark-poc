@@ -24,16 +24,16 @@
 # =============================================================================
 # CLASSES
 # =============================================================================
-
-
+##
+## @brief      Class for configuration object.
+##
 class ConfigObj(object):
-    # -------------------------------------------------------------------------
-    # ConfigObj
-    # -------------------------------------------------------------------------
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      dic   The dic
+    ##
     def __init__(self, dic):
-        # ---------------------------------------------------------------------
-        # __init__
-        # ---------------------------------------------------------------------
         for option, value in dic.items():
             if isinstance(value, list):
                 setattr(self, option, self.__process_list(value))
@@ -41,11 +41,14 @@ class ConfigObj(object):
                 setattr(self, option, ConfigObj(value))
             else:
                 setattr(self, option, value)
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      l     { parameter_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     def __process_list(self, l):
-        # ---------------------------------------------------------------------
-        # __process_list
-        # ---------------------------------------------------------------------
         nl = []
         for v in l:
             if isinstance(v, list):
@@ -55,25 +58,35 @@ class ConfigObj(object):
             else:
                 nl.append(v)
         return nl
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      member  The member
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     def has(self, member):
-        # ---------------------------------------------------------------------
-        # has
-        # ---------------------------------------------------------------------
         return hasattr(self, member)
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      member   The member
+    ## @param      default  The default
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     def get(self, member, default=None):
-        # ---------------------------------------------------------------------
-        # get
-        # ---------------------------------------------------------------------
         if self.has(member):
             return getattr(self, member)
         return default
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      v     { parameter_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     def __v_to_dict(self, v):
-        # ---------------------------------------------------------------------
-        # __v_to_dict
-        # ---------------------------------------------------------------------
         if isinstance(v, ConfigObj):
             return v.to_dict()
 
@@ -90,9 +103,10 @@ class ConfigObj(object):
             return nl
 
         return v
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     def to_dict(self):
-        # ---------------------------------------------------------------------
-        # to_dict
-        # ---------------------------------------------------------------------
         return self.__v_to_dict(vars(self))

@@ -28,16 +28,18 @@ from utils.exceptions import MSWindowsSpecificFeatureException
 # =============================================================================
 # FUNCTIONS
 # =============================================================================
-
-
+##
+## @brief      { function_description }
+##
+## @param      no_raise  No raise
+##
+## @return     { description_of_the_return_value }
+##
 def assert_ms_windows(no_raise=False):
-    # -------------------------------------------------------------------------
-    # assert_ms_windows
-    # -------------------------------------------------------------------------
     if os.name != 'nt':
-
         if no_raise:
             return False
+
         raise MSWindowsSpecificFeatureException
 
     return True

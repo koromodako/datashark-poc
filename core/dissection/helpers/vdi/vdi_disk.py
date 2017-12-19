@@ -30,10 +30,10 @@ from utils.wrapper import trace
 from utils.logging import get_logger
 from utils.wrapper import lazy_getter
 from utils.converting import unpack_one
-from utils.structure_specif import SimpleMember
-from utils.structure_specif import StructSpecif
-from utils.structure_specif import ByteArrayMember
-from utils.structure_factory import StructFactory
+from utils.struct.simple_member import SimpleMember
+from utils.struct.struct_specif import StructSpecif
+from utils.struct.struct_factory import StructFactory
+from utils.struct.byte_array_member import ByteArrayMember
 # =============================================================================
 #  GLOBALS / CONFIG
 # =============================================================================

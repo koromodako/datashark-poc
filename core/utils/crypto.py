@@ -25,7 +25,8 @@
 # IMPORTS
 # =============================================================================
 import os
-import hashlib
+from Crypto import Hash
+from utils.logging import get_logger
 from utils.binary_file import BinaryFile
 # =============================================================================
 # GLOBALS
@@ -34,41 +35,94 @@ RD_BLK_SZ = 8192
 # =============================================================================
 # FUNCTIONS
 # =============================================================================
+##
+## @brief      { function_description }
+##
+## @param      hash_func  The hash function
+##
+## @return     { description_of_the_return_value }
+##
+def __new_hash(hash_func):
+    hash_func = hash_func.lower()
 
+    if hash_func == 'md2':
+        return Hash.MD2.new()
+    elif hash_func == 'md4':
+        return Hash.MD4.new()
+    elif hash_func == 'md5':
+        return Hash.MD5.new()
+    elif hash_func == 'ripemd':
+        return Hash.RIPEMD.new()
+    elif hash_func == 'sha':
+        return Hash.SHA.new()
+    elif hash_func == 'sha224':
+        return Hash.SHA224.new()
+    elif hash_func == 'sha256':
+        return Hash.SHA256.new()
+    elif hash_func == 'sha384':
+        return Hash.SHA384.new()
+    elif hash_func == 'sha512':
+        return Hash.SHA512.new()
 
-def randbuf(sz):
-    # -------------------------------------------------------------------------
-    # randbuf
-    # -------------------------------------------------------------------------
-    return os.urandom(sz)
-
-
-def randstr(sz):
-    # -------------------------------------------------------------------------
-    # randstr
-    # -------------------------------------------------------------------------
-    return randbuf(sz).hex()
-
-
-def hashfile(hash_func, path):
-    # -------------------------------------------------------------------------
-    # hashfile
-    # -------------------------------------------------------------------------
-    if BinaryFile.exists(path):
-        h = hashlib.new(hash_func)
-        bf = BinaryFile(path, 'r')
-        sz = bf.size()
-        while sz > 0:
-            h.update(bf.read(RD_BLK_SZ))
-            sz -= RD_BLK_SZ
-        return h.digest()
     return None
+##
+## @brief      { function_description }
+##
+## @param      sz    The size
+##
+## @return     { description_of_the_return_value }
+##
+def randbuf(sz):
+    return os.urandom(sz)
+##
+## @brief      { function_description }
+##
+## @param      sz    The size
+##
+## @return     { description_of_the_return_value }
+##
+def randstr(sz):
+    return randbuf(sz).hex()
+##
+## @brief      { function_description }
+##
+## @param      hash_func  The hash function
+## @param      path       The path
+##
+## @return     { description_of_the_return_value }
+##
+def hashfile(hash_func, path):
+    if not BinaryFile.exists(path):
+        LGR.error("")
+        return None
 
+    h = __new_hash(hash_func)
+    if h is None:
+        LGR.error("")
+        return None
 
+    bf = BinaryFile(path, 'r')
+    sz = bf.size()
+
+    while sz > 0:
+        h.update(bf.read(RD_BLK_SZ))
+        sz -= RD_BLK_SZ
+
+    bf.close()
+    return h.digest()
+##
+## @brief      { function_description }
+##
+## @param      hash_func  The hash function
+## @param      buf        The buffer
+##
+## @return     { description_of_the_return_value }
+##
 def hashbuf(hash_func, buf):
-    # -------------------------------------------------------------------------
-    # hashbuf
-    # -------------------------------------------------------------------------
-    h = hashlib.new(hash_func)
+    h = __new_hash(hash_func)
+    if h is None:
+        LGR.error("")
+        return None
+
     h.update(buf)
     return h.digest()

@@ -37,9 +37,16 @@ LGR = get_logger(__name__)
 
 
 def lazy_getter(cls_member_name):
-    # -------------------------------------------------------------------------
-    # lazy_getter
-    # -------------------------------------------------------------------------
+    """
+    @brief      Wraps a class method with this function to turn it into a lazy
+                getter.
+                Class member value will be computed on the first call to this
+                function and will never be computed again after that.
+
+    @param      cls_member_name  Name of the member to use
+
+    @return     wrapper
+    """
     def wrapper(f):
         @wraps(f)
         def wrapped(self, *args, **kwds):
@@ -54,23 +61,32 @@ def lazy_getter(cls_member_name):
 
 
 def __in(called, *args, **kwds):
-    # -------------------------------------------------------------------------
-    # __in
-    # -------------------------------------------------------------------------
+    """
+    @brief      Traces when a function is entered
+
+    @param      called  Called function's complete name
+    @param      args    Arguments passed to the function
+    @param      kwds    Keyword args passed to the function
+    """
     LGR.debug("I> {}(...)".format(called))
 
 
 def __out(called, ret):
-    # -------------------------------------------------------------------------
-    # __out
-    # -------------------------------------------------------------------------
+    """
+    @brief      Traces when a function is left
+
+    @param      called  Called function's complete name
+    @param      ret     Called function's return value
+    """
     LGR.debug("O> {}(...) => ...".format(called))
 
 
 def trace():
-    # -------------------------------------------------------------------------
-    # trace
-    # -------------------------------------------------------------------------
+    """
+    @brief      Wraps a method with this function to trace when it's called
+
+    @return     wrapper
+    """
     def wrapper(f):
         @wraps(f)
         def wrapped(self, *args, **kwds):
@@ -90,9 +106,14 @@ def trace():
 
 
 def trace_static(cls_name):
-    # -------------------------------------------------------------------------
-    # trace_static
-    # -------------------------------------------------------------------------
+    """
+    @brief      Wraps a static method with this function to trace when it's
+                called
+
+    @param      cls_name  Class' name
+
+    @return     wrapper
+    """
     def wrapper(f):
         @wraps(f)
         def wrapped(*args, **kwds):
@@ -110,9 +131,14 @@ def trace_static(cls_name):
 
 
 def trace_func(module_name):
-    # -------------------------------------------------------------------------
-    # trace_func
-    # -------------------------------------------------------------------------
+    """
+    @brief      Wraps a module function with this function to trace when it's
+                called
+
+    @param      module_name  The module name
+
+    @return     wrapper
+    """
     def wrapper(f):
         @wraps(f)
         def wrapped(*args, **kwds):

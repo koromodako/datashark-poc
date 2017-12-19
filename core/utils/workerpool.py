@@ -38,9 +38,15 @@ LGR = get_logger(__name__)
 
 @trace_func(__name__)
 def worker_routine(iqueue, oqueue, routine, kwargs):
-    # -------------------------------------------------------------------------
-    # worker_routine
-    # -------------------------------------------------------------------------
+    """
+    @brief      This generic routine implements a specific producer-consumer
+                relation as the consumer here can also be a producer.
+
+    @param      iqueue   Input queue shared between workers
+    @param      oqueue   Output queue collecting workers' results
+    @param      routine  Routine used to process input queue tasks
+    @param      kwargs   Keyword arguments to be passed to the routine
+    """
     while True:
         # take next available task
         LGR.debug('retrieving task...')
@@ -73,13 +79,16 @@ def worker_routine(iqueue, oqueue, routine, kwargs):
 
 
 class WorkerPool(object):
-    # -------------------------------------------------------------------------
-    # WorkerPool
-    # -------------------------------------------------------------------------
+    """
+    @brief      Creates a pool of workers able to process tasks in parallel
+                until input task queue is empty.
+    """
     def __init__(self, num_workers):
-        # ---------------------------------------------------------------------
-        # __init__
-        # ---------------------------------------------------------------------
+        """
+        @brief      Constructor
+
+        @param      num_workers Number of workers to spawn
+        """
         super(WorkerPool, self).__init__()
         self.num_workers = num_workers
         self.workers = []
@@ -88,9 +97,17 @@ class WorkerPool(object):
 
     @trace()
     def map(self, routine, kwargs, tasks):
-        # --------------------------------------------------------------------------
-        # map
-        # --------------------------------------------------------------------------
+        """
+        @brief      Maps tasks to be processed by routine on underlying workers
+
+        @param      routine Routine to be mapped on multiple workers.
+        @param      kwargs  Keyword arguments to be passed to the routine.
+                            Keep in mind that these arguments will be shared
+                            between workers.
+        @param      tasks   Tasks to be processed by workers using routine
+
+        @return     processing results
+        """
         # add tasks to fifo
         LGR.debug('adding tasks to input queue...')
         for task in tasks:

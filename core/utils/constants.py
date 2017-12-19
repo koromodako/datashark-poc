@@ -25,21 +25,38 @@
 # =============================================================================
 #  GLOBALS / CONFIG
 # =============================================================================
-#
+##
+## { item_description }
+##
 PROG_NAME = 'datashark'
-#
+##
+## { item_description }
+##
 VERS_MAJOR = 0
+##
+## { item_description }
+##
 VERS_MINOR = 0
+##
+## { item_description }
+##
 VERS_FIX = 0
+##
+## { item_description }
+##
 VERS_TAG = 'dev'
-PROG_VERSION = '{}.{}.{}{}'.format(VERS_MAJOR, VERS_MINOR, VERS_FIX, VERS_TAG)
-#
+##
+## { item_description }
+##
 LICENSE = """
 Datashark  Copyright (C) 2017  Paul Dautry
 This program comes with ABSOLUTELY NO WARRANTY; for details use command `-w'.
 This is free software, and you are welcome to redistribute it
 under certain conditions; use command `-c' for details.
 """
+##
+## { item_description }
+##
 LICENSE_WARRANTY = """
 15. Disclaimer of Warranty.
 
@@ -52,6 +69,13 @@ PURPOSE.  THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM
 IS WITH YOU.  SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF
 ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
 """
+##
+## { item_description }
+##
 LICENSE_CONDITIONS = """
 See LICENSE file for details.
 """
+##
+## { item_description }
+##
+PROG_VERSION = '{}.{}.{}{}'.format(VERS_MAJOR, VERS_MINOR, VERS_FIX, VERS_TAG)

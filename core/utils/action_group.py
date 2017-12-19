@@ -34,40 +34,58 @@ LGR = get_logger(__name__)
 # =============================================================================
 # CLASSES
 # =============================================================================
-
-
+##
+## @brief      Class for action group.
+##
 class ActionGroup(object):
-    # -------------------------------------------------------------------------
-    # ActionGroup
-    # -------------------------------------------------------------------------
+    ##
+    ## { item_description }
+    ##
     SEP = '.'
+    ##
+    ## { item_description }
+    ##
     K_HELP = 'help'
+    ##
+    ## { item_description }
+    ##
     K_FUNC = 'func'
-
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      name     The name
+    ## @param      actions  The actions
+    ##
     def __init__(self, name, actions):
-        # ---------------------------------------------------------------------
-        # __init__
-        # ---------------------------------------------------------------------
+        super(ActionGroup, self).__init__()
         self.name = name
         self.actions = actions
         self.actions['help'] = ActionGroup.action(self.help, "prints help.")
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      func  The function
+    ## @param      help  The help
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @staticmethod
     @trace_static('ActionGroup')
     def action(func, help=''):
-        # ---------------------------------------------------------------------
-        # action
-        # ---------------------------------------------------------------------
         return {
             ActionGroup.K_FUNC: func,
             ActionGroup.K_HELP: help
         }
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      keywords  The keywords
+    ## @param      args      The arguments
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def perform_action(self, keywords, args=[]):
-        # ---------------------------------------------------------------------
-        # perform_action
-        # ---------------------------------------------------------------------
         action = self.actions.get(keywords[0], None)
 
         if action is None:
@@ -86,19 +104,27 @@ class ActionGroup(object):
             return action.perform_action(subkeywords, args)
 
         return action[ActionGroup.K_FUNC](subkeywords, args)
-
+    ##
+    ## @brief      Determines if it has action.
+    ##
+    ## @param      keywords  The keywords
+    ##
+    ## @return     True if has action, False otherwise.
+    ##
     @trace()
     def has_action(self, keywords):
-        # ---------------------------------------------------------------------
-        # has_action
-        # ---------------------------------------------------------------------
         return (self.actions.get(keywords[0], None) is not None)
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      keywords  The keywords
+    ## @param      args      The arguments
+    ## @param      depth     The depth
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def help(self, keywords, args, depth=0):
-        # ---------------------------------------------------------------------
-        # help
-        # ---------------------------------------------------------------------
         help_txt = ""
         for keyword, action in self.actions.items():
             help_txt += "\n{}{}:".format(ActionGroup.SEP if depth > 0 else "",

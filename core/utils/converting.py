@@ -34,12 +34,15 @@ LGR = get_logger(__name__)
 # =============================================================================
 # FUNCTIONS
 # =============================================================================
-
+##
+## @brief   Converts a string to an integer
+##
+## @param   s   String representing an integer
+##
+## @return  integer corresponding to given string
+##
 @trace_func(__name__)
 def str_to_int(s):
-    # -------------------------------------------------------------------------
-    # str_to_int
-    # -------------------------------------------------------------------------
     if s.startswith('0x'):
         return int(s, 16)
 
@@ -49,12 +52,15 @@ def str_to_int(s):
     elif s.startswith('0b'):
         return int(s, 2)
 
-    # fallback on base 10
-    return int(s)
-
+    return int(s, 10)
+##
+## @brief      Unpacks one value from data
+##
+## @param      fmt   Format to use for unpacking
+## @param      data  Data to unpack
+##
+## @return     Unpacked value
+##
 @trace_func(__name__)
 def unpack_one(fmt, data):
-    # -------------------------------------------------------------------------
-    # unpack_one
-    # -------------------------------------------------------------------------
     return struct.unpack(fmt, data)[0]

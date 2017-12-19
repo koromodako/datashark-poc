@@ -30,6 +30,7 @@ import importlib as implib
 import utils.config as config
 from utils.logging import get_logger
 from utils.wrapper import trace
+from utils.exceptions import PluginImportException
 # =============================================================================
 #  GLOBALS / CONFIG
 # =============================================================================
@@ -37,21 +38,21 @@ LGR = get_logger(__name__)
 # =============================================================================
 #  CLASSES
 # =============================================================================
-
-
-class PluginImportException(Exception):
-    pass
-
-
+##
+## @brief      Class for plugin importer.
+##
 class PluginImporter(object):
-    # -------------------------------------------------------------------------
-    # PluginImporter
-    # -------------------------------------------------------------------------
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      import_root     The import root
+    ## @param      caller          The caller
+    ## @param      subdir          The subdir
+    ## @param      recursive       The recursive
+    ## @param      expected_funcs  The expected funcs
+    ##
     def __init__(self, import_root, caller, subdir, recursive=True,
                  expected_funcs=set()):
-        # ---------------------------------------------------------------------
-        # __init__
-        # ---------------------------------------------------------------------
         super(PluginImporter, self).__init__()
         self.skip_failing_import = config.value('skip_failing_import', False)
         self.expected_funcs = expected_funcs
@@ -60,7 +61,13 @@ class PluginImporter(object):
         self.recursive = recursive
         self.plugins = {}
         self.valid = None
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      error  The error
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def __import_failure(self, error):
         # ---------------------------------------------------------------------
@@ -70,7 +77,14 @@ class PluginImporter(object):
         LGR.error(error)
         if not self.skip_failing_import:
             raise PluginImportException(error)
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      plugin       The plugin
+    ## @param      plugin_name  The plugin name
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def __register_plugin(self, plugin, plugin_name):
         plugin_funcs = set(dir(plugin))
@@ -89,12 +103,13 @@ class PluginImporter(object):
         LGR.info("plugin <{}> registered.".format(plugin_name))
 
         return None
-
+    ##
+    ## @brief      Loads plugins.
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def load_plugins(self):
-        # ---------------------------------------------------------------------
-        # load_plugins
-        # ---------------------------------------------------------------------
         self.valid = True
 
         LGR.info("loading plugins from <{}>".format(self.search_root))

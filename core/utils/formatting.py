@@ -33,23 +33,31 @@ BLANK_LINE = ' ' * 120
 # =============================================================================
 # FUNCTIONS
 # =============================================================================
-
-
+##
+## @brief      Returns a character if it's part of ASCII printable caracters
+##
+## @param      byte  Byte to interpret as a char
+##
+## @return     char matching byte or '.'
+##
 def __printable(byte):
-    # -------------------------------------------------------------------------
-    # __printable
-    # -------------------------------------------------------------------------
     if byte < 0x20 or byte > 0x7e:
         return '.'
 
     return chr(byte)
-
-
+##
+## @brief      { function_description }
+##
+## @param      data       The data
+## @param      col_sz     The col size
+## @param      col_num    The col number
+## @param      human      The human
+## @param      max_lines  The maximum lines
+##
+## @return     { description_of_the_return_value }
+##
 @trace_func(__name__)
 def hexdump(data, col_sz=2, col_num=4, human=True, max_lines=10):
-    # -------------------------------------------------------------------------
-    # hexdump
-    # -------------------------------------------------------------------------
     lines = []
     row_sz = col_sz * col_num
     r = len(data) % row_sz

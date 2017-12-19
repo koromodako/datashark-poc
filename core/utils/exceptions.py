@@ -24,11 +24,13 @@
 # =============================================================================
 # CLASSES
 # =============================================================================
-
-
+##
+## @brief      Exception for signaling MS Windows specific feature errors.
+##
 class MSWindowsSpecificFeatureException(Exception):
-    # -------------------------------------------------------------------------
-    #   MSWindowsSpecificFeatureException
-    #       This feature can only be used on a Windows operating system
-    # ------------------------------------------------------------------------------
+    pass
+##
+## @brief      Exception for signaling plugin import errors.
+##
+class PluginImportException(Exception):
     pass

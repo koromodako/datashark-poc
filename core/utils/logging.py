@@ -40,12 +40,13 @@ if assert_ms_windows(no_raise=True):
 # =============================================================================
 # CLASSES
 # =============================================================================
-
-
+##
+## @brief      Class for colored formatter.
+##
 class ColoredFormatter(logging.Formatter):
-    # -------------------------------------------------------------------------
-    # ColoredFormatter
-    # -------------------------------------------------------------------------
+    ##
+    ## { item_description }
+    ##
     COLORS = {
         'DEBUG': 'green',
         'INFO': 'blue',
@@ -53,31 +54,37 @@ class ColoredFormatter(logging.Formatter):
         'ERROR': 'red',
         'CRITICAL': 'magenta'
     }
-
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      fmt      The format
+    ## @param      datefmt  The datefmt
+    ## @param      style    The style
+    ##
     def __init__(self, fmt=None, datefmt=None, style='%'):
-        # ---------------------------------------------------------------------
-        # __init__
-        # ---------------------------------------------------------------------
         super(ColoredFormatter, self).__init__(fmt, datefmt, style)
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      record  The record
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     def format(self, record):
-        # ---------------------------------------------------------------------
-        # format
-        # ---------------------------------------------------------------------
         os = super(ColoredFormatter, self).format(record)
         if COLORED:
             os = colored(os, ColoredFormatter.COLORS[record.levelname])
         return os
-
-
+##
+## @brief      Class for logging module.
+##
 class LoggingModule(object):
-    # -------------------------------------------------------------------------
-    # LoggingModule
-    # -------------------------------------------------------------------------
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      logsdir  The logsdir
+    ##
     def __init__(self, logsdir):
-        # ---------------------------------------------------------------------
-        # __init__
-        # ---------------------------------------------------------------------
         self.logsdir = logsdir
         self.silent = True
         self.verbose = False
@@ -88,33 +95,36 @@ class LoggingModule(object):
         # formatters init
         self.fmtr = logging.Formatter(fmt=FMT)
         self.cfmtr = ColoredFormatter(fmt=CONSOLE_FMT)
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     def __configure_verbose_hdlr(self):
-        # ---------------------------------------------------------------------
-        # __configure_verbose_hdlr
-        # ---------------------------------------------------------------------
         if self.verbose:
             self.rootlgr.debug('adding verbose handler.')
             self.rootlgr.addHandler(self.verbose_hdlr)
         else:
             self.rootlgr.debug('removing verbose handler.')
             self.rootlgr.removeHandler(self.verbose_hdlr)
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     def __configure_debug_hdlr(self):
-        # ---------------------------------------------------------------------
-        # __configure_debug_hdlr
-        # ---------------------------------------------------------------------
         if self.debug:
             self.rootlgr.debug('adding debug handler.')
             self.rootlgr.addHandler(self.debug_hdlr)
         else:
             self.rootlgr.debug('removing debug handler.')
             self.rootlgr.removeHandler(self.debug_hdlr)
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     def __configure_console_hdlr(self):
-        # ---------------------------------------------------------------------
-        # __configure_console_hdlr
-        # ---------------------------------------------------------------------
         # set level depending on 'debug' value
         lvl = logging.INFO
         if self.debug:
@@ -127,11 +137,12 @@ class LoggingModule(object):
         else:
             self.rootlgr.debug('removing console handler.')
             self.rootlgr.removeHandler(self.console_hdlr)
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     def init(self):
-        # ---------------------------------------------------------------------
-        # init
-        # ---------------------------------------------------------------------
         # instanciate and configure error hdlr
         error_hdlr = logging.handlers.RotatingFileHandler(
             os.path.join(self.logsdir, '{}.error.log'.format(PROG_NAME)),
@@ -157,11 +168,16 @@ class LoggingModule(object):
         self.console_hdlr = logging.StreamHandler()
         self.console_hdlr.setFormatter(self.cfmtr)
         self.__configure_console_hdlr()
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      silent   The silent
+    ## @param      verbose  The verbose
+    ## @param      debug    The debug
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     def configure(self, silent, verbose, debug):
-        # ---------------------------------------------------------------------
-        # configure
-        # ---------------------------------------------------------------------
         self.silent = silent
         self.verbose = verbose
         self.debug = debug
@@ -178,12 +194,14 @@ LOGGING = None
 # =============================================================================
 # FUNCTIONS
 # =============================================================================
-
-
+##
+## @brief      { function_description }
+##
+## @param      logsdir  The logsdir
+##
+## @return     { description_of_the_return_value }
+##
 def init(logsdir):
-    # -------------------------------------------------------------------------
-    # init
-    # -------------------------------------------------------------------------
     global LOGGING
 
     if LOGGING is None:
@@ -196,27 +214,37 @@ def init(logsdir):
             print(e)
 
     return False
-
-
+##
+## @brief      { function_description }
+##
+## @param      silent   The silent
+## @param      verbose  The verbose
+## @param      debug    The debug
+##
+## @return     { description_of_the_return_value }
+##
 def reconfigure(silent, verbose, debug):
-    # -------------------------------------------------------------------------
-    # reconfigure_loggers
-    # -------------------------------------------------------------------------
     LOGGING.configure(silent, verbose, debug)
-
-
+##
+## @brief      Gets the logger.
+##
+## @param      name  The name
+##
+## @return     The logger.
+##
 def get_logger(name):
-    # -------------------------------------------------------------------------
-    # get_logger
-    # -------------------------------------------------------------------------
     lgr_name = '.'.join([PROG_NAME, name])
     return logging.getLogger(lgr_name)
-
-
+##
+## @brief      { function_description }
+##
+## @param      lgr       The lgr
+## @param      task      The task
+## @param      no_raise  No raise
+##
+## @return     { description_of_the_return_value }
+##
 def todo(lgr, task='', no_raise=False):
-    # -------------------------------------------------------------------------
-    # todo
-    # -------------------------------------------------------------------------
     msg = 'not implemented [contribute! :)]. TODO: {}'.format(task)
 
     if no_raise:

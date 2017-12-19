@@ -32,31 +32,37 @@ SEPARATORS = (',', ':')
 # =============================================================================
 # FUNCTIONS
 # =============================================================================
-
-
+##
+## @brief      { function_description }
+##
+## @param      fp    { parameter_description }
+##
+## @return     { description_of_the_return_value }
+##
 def json_load(fp):
-    # -------------------------------------------------------------------------
-    # json_load
-    # -------------------------------------------------------------------------
     return json.load(fp)
-
-
+##
+## @brief      { function_description }
+##
+## @param      s     { parameter_description }
+##
+## @return     { description_of_the_return_value }
+##
 def json_loads(s):
-    # -------------------------------------------------------------------------
-    # json_loads
-    # -------------------------------------------------------------------------
     return json.loads(s)
-
-
+##
+## @brief      { function_description }
+##
+## @param      fp    { parameter_description }
+##
+## @return     { description_of_the_return_value }
+##
 def json_dump(obj, fp):
-    # -------------------------------------------------------------------------
-    # json_dump
-    # -------------------------------------------------------------------------
     json.dump(obj, fp, separators=SEPARATORS)
-
-
+##
+## @brief      { function_description }
+##
+## @return     { description_of_the_return_value }
+##
 def json_dumps(obj):
-    # -------------------------------------------------------------------------
-    # json_dump
-    # -------------------------------------------------------------------------
     return json.dumps(obj, separators=SEPARATORS)

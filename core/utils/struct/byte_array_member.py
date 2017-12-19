@@ -1,6 +1,6 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#     file: fs.py
-#     date: 2017-12-16
+#     file: byte_array_member.py
+#     date: 2017-12-19
 #   author: paul.dautry
 #  purpose:
 #
@@ -25,50 +25,54 @@
 # =============================================================================
 #  IMPORTS
 # =============================================================================
-import os
 from utils.logging import get_logger
-from utils.wrapper import trace_func
-from utils.binary_file import BinaryFile
+from utils.struct.member import Member
 # =============================================================================
 #  GLOBALS / CONFIG
 # =============================================================================
 LGR = get_logger(__name__)
 # =============================================================================
-#  FUNCTIONS
+#  CLASSES
 # =============================================================================
 ##
-## @brief      { function_description }
+## @brief
 ##
-## @param      dirs         The dirs
-## @param      dir_filter   The dir filter
-## @param      file_filter  The file filter
-## @param      recursive    The recursive
-##
-## @return     { description_of_the_return_value }
-##
-@trace_func(__name__)
-def enumerate_files(dirs, dir_filter, file_filter, recursive):
-    # -------------------------------------------------------------------------
-    # enumerate_files
-    # -------------------------------------------------------------------------
-    fpaths = []
+class ByteArrayMember(Member):
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      name    The name
+    ## @param      length  The length
+    ## @param      load    The load
+    ## @param      valid   The valid
+    ##
+    def __init__(self, name, length, load=True, valid=False):
+        self.length = int(length)
+        super(ByteArrayMember, self).__init__(name, load, valid)
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def _validate(self):
+        if self.length <= 0:
+            LGR.error("ByteArrayMember's length must be in [1,+inf[.")
+            return False
 
-    for dpath in dirs:
-        adpath = os.path.abspath(dpath)
-
-        if recursive:
-            # recursive listing from given directory
-            for root, dirs, files in os.walk(adpath):
-                dirs[:] = [d for d in dirs if dir_filter.keep(d)]
-                for f in files:
-                    if file_filter.keep(f):
-                        fpaths.append(os.path.join(root, f))
-        else:
-            # listing only inside given directory
-            for entry in os.listdir(adpath):
-                fpath = os.path.join(adpath, entry)
-                if BinaryFile.exists(fpath):
-                    if file_filter.keep(entry):
-                        fpaths.append(fpath)
-
-    return fpaths
+        return True
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def _size(self):
+        return self.length
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      data  The data
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def _read(self, data):
+        return data[0:self.size()]

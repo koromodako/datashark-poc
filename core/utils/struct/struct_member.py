@@ -1,6 +1,6 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#     file: fs.py
-#     date: 2017-12-16
+#     file: struct_member.py
+#     date: 2017-12-19
 #   author: paul.dautry
 #  purpose:
 #
@@ -25,50 +25,57 @@
 # =============================================================================
 #  IMPORTS
 # =============================================================================
-import os
 from utils.logging import get_logger
-from utils.wrapper import trace_func
-from utils.binary_file import BinaryFile
+from utils.struct.member import Member
+from utils.struct.struct_factory import StructFactory
 # =============================================================================
 #  GLOBALS / CONFIG
 # =============================================================================
 LGR = get_logger(__name__)
 # =============================================================================
-#  FUNCTIONS
+#  CLASSES
 # =============================================================================
 ##
-## @brief      { function_description }
+## @brief
 ##
-## @param      dirs         The dirs
-## @param      dir_filter   The dir filter
-## @param      file_filter  The file filter
-## @param      recursive    The recursive
-##
-## @return     { description_of_the_return_value }
-##
-@trace_func(__name__)
-def enumerate_files(dirs, dir_filter, file_filter, recursive):
-    # -------------------------------------------------------------------------
-    # enumerate_files
-    # -------------------------------------------------------------------------
-    fpaths = []
+class StructMember(Member):
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      name     The name
+    ## @param      st_type  The st type
+    ## @param      load     The load
+    ## @param      valid    The valid
+    ##
+    def __init__(self, name, st_type, load=True, valid=False):
+        self.st_type = st_type
+        super(StructMember, self).__init__(name, load, valid)
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def _validate(self):
+        if not StructFactory.st_exists(self.st_type):
+            LGR.error("StructMember's struct_name must refer to an existant "
+                      "structure registered in the StructFactory.")
+            return False
 
-    for dpath in dirs:
-        adpath = os.path.abspath(dpath)
+        return True
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def _size(self):
+        return StructFactory.st_size(self.st_type)
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      data  The data
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def _read(self, data):
 
-        if recursive:
-            # recursive listing from given directory
-            for root, dirs, files in os.walk(adpath):
-                dirs[:] = [d for d in dirs if dir_filter.keep(d)]
-                for f in files:
-                    if file_filter.keep(f):
-                        fpaths.append(os.path.join(root, f))
-        else:
-            # listing only inside given directory
-            for entry in os.listdir(adpath):
-                fpath = os.path.join(adpath, entry)
-                if BinaryFile.exists(fpath):
-                    if file_filter.keep(entry):
-                        fpaths.append(fpath)
-
-    return fpaths
+        return StructFactory.st_from_bytes(self.st_type, data)

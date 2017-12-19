@@ -34,108 +34,119 @@ from utils.wrapper import trace_static
 # GLOBALS
 # =============================================================================
 LGR = get_logger(__name__)
-BF_READ='r'
-BF_WRIT='w'
 # =============================================================================
 #  CLASSES
 # =============================================================================
-
-
+##
+## @brief      Class for binary file.
+##
 class BinaryFile(object):
-    # -------------------------------------------------------------------------
-    # BinaryFile
-    # \param fpath: file path
-    # \param mode: can be 'r' or 'w'
-    # -------------------------------------------------------------------------
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      path  The path
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @staticmethod
     @trace_static('BinaryFile')
     def exists(path):
-        # ---------------------------------------------------------------------
-        # exists
-        # ---------------------------------------------------------------------
         return os.path.isfile(path)
-
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      fpath  File's path
+    ## @param      mode   Open mode ('r' or 'w')
+    ##
     def __init__(self, fpath, mode):
-        # ---------------------------------------------------------------------
-        # __init__
-        # ---------------------------------------------------------------------
         self.path = fpath
         self.dirname = os.path.dirname(fpath)
         self.basename = os.path.basename(fpath)
         self.abspath = os.path.abspath(fpath)
-        if mode not in [BF_READ, BF_WRIT]:
+        if mode not in ['r', 'w']:
             self.valid = False
         else:
             self.fp = open(fpath, mode+'b')
             self.valid = True
-
-    # @trace()
+    ##
+    ## @brief      Returns file's stat structure
+    ##
+    ## @return     stat structure
+    ##
     def stat(self):
-        # ---------------------------------------------------------------------
-        # stat
-        # ---------------------------------------------------------------------
         return os.stat(self.abspath)
-
-    # @trace()
+    ##
+    ## @brief      Returns file size.
+    ##
+    ## @return     Number of bytes in file.
+    ##
     def size(self):
-        # ---------------------------------------------------------------------
-        # size
-        # ---------------------------------------------------------------------
         return self.stat().st_size
-
-    # @trace()
+    ##
+    ## @brief      Places cursor at given offset in file using whence
+    ##
+    ## @param      offset  The offset
+    ## @param      whence  The whence
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     def seek(self, offset, whence=io.SEEK_SET):
-        # ---------------------------------------------------------------------
-        # seek
-        # ---------------------------------------------------------------------
         return self.fp.seek(offset, whence)
-
-    # @trace()
+    ##
+    ## @brief      Reads n bytes from file as text using encoding.
+    ##
+    ## @param      n         Number of bytes to read
+    ## @param      encoding  Encoding to use for decoding read bytes
+    ##
+    ## @return     str
+    ##
     def read_text(self, n=-1, encoding='utf-8'):
-        # ---------------------------------------------------------------------
-        # read_text
-        # ---------------------------------------------------------------------
         return self.read(n).decode(encoding)
-
-    # @trace()
+    ##
+    ## @brief      Reads n bytes from file.
+    ##
+    ## @param      n     Number of bytes to read
+    ##
+    ## @return     bytes
+    ##
     def read(self, n=-1):
-        # ---------------------------------------------------------------------
-        # read
-        # ---------------------------------------------------------------------
         return self.fp.read(n)
-
-    # @trace()
+    ##
+    ## @brief      Reads bytes N bytes into given buffer, N being buffer size.
+    ##
+    ## @param      b     { parameter_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     def readinto(self, b):
-        # ---------------------------------------------------------------------
-        # readinto
-        # ---------------------------------------------------------------------
         return self.fp.readinto(b)
-
-    # @trace()
+    ##
+    ## @brief      Writes bytes to file as text using encoding.
+    ##
+    ## @param      text      The text
+    ## @param      encoding  The encoding
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     def write_text(self, text, encoding='utf-8'):
-        # ---------------------------------------------------------------------
-        # write_text
-        # ---------------------------------------------------------------------
         return self.fp.write(text.encode('utf-8'))
-
-    # @trace()
+    ##
+    ## @brief      Writes bytes to file.
+    ##
+    ## @param      data  The data
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     def write(self, data):
-        # ---------------------------------------------------------------------
-        # write
-        # ---------------------------------------------------------------------
         return self.fp.write(data)
-
-    # @trace()
+    ##
+    ## @brief      Flushes underlying file buffer
+    ##
     def flush(self):
-        # ---------------------------------------------------------------------
-        # flush
-        # ---------------------------------------------------------------------
         self.fp.flush()
-
-    # @trace()
+    ##
+    ## @brief      Releases underlying file handle
+    ##
     def close(self):
-        # ---------------------------------------------------------------------
-        # close
-        # ---------------------------------------------------------------------
         self.valid = False
         self.fp.close()

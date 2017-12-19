@@ -34,16 +34,17 @@ LGR = get_logger(__name__)
 # =============================================================================
 # CLASSES
 # =============================================================================
-
-
+##
+## @brief      Class for fs entry filter.
+##
 class FSEntryFilter(object):
-    # -------------------------------------------------------------------------
-    # FSEntryFilter
-    # -------------------------------------------------------------------------
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      include  The include
+    ## @param      exclude  The exclude
+    ##
     def __init__(self, include=[], exclude=[]):
-        # ---------------------------------------------------------------------
-        # __init__
-        # ---------------------------------------------------------------------
         self.sep = ','
 
         if isinstance(include, str):
@@ -60,12 +61,15 @@ class FSEntryFilter(object):
 
         self.include = include
         self.exclude = exclude
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      path  The path
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def keep(self, path):
-        # ---------------------------------------------------------------------
-        # keep
-        # ---------------------------------------------------------------------
         # check if files matches an inclusion pattern
         for pattern in self.include:
             if fnmatch(path, pattern):
