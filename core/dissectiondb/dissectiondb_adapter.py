@@ -25,9 +25,9 @@
 # =============================================================================
 #  IMPORTS
 # =============================================================================
-import multiprocessing
 from utils.wrapper import trace
 from utils.logging import get_logger
+from utils.db_adapter import DBAdapter
 # =============================================================================
 #  GLOBALS / CONFIG
 # =============================================================================
@@ -35,70 +35,33 @@ LGR = get_logger(__name__)
 # =============================================================================
 #  CLASSES
 # =============================================================================
-
-
-class DissectionDBAdapter(object):
-    # -------------------------------------------------------------------------
-    # DissectionDBAdapter
-    # -------------------------------------------------------------------------
+##
+## @brief      Abstract representation of a dissection db adapter plugin
+##
+class DissectionDBAdapter(DBAdapter):
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      conf  The conf
+    ##
     def __init__(self, conf):
-        super(DissectionDBAdapter, self).__init__()
-
-        self._conf = conf
-        self._lock = multiprocessing.Lock()
-
-        self.__mode = None
-        self.__valid = False
-
-    def _check_conf(self):
+        super(DissectionDBAdapter, self).__init__(conf)
+    ##
+    ## @brief      Checks if a container UUID is already used within the
+    ##             database
+    ##
+    ## @param      container_uuid  The container uuid
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def exists(self, container_uuid):
         raise NotImplementedError
-
-    def _init_r(self):
-        raise NotImplementedError
-
-    def _init_w(self):
-        raise NotImplementedError
-
-    def _term_r(self):
-        raise NotImplementedError
-
-    def _term_w(self):
-        raise NotImplementedError
-
+    ##
+    ## @brief      Inserts a new container into the database
+    ##
+    ## @param      container_dict  The container dictionary
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     def insert(self, container_dict):
         raise NotImplementedError
-
-    @trace()
-    def init(self, mode):
-        # ---------------------------------------------------------------------
-        # init
-        # ---------------------------------------------------------------------
-        if mode not in ['r', 'w']:
-            raise ValueError("mode must be one of ['r', 'w']")
-        self.__mode = mode
-
-        if not self._check_conf():
-            self.__valid = False
-            return
-
-        if self.__mode == 'r':
-            self.__valid = self._init_r()
-        else:
-            self.__valid = self._init_w()
-
-    @trace()
-    def term(self):
-        # ---------------------------------------------------------------------
-        # term
-        # ---------------------------------------------------------------------
-        if self.__mode == 'r':
-            self._term_r()
-        else:
-            self._term_w()
-
-    @trace()
-    def is_valid(self):
-        # ---------------------------------------------------------------------
-        # is_valid
-        # ---------------------------------------------------------------------
-        return self.__valid

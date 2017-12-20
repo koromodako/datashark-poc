@@ -44,6 +44,7 @@ from hashdb.hashdb import HashDBActionGroup
 from utils.filtering import FSEntryFilter
 from utils.action_group import ActionGroup
 from container.container import ContainerActionGroup
+from workspace.workspace import WorkspaceActionGroup
 from dissection.dissection import DissectionActionGroup
 from dissectiondb.dissectiondb import DissectionDBActionGroup
 # =============================================================================
@@ -68,7 +69,7 @@ HASHDB_ACT_GRP = HashDBActionGroup()
 CONTAINER_ACT_GRP = ContainerActionGroup()
 DISSECTION_ACT_GRP = DissectionActionGroup()
 DISSECTION_DB_ACT_GRP = DissectionDBActionGroup()
-WORKSPACE_ACT_GRP = workspace.action_group()
+WORKSPACE_ACT_GRP = WorkspaceActionGroup()
 ACTIONS = ActionGroup('datashark', {
     HASHDB_ACT_GRP.name: HASHDB_ACT_GRP,
     WORKSPACE_ACT_GRP.name: WORKSPACE_ACT_GRP,

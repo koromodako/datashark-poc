@@ -44,44 +44,60 @@ LGR = get_logger(__name__)
 # =============================================================================
 # FUNCTIONS
 # =============================================================================
-
-
+##
+## @brief      { function_description }
+##
+## @param      container   The container
+## @param      dissectors  The dissectors
+##
+## @return     { description_of_the_return_value }
+##
 @trace_func(__name__)
 def dissect(container, dissectors):
-    # -------------------------------------------------------------------------
-    # dissect
-    # -------------------------------------------------------------------------
     LGR.info('dissection of <{}> begins...'.format(container.realname))
     containers = []
-    #
+
     dissection_mods = dissectors.get(container.mime_type, None)
     if dissection_mods is None:
         LGR.warn("cannot find dissector for: {} => flagged.".format(
             container.mime_type))
         container.set_flag(Container.Flag.FLAGGED)
         return []
-    #
+
     for dissector in dissection_mods:
         if dissector.can_dissect(container):
             containers += dissector.dissect(container)
-    #
+
     return containers
-
-
+##
+## @brief      { function_description }
+##
+## @param      container  The container
+## @param      carvers    The carvers
+##
+## @return     { description_of_the_return_value }
+##
 @trace_func(__name__)
 def carve(container, carvers):
-    # -------------------------------------------------------------------------
-    # dissect
-    # -------------------------------------------------------------------------
     LGR.info('carving of <{}> begins...'.format(container.realname))
     containers = []
-    #
+
     for carver in carvers:
         containers += carver.carve(container)
-    #
+
     return containers
-
-
+##
+## @brief      { function_description }
+##
+## @param      container      The container
+## @param      whitelist_db   The whitelist database
+## @param      blacklist_db   The blacklist database
+## @param      dissection_db  The dissection database
+## @param      dissectors     The dissectors
+## @param      carvers        The carvers
+##
+## @return     { description_of_the_return_value }
+##
 @trace_func(__name__)
 def dissection_routine(container,
                        whitelist_db,
@@ -89,26 +105,20 @@ def dissection_routine(container,
                        dissection_db,
                        dissectors,
                        carvers):
-    # -------------------------------------------------------------------------
-    # dissection_routine
-    # -------------------------------------------------------------------------
     iq = []
     oq = []
-
     # is the container whitelisted ?
     if whitelist_db.contains(container):
         LGR.info("matching whitelisted container. skipping!")
         container.set_flag(Container.Flag.WHITELISTED)
         dissection_db.persist(container)
         return (iq, oq)     # interrupt dissection process here
-
     # is the container blacklisted ?
     if blacklist_db.contains(container):
         LGR.warn("matching blacklisted container. flagged!")
         container.set_flag(Container.Flag.BLACKLISTED)
         dissection_db.persist(container)
         return (iq, oq)     # interrupt dissection process here
-
     # is dissection required ?
     if not container.has_flag(Container.Flag.DISSECTED):
         # dissect container and iterate over children
@@ -117,7 +127,6 @@ def dissection_routine(container,
             iq.append(new_container)
         # container dissection: OK => carving might be required
         container.set_flag(Container.Flag.DISSECTED)
-
     # is carving required ?
     if (container.has_flag(Container.Flag.CARVING_REQUIRED) and
        not container.has_flag(Container.Flag.CARVED)):
@@ -126,20 +135,19 @@ def dissection_routine(container,
             new_container.set_parent(container)
             iq.append(new_container)
         # container carving: OK
-
     # finally persist container
     dissection_db.persist(container)
-
     return (iq, oq)
 # =============================================================================
 # CLASSES
 # =============================================================================
-
-
+##
+## @brief      Class for dissection.
+##
 class Dissection(object):
-    # -------------------------------------------------------------------------
-    # Dissection
-    # -------------------------------------------------------------------------
+    ##
+    ## { item_description }
+    ##
     DISSECTOR_EXPECTED_FUNCS = set([
         'mimes',
         'dissect',
@@ -147,28 +155,31 @@ class Dissection(object):
         'can_dissect',
         'action_group'
     ])
+    ##
+    ## { item_description }
+    ##
     CARVER_EXPECTED_FUNCS = set([
         'carve',
         'configure',
         'action_group'
     ])
-
+    ##
+    ## @brief      Constructs the object.
+    ##
     def __init__(self):
-        # ---------------------------------------------------------------------
-        # __init__
-        # ---------------------------------------------------------------------
         super(Dissection, self).__init__()
         self.conf = config.load_from_value('dissection_config')
         self._dissectors = {}
         self._carvers = []
         self.__whitelist = None
         self.__blacklist = None
-
+    ##
+    ## @brief      Loads dissectors.
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def load_dissectors(self):
-        # ---------------------------------------------------------------------
-        # load_dissectors
-        # ---------------------------------------------------------------------
         noerr = True
         LGR.info("loading dissectors...")
 
@@ -196,12 +207,13 @@ class Dissection(object):
             LGR.info("dissector <{}> import successful.".format(dissector.name))
 
         return noerr
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def dissectors(self):
-        # ---------------------------------------------------------------------
-        # dissectors
-        # ---------------------------------------------------------------------
         dissectors = []
 
         for mime in sorted(list(self._dissectors.keys())):
@@ -213,12 +225,13 @@ class Dissection(object):
             dissectors.append([mime, sorted(mime_dissectors)])
 
         return dissectors
-
+    ##
+    ## @brief      Loads carvers.
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def load_carvers(self):
-        # ---------------------------------------------------------------------
-        # load_carvers
-        # ---------------------------------------------------------------------
         noerr = True
         LGR.info("loading carvers...")
 
@@ -241,19 +254,24 @@ class Dissection(object):
             LGR.info("carver <{}> import successful.".format(carver.name))
 
         return noerr
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def carvers(self):
-        # ---------------------------------------------------------------------
-        # carvers
-        # ---------------------------------------------------------------------
         return [carver.name for carver in self._carvers]
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      path         The path
+    ## @param      num_threads  The number threads
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def dissect(self, path, num_threads=1):
-        # ---------------------------------------------------------------------
-        # dissect
-        # ---------------------------------------------------------------------
         LGR.info('starting dissection processes...')
 
         LGR.info('preparing dissection database...')
@@ -296,18 +314,21 @@ class Dissection(object):
         LGR.info('dissection done.')
 
         return True
-
-
+##
+## @brief      Class for dissection action group.
+##
 class DissectionActionGroup(ActionGroup):
-    # -------------------------------------------------------------------------
-    # DissectionActionGroup
-    # -------------------------------------------------------------------------
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      keywords  The keywords
+    ## @param      args      The arguments
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @staticmethod
     @trace_static('DissectionActionGroup')
     def dissectors(keywords, args):
-        # ---------------------------------------------------------------------
-        # dissectors
-        # ---------------------------------------------------------------------
         dissection = Dissection()
         dissection.load_dissectors()
         dissectors = dissection.dissectors()
@@ -323,13 +344,17 @@ class DissectionActionGroup(ActionGroup):
                 LGR.info('\t\t+ {}'.format(dissector))
 
         return True
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      keywords  The keywords
+    ## @param      args      The arguments
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @staticmethod
     @trace_static('DissectionActionGroup')
     def carvers(keywords, args):
-        # ---------------------------------------------------------------------
-        # carvers
-        # ---------------------------------------------------------------------
         dissection = Dissection()
         dissection.load_carvers()
         carvers = dissection.carvers()
@@ -343,13 +368,17 @@ class DissectionActionGroup(ActionGroup):
             LGR.info('\t+ {}'.format(carver))
 
         return True
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      keywords  The keywords
+    ## @param      args      The arguments
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @staticmethod
     @trace_static('DissectionActionGroup')
     def dissector(keywords, args):
-        # ---------------------------------------------------------------------
-        # dissector
-        # ---------------------------------------------------------------------
         # check args
         if len(keywords) == 0:
             LGR.error("missing keyword.")
@@ -365,14 +394,17 @@ class DissectionActionGroup(ActionGroup):
                 actions[act_grp.name] = act_grp
 
         return ActionGroup('dissector', actions).perform_action(keywords, args)
-
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      keywords  The keywords
+    ## @param      args      The arguments
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @staticmethod
     @trace_static('DissectionActionGroup')
     def carver(keywords, args):
-        # ---------------------------------------------------------------------
-        # carver
-        # ---------------------------------------------------------------------
         # check args
         if len(keywords) == 0:
             LGR.error("missing keyword.")
@@ -388,14 +420,17 @@ class DissectionActionGroup(ActionGroup):
                 actions[act_grp.name] = act_grp
 
         return ActionGroup('carver', actions).perform_action(keywords, args)
-
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      keywords  The keywords
+    ## @param      args      The arguments
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @staticmethod
     @trace_static('DissectionActionGroup')
     def dissect(keywords, args):
-        # ---------------------------------------------------------------------
-        # dissect
-        # ---------------------------------------------------------------------
         dissection = Dissection()
         dissection.load_carvers()
         dissection.load_dissectors()
@@ -408,11 +443,10 @@ class DissectionActionGroup(ActionGroup):
                 return False
 
         return True
-
+    ##
+    ## @brief      Constructs the object.
+    ##
     def __init__(self):
-        # ---------------------------------------------------------------------
-        # __init__
-        # ---------------------------------------------------------------------
         super(DissectionActionGroup, self).__init__('dissection', {
             'dissectors': ActionGroup.action(DissectionActionGroup.dissectors,
                                              "list dissectors."),

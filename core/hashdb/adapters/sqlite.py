@@ -37,23 +37,29 @@ LGR = get_logger(__name__)
 # =============================================================================
 #  CLASSES
 # =============================================================================
-
-
+##
+## @brief      Class for sq lite db.
+##
 class SQLiteDB(HashDBAdapter):
-    # -------------------------------------------------------------------------
-    # SQLiteDB
-    # -------------------------------------------------------------------------
+    ##
+    ## { item_description }
+    ##
     EXPECTED_CONF = {
         'path': "path/to/database.db"
     }
-
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      conf  The conf
+    ##
     def __init__(self, conf):
         super(SQLiteDB, self).__init__(conf)
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     def _check_conf(self):
-        # ---------------------------------------------------------------------
-        # _check_conf
-        # ---------------------------------------------------------------------
         if self._conf is None:
             return False
 
@@ -62,7 +68,14 @@ class SQLiteDB(HashDBAdapter):
             return False
 
         return True
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      hexdigest  The hexdigest
+    ## @param      path       The path
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     def insert(self, hexdigest, path):
         self._lock.acquire()
 
@@ -74,7 +87,13 @@ class SQLiteDB(HashDBAdapter):
 
         self._lock.release()
         return True
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      hexdigest  The hexdigest
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     def lookup(self, hexdigest):
         self._lock()
 
@@ -85,7 +104,13 @@ class SQLiteDB(HashDBAdapter):
 
         self._lock.release()
         return record
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      other  The other
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     def merge_into(self, other):
         self._lock.acquire()
 
@@ -101,7 +126,11 @@ class SQLiteDB(HashDBAdapter):
 
         self._lock.release()
         return True
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     def _init_r(self):
         try:
             uri = 'file:{}?mode=ro'.format(self._conf.path)
@@ -111,7 +140,11 @@ class SQLiteDB(HashDBAdapter):
             return False
 
         return True
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     def _init_w(self):
         try:
             uri = 'file:{}?mode=rwc'.format(self._conf.path)
@@ -129,18 +162,30 @@ class SQLiteDB(HashDBAdapter):
         self.conn.commit()
 
         return True
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     def _term_r(self):
         self.conn.close()
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     def _term_w(self):
         self.conn.close()
-
 # =============================================================================
 #  FUNCTIONS
 # =============================================================================
-
-
+##
+## @brief      { function_description }
+##
+## @param      conf  The conf
+##
+## @return     { description_of_the_return_value }
+##
 @trace_func(__name__)
 def instance(conf):
     return SQLiteDB(conf)

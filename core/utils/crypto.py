@@ -25,12 +25,23 @@
 # IMPORTS
 # =============================================================================
 import os
-from Crypto import Hash
+from Crypto.Hash import HMAC
+from Crypto.Hash import MD2
+from Crypto.Hash import MD4
+from Crypto.Hash import MD5
+from Crypto.Hash import RIPEMD
+from Crypto.Hash import SHA
+from Crypto.Hash import SHA224
+from Crypto.Hash import SHA256
+from Crypto.Hash import SHA384
+from Crypto.Hash import SHA512
+from Crypto.Random import get_random_bytes
 from utils.logging import get_logger
 from utils.binary_file import BinaryFile
 # =============================================================================
 # GLOBALS
 # =============================================================================
+LGR = get_logger(__name__)
 RD_BLK_SZ = 8192
 # =============================================================================
 # FUNCTIONS
@@ -42,28 +53,37 @@ RD_BLK_SZ = 8192
 ##
 ## @return     { description_of_the_return_value }
 ##
-def __new_hash(hash_func):
+def __new_hash(hash_func, key=None, digestmod=None):
+    if hash_func is None:
+        return None
+
     hash_func = hash_func.lower()
 
-    if hash_func == 'md2':
-        return Hash.MD2.new()
+    if hash_func == 'hmac':
+        if key is None:
+            LGR.error("key must be specified for hmac")
+            return None
+        return HMAC.new(key, digestmod=__new_hash(digestmod))
+    elif hash_func == 'md2':
+        return MD2.new()
     elif hash_func == 'md4':
-        return Hash.MD4.new()
+        return MD4.new()
     elif hash_func == 'md5':
-        return Hash.MD5.new()
+        return MD5.new()
     elif hash_func == 'ripemd':
-        return Hash.RIPEMD.new()
+        return RIPEMD.new()
     elif hash_func == 'sha':
-        return Hash.SHA.new()
+        return SHA.new()
     elif hash_func == 'sha224':
-        return Hash.SHA224.new()
+        return SHA224.new()
     elif hash_func == 'sha256':
-        return Hash.SHA256.new()
+        return SHA256.new()
     elif hash_func == 'sha384':
-        return Hash.SHA384.new()
+        return SHA384.new()
     elif hash_func == 'sha512':
-        return Hash.SHA512.new()
+        return SHA512.new()
 
+    LGR.warn("unknown hash_func value: <{}>".format(hash_func))
     return None
 ##
 ## @brief      { function_description }
@@ -73,7 +93,7 @@ def __new_hash(hash_func):
 ## @return     { description_of_the_return_value }
 ##
 def randbuf(sz):
-    return os.urandom(sz)
+    return get_random_bytes(sz)
 ##
 ## @brief      { function_description }
 ##
@@ -91,14 +111,14 @@ def randstr(sz):
 ##
 ## @return     { description_of_the_return_value }
 ##
-def hashfile(hash_func, path):
+def hashfile(hash_func, path, key=None, digestmod=None):
     if not BinaryFile.exists(path):
-        LGR.error("")
+        LGR.error("file must exists to be hashed.")
         return None
 
-    h = __new_hash(hash_func)
+    h = __new_hash(hash_func, key, digestmod)
     if h is None:
-        LGR.error("")
+        LGR.error("invalid hash object returned.")
         return None
 
     bf = BinaryFile(path, 'r')
@@ -118,10 +138,10 @@ def hashfile(hash_func, path):
 ##
 ## @return     { description_of_the_return_value }
 ##
-def hashbuf(hash_func, buf):
+def hashbuf(hash_func, buf, key=None, digestmod=None):
     h = __new_hash(hash_func)
     if h is None:
-        LGR.error("")
+        LGR.error("invalid hash object returned.")
         return None
 
     h.update(buf)

@@ -72,7 +72,7 @@ class Test(object):
         # run
         # ---------------------------------------------------------------------
         if not self.init():
-            return (False, "init() failed.")
+            return (False, None, "init() failed.")
         (exit_ok, exit_code, output) = self.exec_cmd(self.cmd,
                                                      self.expect_code)
         self.term()
@@ -112,7 +112,11 @@ def run_tests(tests):
             status = failure
             failure_ctr += 1
 
-        print("{}: {} (code={})".format(test.name, status, exit_code))
+        warn = ""
+        if exit_code is None:
+            warn = colored(" /!\\ {}".format(output), 'yellow')
+
+        print("{}: {} (code={}){}".format(test.name, status, exit_code, warn))
 
         with open('logs/{}.log'.format(test.name), 'w') as f:
             f.write(output)
@@ -136,14 +140,14 @@ def hashdb_merge_init():
     # -------------------------------------------------------------------------
     # hashdb_merge_init
     # -------------------------------------------------------------------------
-    (exit_0, _, output) = Test.exec_cmd(['datashark', 'hashdb.create',
+    (exit_ok, _, output) = Test.exec_cmd(['datashark', 'hashdb.create',
                                       'config/bhdb-1.conf', DATA_DIR])
-    if not exit_0:
+    if not exit_ok:
         return False
 
-    (exit_0, _, output) = Test.exec_cmd(['datashark', 'hashdb.create',
+    (exit_ok, _, output) = Test.exec_cmd(['datashark', 'hashdb.create',
                                       'config/bhdb-2.conf', SUBDIR_DIR])
-    if not exit_0:
+    if not exit_ok:
         return False
 
     return True

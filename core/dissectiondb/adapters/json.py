@@ -37,28 +37,34 @@ LGR = get_logger(__name__)
 # =============================================================================
 # CLASSES
 # =============================================================================
-
-
+##
+## @brief      Class for json db.
+##
 class JsonDB(DissectionDBAdapter):
-    # -------------------------------------------------------------------------
-    # JsonDB
-    # -------------------------------------------------------------------------
+    ##
+    ## { item_description }
+    ##
     JSON_BEGIN = '{"containers":['
+    ##
+    ## { item_description }
+    ##
     JSON_END = ']}'
-
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      conf  The conf
+    ##
     def __init__(self, conf):
-        # ---------------------------------------------------------------------
-        # __init__
-        # ---------------------------------------------------------------------
         super(JsonDB, self).__init__(conf)
         self.bf = None
         self.cnt = 0
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def _check_conf(self):
-        # ---------------------------------------------------------------------
-        # _check_conf
-        # ---------------------------------------------------------------------
         if self._conf is None:
             return False
 
@@ -66,49 +72,56 @@ class JsonDB(DissectionDBAdapter):
             return False
 
         return True
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def _init_r(self):
-        # ---------------------------------------------------------------------
-        # _init_r
-        # ---------------------------------------------------------------------
         if not BinaryFile.exists(self._conf.path):
             return False
 
         self.bf = BinaryFile(self._conf.path, 'r')
         return True
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def _init_w(self):
-        # ---------------------------------------------------------------------
-        # _init_w
-        # ---------------------------------------------------------------------
         self.bf = BinaryFile(self._conf.path, 'w')
         self.bf.write_text(self.JSON_BEGIN)
         self.bf.flush()
         return True
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def _term_r(self):
-        # ---------------------------------------------------------------------
-        # _term_r
-        # ---------------------------------------------------------------------
         self.bf.close()
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def _term_w(self):
-        # ---------------------------------------------------------------------
-        # _term_w
-        # ---------------------------------------------------------------------
         self.bf.write_text(self.JSON_END)
         self.bf.flush()
         self.bf.close()
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      container_dict  The container dictionary
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def insert(self, container_dict):
-        # ---------------------------------------------------------------------
-        # insert
-        # ---------------------------------------------------------------------
         data = json_dumps(container_dict)
         self._lock.acquire()
         # protect counter increment
@@ -119,11 +132,16 @@ class JsonDB(DissectionDBAdapter):
         self.bf.write_text(data)
         self.bf.flush()
         self._lock.release()
-
 # =============================================================================
 # FUNCTIONS
 # =============================================================================
-
+##
+## @brief      { function_description }
+##
+## @param      conf  The conf
+##
+## @return     { description_of_the_return_value }
+##
 @trace_func(__name__)
 def instance(conf):
     return JsonDB(conf)

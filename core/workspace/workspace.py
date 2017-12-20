@@ -44,41 +44,59 @@ LGR = get_logger(__name__)
 # ==============================================================================
 # CLASSES
 # ==============================================================================
-
-
+##
+## @brief      Class for workspace.
+##
 class Workspace(object):
-    # ------------------------------------------------------------------------------
-    # Workspace
-    # ------------------------------------------------------------------------------
+    ##
+    ## { item_description }
+    ##
     WS_PREFIX = 'ds.ws.'
-
+    ##
+    ## @brief      Constructs the object.
+    ##
     def __init__(self):
-        # --------------------------------------------------------------------------
-        # __init__
-        # --------------------------------------------------------------------------
         randdir = '{}{}'.format(self.WS_PREFIX, randstr(4))
         self.__ws_root = os.path.join(gettempdir(), randdir)
         self.__ws_logdir = os.path.join(self.__ws_root, 'logs')
         self.__ws_tmpdir = os.path.join(self.__ws_root, 'tmp')
         self.__ws_datdir = os.path.join(self.__ws_root, 'data')
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      abspath  The abspath
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def __mkdir(self, abspath):
-        # --------------------------------------------------------------------------
-        # __mkdir
-        # --------------------------------------------------------------------------
         os.makedirs(abspath, exist_ok=True)
         return abspath
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      prefix     The prefix
+    ## @param      suffix     The suffix
+    ## @param      randomize  The randomize
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def __filename(self, prefix, suffix, randomize):
-        # --------------------------------------------------------------------------
-        # __filename
-        # --------------------------------------------------------------------------
         parts = [prefix, randstr(4) if randomize else '', suffix]
         parts = list(filter(None, parts))
         return '.'.join(parts)
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      absdir     The absdir
+    ## @param      prefix     The prefix
+    ## @param      suffix     The suffix
+    ## @param      isdir      The isdir
+    ## @param      randomize  The randomize
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def __file(self, absdir, prefix, suffix, isdir=False, randomize=True):
         # --------------------------------------------------------------------------
@@ -90,146 +108,128 @@ class Workspace(object):
             return self.__mkdir(full_path)
 
         return BinaryFile(full_path, 'w')
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def init(self):
-        # --------------------------------------------------------------------------
-        # init
-        # --------------------------------------------------------------------------
         self.__mkdir(self.__ws_logdir)
         self.__mkdir(self.__ws_datdir)
         self.__mkdir(self.__ws_tmpdir)
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def cleanup(self):
-        # --------------------------------------------------------------------------
-        # cleanup
-        # --------------------------------------------------------------------------
         if os.path.isdir(self.__ws_tmpdir):
             rmtree(self.__ws_tmpdir)  # remove temporary directory (cleanup)
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def term(self):
-        # --------------------------------------------------------------------------
-        # term
-        # --------------------------------------------------------------------------
         pass
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def logdir(self):
-        # --------------------------------------------------------------------------
-        # logdir
-        # --------------------------------------------------------------------------
         return self.__ws_logdir
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      name  The name
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def logfile(self, name):
-        # --------------------------------------------------------------------------
-        # logfile
-        # --------------------------------------------------------------------------
         return self.__file(self.__ws_logdir, name, '', randomize=False)
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      subdir  The subdir
+    ## @param      prefix  The prefix
+    ## @param      suffix  The suffix
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def datdir(self, subdir=False, prefix='', suffix=''):
-        # --------------------------------------------------------------------------
-        # datdir
-        # --------------------------------------------------------------------------
         if subdir:
             return self.__file(self.__ws_datdir, prefix, suffix, isdir=True)
 
         return self.__ws_datdir
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      prefix  The prefix
+    ## @param      suffix  The suffix
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def datfile(self, prefix='', suffix=''):
-        # --------------------------------------------------------------------------
-        # datfile
-        # --------------------------------------------------------------------------
         return self.__file(self.__ws_datdir, prefix, suffix)
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      subdir  The subdir
+    ## @param      prefix  The prefix
+    ## @param      suffix  The suffix
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def tmpdir(self, subdir=False, prefix='', suffix=''):
-        # --------------------------------------------------------------------------
-        # tmpdir
-        # --------------------------------------------------------------------------
         if subdir:
             return self.__file(self.__ws_tmpdir, prefix, suffix, isdir=True)
 
         return self.__ws_tmpdir
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      prefix  The prefix
+    ## @param      suffix  The suffix
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def tmpfile(self, prefix='', suffix=''):
-        # --------------------------------------------------------------------------
-        # tmpfile
-        # --------------------------------------------------------------------------
         return self.__file(self.__ws_tmpdir, prefix, suffix)
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      fp    { parameter_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def filepath(self, fp):
-        # ---------------------------------------------------------------------
-        # filepath
-        # ---------------------------------------------------------------------
         return os.path.abspath(fp.name)
-# ==============================================================================
-# FUNCTIONS
-# ==============================================================================
-
-@trace_func(__name__)
-def init():
-    # ------------------------------------------------------------------------------
-    # init
-    # ------------------------------------------------------------------------------
-    global WORKSPACE
-
-    if WORKSPACE is None:
-        WORKSPACE = Workspace()
-
-        try:
-            WORKSPACE.init()
-            return True
-        except Exception as e:
-            print(e)
-
-    return False
-
-@trace_func(__name__)
-def cleanup():
-    # -------------------------------------------------------------------------
-    # cleanup
-    # -------------------------------------------------------------------------
-    if WORKSPACE is not None:
-        WORKSPACE.cleanup()
-        return True
-
-    return False
-
-@trace_func(__name__)
-def term():
-    # ------------------------------------------------------------------------------
-    # term
-    # ------------------------------------------------------------------------------
-    if WORKSPACE is not None:
-        WORKSPACE.term()
-        return True
-
-    return False
-
-@trace_func(__name__)
-def workspace():
-    # ------------------------------------------------------------------------------
-    # workspace
-    # ------------------------------------------------------------------------------
-    return WORKSPACE
-
-@trace_func(__name__)
-def action_group():
-    # ------------------------------------------------------------------------------
-    # action_group
-    # ------------------------------------------------------------------------------
-    @trace_func(__name__)
-    def __action_list(keywords, args):
-        # --------------------------------------------------------------------------
-        # __action_list
-        # --------------------------------------------------------------------------
+##
+## @brief      Class for workspace action group.
+##
+class WorkspaceActionGroup(ActionGroup):
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      keywords  The keywords
+    ## @param      args      The arguments
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @staticmethod
+    @trace_static('WorkspaceActionGroup')
+    def list(keywords, args):
         total = 0
         tmpdir = gettempdir()
 
@@ -246,12 +246,17 @@ def action_group():
         LGR.info(text)
 
         return True
-
-    @trace_func(__name__)
-    def __action_clean(keywords, args):
-        # --------------------------------------------------------------------------
-        # __action_clean
-        # --------------------------------------------------------------------------
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      keywords  The keywords
+    ## @param      args      The arguments
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @staticmethod
+    @trace_static('WorkspaceActionGroup')
+    def clean(keywords, args):
         tmpdir = gettempdir()
 
         only = args.files
@@ -269,10 +274,67 @@ def action_group():
                     rmtree(full_path)
 
         return True
-    # -------------------------------------------------------------------------
-    # ActionGroup
-    # -------------------------------------------------------------------------
-    return ActionGroup('workspace', {
-        'list': ActionGroup.action(__action_list, 'lists workspaces.'),
-        'clean': ActionGroup.action(__action_clean, 'removes all workspaces.')
-    })
+    ##
+    ## @brief      Constructs the object.
+    ##
+    def __init__(self):
+        super(WorkspaceActionGroup, self).__init__('workspace', {
+            'list': ActionGroup.action(WorkspaceActionGroup.list,
+                                       "lists workspaces."),
+            'clean': ActionGroup.action(WorkspaceActionGroup.clean,
+                                        "removes all workspaces.")
+        })
+# ==============================================================================
+# FUNCTIONS
+# ==============================================================================
+##
+## @brief      { function_description }
+##
+## @return     { description_of_the_return_value }
+##
+@trace_func(__name__)
+def init():
+    global WORKSPACE
+
+    if WORKSPACE is None:
+        WORKSPACE = Workspace()
+
+        try:
+            WORKSPACE.init()
+            return True
+        except Exception as e:
+            print(e)
+
+    return False
+##
+## @brief      { function_description }
+##
+## @return     { description_of_the_return_value }
+##
+@trace_func(__name__)
+def cleanup():
+    if WORKSPACE is not None:
+        WORKSPACE.cleanup()
+        return True
+
+    return False
+##
+## @brief      { function_description }
+##
+## @return     { description_of_the_return_value }
+##
+@trace_func(__name__)
+def term():
+    if WORKSPACE is not None:
+        WORKSPACE.term()
+        return True
+
+    return False
+##
+## @brief      { function_description }
+##
+## @return     { description_of_the_return_value }
+##
+@trace_func(__name__)
+def workspace():
+    return WORKSPACE

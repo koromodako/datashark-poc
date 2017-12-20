@@ -60,6 +60,7 @@
 import re
 from utils.wrapper import trace
 from utils.logging import get_logger
+from utils.struct.member import Member
 # =============================================================================
 # GLOBAL
 # =============================================================================

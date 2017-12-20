@@ -37,17 +37,20 @@ LGR = get_logger(__name__)
 # =============================================================================
 # CLASSES
 # =============================================================================
-
-
+##
+## @brief      Class for dissection db.
+##
 class DissectionDB(object):
+    ##
+    ## { item_description }
+    ##
     ADAPTERS = None
-    # -------------------------------------------------------------------------
-    # HashDB
-    # -------------------------------------------------------------------------
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      conf  The conf
+    ##
     def __init__(self, conf):
-        # ---------------------------------------------------------------------
-        # __init__
-        # ---------------------------------------------------------------------
         super(DissectionDB, self).__init__()
         self.conf = conf
         self.valid = False
@@ -61,12 +64,15 @@ class DissectionDB(object):
                 LGR.warn("some adapters failed to be loaded.")
 
             DissectionDB.ADAPTERS = pi.plugins
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      mode  The mode
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def init(self, mode):
-        # ---------------------------------------------------------------------
-        # init
-        # ---------------------------------------------------------------------
         if self.conf is None:
             LGR.error("invalid dissection database configuration.")
             return False
@@ -95,17 +101,24 @@ class DissectionDB(object):
 
         self.valid = True
         return True
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def term(self):
-        # ---------------------------------------------------------------------
-        # term
-        # ---------------------------------------------------------------------
         if self.valid:
             self.adapter.term()
             self.adapter = None
             self.valid = False
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      container  The container
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def persist(self, container):
         # ---------------------------------------------------------------------
@@ -118,17 +131,21 @@ class DissectionDB(object):
             return False
 
         return True
-
+##
+## @brief      Class for dissection db action group.
+##
 class DissectionDBActionGroup(ActionGroup):
-    # -------------------------------------------------------------------------
-    # DissectionDBActionGroup
-    # -------------------------------------------------------------------------
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      keywords  The keywords
+    ## @param      args      The arguments
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @staticmethod
     @trace_static('DissectionDBActionGroup')
     def adapters(keywords, args):
-        # ---------------------------------------------------------------------
-        # list
-        # ---------------------------------------------------------------------
         conf = config.load_from_value('dissection_db')
         dissection_db = DissectionDB(None)
         adapters = sorted(DissectionDB.ADAPTERS.keys())
@@ -144,11 +161,10 @@ class DissectionDBActionGroup(ActionGroup):
         text += "\n"
         LGR.info(text)
         return True
-
+    ##
+    ## @brief      Constructs the object.
+    ##
     def __init__(self):
-        # ---------------------------------------------------------------------
-        # __init__
-        # ---------------------------------------------------------------------
         super(DissectionDBActionGroup, self).__init__('dissectiondb', {
             'adapters': ActionGroup.action(DissectionDBActionGroup.adapters,
                                            "list of available database "

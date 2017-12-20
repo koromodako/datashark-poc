@@ -43,12 +43,16 @@ LGR = get_logger(__name__)
 # =============================================================================
 # FUNCTIONS
 # =============================================================================
-
+##
+## @brief      { function_description }
+##
+## @param      fpath   The fpath
+## @param      hashdb  The hashdb
+##
+## @return     { description_of_the_return_value }
+##
 @trace_func(__name__)
 def hashing_routine(fpath, hashdb):
-    # -------------------------------------------------------------------------
-    # hashing_routine
-    # -------------------------------------------------------------------------
     LGR.info("hashing <{}>...".format(fpath))
     container = Container(fpath, os.path.basename(fpath))
 
@@ -59,24 +63,29 @@ def hashing_routine(fpath, hashdb):
 # =============================================================================
 # CLASSES
 # =============================================================================
-
-
+##
+## @brief      Class for hash db.
+##
 class HashDB(object):
+    ##
+    ## { item_description }
+    ##
     ADAPTERS = None
-    # -------------------------------------------------------------------------
-    # HashDB
-    # -------------------------------------------------------------------------
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      conf  The conf
+    ##
     def __init__(self, conf):
-        # ---------------------------------------------------------------------
-        # __init__
-        # ---------------------------------------------------------------------
         super(HashDB, self).__init__()
         self.conf = conf
         self.name = None
         if self.conf is not None:
             self.name = self.conf.get('name')
+
         self.valid = False
         self.adapter = None
+
         if HashDB.ADAPTERS is None:
             pi = PluginImporter('hashdb.adapters',
                             __file__, 'adapters',
@@ -86,12 +95,15 @@ class HashDB(object):
                 LGR.warn("some adapters failed to be loaded.")
 
             HashDB.ADAPTERS = pi.plugins
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      mode  The mode
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def init(self, mode):
-        # ---------------------------------------------------------------------
-        # init
-        # ---------------------------------------------------------------------
         if self.conf is None:
             LGR.error("hashdb configuration is missing.")
             return False
@@ -113,32 +125,39 @@ class HashDB(object):
 
         self.valid = True
         return True
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def term(self):
-        # ---------------------------------------------------------------------
-        # term
-        # ---------------------------------------------------------------------
         if self.valid:
             self.adapter.term()
             self.adapter = None
             self.valid = False
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      container  The container
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def contains(self, container):
-        # ---------------------------------------------------------------------
-        # contains
-        # ---------------------------------------------------------------------
         if not self.valid:
             return None
 
         return (self.adapter.lookup(container.hashed) is not None)
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      container  The container
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def persist(self, container):
-        # ---------------------------------------------------------------------
-        # insert
-        # ---------------------------------------------------------------------
         if not self.valid:
             return False
 
@@ -146,12 +165,15 @@ class HashDB(object):
             return False
 
         return True
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      other  The other
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def merge_into(self, other):
-        # ---------------------------------------------------------------------
-        # merge
-        # ---------------------------------------------------------------------
         if not self.valid or not other.valid:
             return False
 
@@ -159,12 +181,18 @@ class HashDB(object):
             return False
 
         return True
-
-
+##
+## @brief      Class for hash db action group.
+##
 class HashDBActionGroup(ActionGroup):
-    # -------------------------------------------------------------------------
-    # HashDBActionGroup
-    # -------------------------------------------------------------------------
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      keywords  The keywords
+    ## @param      args      The arguments
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @staticmethod
     @trace_static('HashDBActionGroup')
     def adapters(keywords, args):
@@ -183,14 +211,17 @@ class HashDBActionGroup(ActionGroup):
         LGR.info(text)
 
         return True
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      keywords  The keywords
+    ## @param      args      The arguments
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @staticmethod
     @trace_static('HashDBActionGroup')
     def create(keywords, args):
-        # ---------------------------------------------------------------------
-        # create
-        # ---------------------------------------------------------------------
-        # check arguments
         if len(args.files) < 2:
             LGR.error("this action expect at least these args: hashdb.conf "
                       "dir [dir ...]")
@@ -206,7 +237,7 @@ class HashDBActionGroup(ActionGroup):
             if not os.path.isdir(dpath):
                 LGR.error("<{}> must be an existing directory.".format(dpath))
                 return False
-        # create database
+
         LGR.info("enumerating files...")
         fpaths = fs.enumerate_files(dirs, args.dir_filter, args.file_filter,
                                     args.recursive)
@@ -226,15 +257,17 @@ class HashDBActionGroup(ActionGroup):
 
         LGR.info("done.")
         return True
-
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      keywords  The keywords
+    ## @param      args      The arguments
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @staticmethod
     @trace_static('HashDBActionGroup')
     def merge(keywords, args):
-        # ---------------------------------------------------------------------
-        # merge
-        # ---------------------------------------------------------------------
-        # check arguments
         if len(args.files) < 2:
             LGR.error("this action expect at least these args: outdb.conf "
                       "db.0.conf [db.1.conf ... db.N.conf]")
@@ -261,11 +294,10 @@ class HashDBActionGroup(ActionGroup):
         LGR.info("done.")
         odb.term()
         return True
-
+    ##
+    ## @brief      Constructs the object.
+    ##
     def __init__(self):
-        # ---------------------------------------------------------------------
-        # __init__
-        # ---------------------------------------------------------------------
         super(HashDBActionGroup, self).__init__('hashdb', {
             'adapters': ActionGroup.action(HashDBActionGroup.adapters,
                                            "list hash database adapters."),
