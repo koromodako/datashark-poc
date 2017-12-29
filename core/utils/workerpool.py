@@ -25,6 +25,7 @@
 # IMPORTS
 # =============================================================================
 import multiprocessing as mp
+import utils.crypto as crypto
 from utils.wrapper import trace
 from utils.logging import get_logger
 from utils.wrapper import trace_func
@@ -47,6 +48,9 @@ def worker_routine(iqueue, oqueue, routine, kwargs):
     @param      routine  Routine used to process input queue tasks
     @param      kwargs   Keyword arguments to be passed to the routine
     """
+    # re-init crypto context after worker fork
+    crypto.re_init()
+    # enter worker infinite loop
     while True:
         # take next available task
         LGR.debug('retrieving task...')

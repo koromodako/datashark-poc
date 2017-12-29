@@ -35,6 +35,7 @@ from Crypto.Hash import SHA224
 from Crypto.Hash import SHA256
 from Crypto.Hash import SHA384
 from Crypto.Hash import SHA512
+from Crypto.Random import atfork
 from Crypto.Random import get_random_bytes
 from utils.logging import get_logger
 from utils.binary_file import BinaryFile
@@ -85,6 +86,13 @@ def __new_hash(hash_func, key=None, digestmod=None):
 
     LGR.warn("unknown hash_func value: <{}>".format(hash_func))
     return None
+##
+## @brief      { function_description }
+##
+## @return     { description_of_the_return_value }
+##
+def re_init():
+    atfork()
 ##
 ## @brief      { function_description }
 ##

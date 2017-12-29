@@ -29,7 +29,7 @@ function install_python_requirements {
 		exit 1
 	else
 		echo "installing requirements <${1}>..."
-		sudo ${PIP} install -r ${1}
+		${PIP} install -r ${1}
 	fi
 }
 
