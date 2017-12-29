@@ -1,0 +1,3 @@
+PyCrypto
+termcolor
+python-magic

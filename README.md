@@ -11,6 +11,19 @@
     4. [Dissection](#dissection)
     5. [DissectionDB](#dissectiondb)
 
+## Install
+
+```bash
+> $ ./setup.sh
+```
+
+## Minimal requirements & dependencies
+
+ + Python 3.6.x
+ + python-magic
+ + termcolor
+ + PyCrypto
+
 ## Getting started
 
 Get some help about datashark CLI arguments:

@@ -54,7 +54,7 @@ function deploy_command {
 ## Install Python requirements
 ##
 check_python_version
-install_python_requirements ${CORE_DIR}/requirements.txt
+install_python_requirements requirements.txt
 ##
 ## Copy configuration file
 ##
