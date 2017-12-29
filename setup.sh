@@ -4,12 +4,35 @@
 # ENVARS
 #
 PWD=$(pwd)
-CONF_SRC_DIR="core/config"
+PIP=$(which pip3)
+CORE_DIR="core"
+CONF_SRC_DIR="${CORE_DIR}/config"
 CONF_DST_DIR="${HOME}/.config/datashark"
 BIN_DST_DIR="${HOME}/bin"
 #
 # FUNCTIONS
 #
+function check_python_version {
+	echo "checking python version..."
+	VALID=$(python3 -c 'import sys; v=sys.version_info[:]; print("OK" if v[0] >= 3 and v[1] >= 6 else "")')
+	if [ "${VALID}" == "" ]
+	then
+		echo "please install Python version 3.6.x or newer."
+		exit 1
+	fi
+}
+
+function install_python_requirements {
+	if [ "${PIP}" == "" ]
+	then
+		echo "please install pip3 first."
+		exit 1
+	else
+		echo "installing requirements <${1}>..."
+		sudo ${PIP} install -r ${1}
+	fi
+}
+
 function makedirs {
 	echo "making directory <${1}>..."
 	mkdir -p ${1}
@@ -27,6 +50,11 @@ function deploy_command {
 #
 # SCRIPT
 #
+##
+## Install Python requirements
+##
+check_python_version
+install_python_requirements ${CORE_DIR}/requirements.txt
 ##
 ## Copy configuration file
 ##

@@ -27,12 +27,17 @@
 # =============================================================================
 # IMPORTS
 # =============================================================================
-# modules imports
+#
+from utils.constants import check_python_version
+if not check_python_version(3, 6, 0):
+    print("FATAL: requires python version 3.6.x or newer.")
+    exit(100)
+#
 import os
 import utils.logging as logging
 import workspace.workspace as workspace
 import utils.config as config
-# functions imports
+#
 from utils.config import print_license
 from utils.config import print_version
 from utils.config import get_arg_parser
@@ -53,17 +58,17 @@ from dissectiondb.dissectiondb import DissectionDBActionGroup
 #
 if not workspace.init():
     print("FATAL: failed to initialize workspace.")
-    exit(100)
+    exit(101)
 #
 if not logging.init(workspace.workspace().logdir()):
     print("FATAL: failed to initialize logger.")
-    exit(101)
+    exit(102)
 #
 LGR = logging.get_logger(__name__)
 #
 if not config.load():
     print("FATAL: failed to load config from file.")
-    exit(102)
+    exit(103)
 #
 HASHDB_ACT_GRP = HashDBActionGroup()
 CONTAINER_ACT_GRP = ContainerActionGroup()

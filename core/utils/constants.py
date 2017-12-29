@@ -23,6 +23,10 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # =============================================================================
+#  IMPORTS
+# =============================================================================
+import sys
+# =============================================================================
 #  GLOBALS / CONFIG
 # =============================================================================
 ##
@@ -79,3 +83,25 @@ See LICENSE file for details.
 ## { item_description }
 ##
 PROG_VERSION = '{}.{}.{}{}'.format(VERS_MAJOR, VERS_MINOR, VERS_FIX, VERS_TAG)
+##
+## { item_description }
+##
+PYTHON_VERSION = sys.version_info
+# =============================================================================
+#  FUNCTIONS
+# =============================================================================
+def check_python_version(major, minor, micro):
+
+    if PYTHON_VERSION.major < major:
+        return False
+
+    if PYTHON_VERSION.major == major:
+        if PYTHON_VERSION.minor < minor:
+            return False
+
+        elif PYTHON_VERSION.minor == minor:
+            if PYTHON_VERSION.micro < micro:
+                return False
+
+    return True
+
