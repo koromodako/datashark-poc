@@ -143,7 +143,8 @@ class Container(object):
         # to_dict
         # ---------------------------------------------------------------------
         return {
-            'parent': self.parent,
+            'uuid': self.uuid,
+            'parent_uuid': self.parent_uuid,
             'path': self.path,
             'realname': self.realname,
             'hashed': self.hashed,
