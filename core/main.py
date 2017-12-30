@@ -168,6 +168,7 @@ def handle_action(args):
 
     if not ACTIONS.perform_action(args.action.split(ActionGroup.SEP), args):
         return 2
+
     return 0
 
 

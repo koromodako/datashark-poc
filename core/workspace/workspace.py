@@ -28,7 +28,6 @@
 import os
 #
 from shutil import rmtree
-from tempfile import gettempdir
 from utils.crypto import randstr
 from utils.wrapper import trace
 from utils.logging import get_logger
@@ -51,13 +50,17 @@ class Workspace(object):
     ##
     ## { item_description }
     ##
+    WS_ROOT_DIR = os.path.expanduser('~/datashark')
+    ##
+    ## { item_description }
+    ##
     WS_PREFIX = 'ds.ws.'
     ##
     ## @brief      Constructs the object.
     ##
     def __init__(self):
         randdir = '{}{}'.format(self.WS_PREFIX, randstr(4))
-        self.__ws_root = os.path.join(gettempdir(), randdir)
+        self.__ws_root = os.path.join(self.WS_ROOT_DIR, randdir)
         self.__ws_logdir = os.path.join(self.__ws_root, 'logs')
         self.__ws_tmpdir = os.path.join(self.__ws_root, 'tmp')
         self.__ws_datdir = os.path.join(self.__ws_root, 'data')
@@ -231,11 +234,10 @@ class WorkspaceActionGroup(ActionGroup):
     @trace_static('WorkspaceActionGroup')
     def list(keywords, args):
         total = 0
-        tmpdir = gettempdir()
 
         text = '\nworkspaces:\n'
-        for entry in os.listdir(tmpdir):
-            full_path = os.path.join(tmpdir, entry)
+        for entry in os.listdir(Workspace.WS_ROOT_DIR):
+            full_path = os.path.join(Workspace.WS_ROOT_DIR, entry)
 
             if os.path.isdir(full_path):
                 if entry.startswith(Workspace.WS_PREFIX):
@@ -257,16 +259,14 @@ class WorkspaceActionGroup(ActionGroup):
     @staticmethod
     @trace_static('WorkspaceActionGroup')
     def clean(keywords, args):
-        tmpdir = gettempdir()
-
         only = args.files
 
-        for entry in os.listdir(tmpdir):
+        for entry in os.listdir(Workspace.WS_ROOT_DIR):
 
             if len(only) > 0 and entry not in only:
                 continue
 
-            full_path = os.path.join(tmpdir, entry)
+            full_path = os.path.join(Workspace.WS_ROOT_DIR, entry)
 
             if os.path.isdir(full_path):
                 if entry.startswith(Workspace.WS_PREFIX):
