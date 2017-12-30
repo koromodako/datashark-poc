@@ -50,7 +50,7 @@ class Workspace(object):
     ##
     ## { item_description }
     ##
-    WS_ROOT_DIR = os.path.expanduser('~/datashark')
+    WS_ROOT_DIR = os.path.expanduser('~/datashark.ws')
     ##
     ## { item_description }
     ##
