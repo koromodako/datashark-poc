@@ -41,28 +41,32 @@ SECTOR_SZ = VmdkDisk.SECTOR_SZ
 # =============================================================================
 #  CLASSES
 # =============================================================================
-
-
+##
+## @brief      Class for sparse extent extractor.
+##
 class SparseExtentExtractor(object):
-    # -------------------------------------------------------------------------
-    # SparseExtentExtractor
-    # -------------------------------------------------------------------------
-
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      wdir  The wdir
+    ## @param      vmdk  The vmdk
+    ## @param      obf   The obf
+    ##
     def __init__(self, wdir, vmdk, obf):
-        # ---------------------------------------------------------------------
-        # __init__
-        # ---------------------------------------------------------------------
         super(SparseExtentExtractor, self).__init__()
         self.wdir = wdir
         self.vmdk = vmdk
         self.obf = obf
         self.df = vmdk.descriptor_file()
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      extent  The extent
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def __extract_sparse_extent(self, extent):
-        # ---------------------------------------------------------------------
-        # __extract_sparse_extent
-        # ---------------------------------------------------------------------
         extent_path = os.path.join(self.wdir, extent.filename)
         if not BinaryFile.exists(extent_path):
             LGR.error("cannot find extent: {}".format(extent_path))
@@ -95,12 +99,13 @@ class SparseExtentExtractor(object):
         gds.term() # close grain directory stack internal binary files
         ebf.close()
         return True
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def __extract_monolithic_sparse(self):
-        # ---------------------------------------------------------------------
-        # __extract_monolithic_sparse
-        # ---------------------------------------------------------------------
         total_sectors = sum([extent.size for extent in self.df.extents])
         total_sectors = total_sectors // SECTOR_SZ
 
@@ -119,12 +124,13 @@ class SparseExtentExtractor(object):
 
         LGR.info("extraction completed.")
         return True
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def extract(self):
-        # ---------------------------------------------------------------------
-        # extract
-        # ---------------------------------------------------------------------
         if self.df.is_monolithic():
             return self.__extract_monolithic_sparse()
 

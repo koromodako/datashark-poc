@@ -36,20 +36,26 @@ LGR = get_logger(__name__)
 #  CLASSES
 # =============================================================================
 ##
-## @brief
+## @brief      Class for union member.
 ##
 class UnionMember(Member):
-    # -------------------------------------------------------------------------
-    # UnionMember
-    # -------------------------------------------------------------------------
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      name     The name
+    ## @param      members  The members
+    ## @param      load     The load
+    ## @param      valid    The valid
+    ##
     def __init__(self, name, members, load=True, valid=False):
         self.members = members
         super(UnionMember, self).__init__(name, load, valid)
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     def _validate(self):
-        # ---------------------------------------------------------------------
-        # _validate
-        # ---------------------------------------------------------------------
         if not isinstance(self.members, list):
             LGR.error("UnionMember's members must be a non-empty dict.")
             return False
@@ -73,18 +79,21 @@ class UnionMember(Member):
             return False
 
         return True
-
+    ##
+    ## @brief      This is a union i.e. we return size its biggest member
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     def _size(self):
-        # ---------------------------------------------------------------------
-        # _size
-        #   This is a union we return size its biggest member
-        # ---------------------------------------------------------------------
         return max([member.size() for member in self.members])
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      data  The data
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     def _read(self, data):
-        # ---------------------------------------------------------------------
-        # _read
-        # ---------------------------------------------------------------------
         st = Struct('union')
 
         for member in self.members:

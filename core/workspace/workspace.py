@@ -102,9 +102,6 @@ class Workspace(object):
     ##
     @trace()
     def __file(self, absdir, prefix, suffix, isdir=False, randomize=True):
-        # --------------------------------------------------------------------------
-        # __file
-        # --------------------------------------------------------------------------
         full_path = os.path.join(absdir, self.__filename(prefix, suffix,
                                                          randomize))
         if isdir:

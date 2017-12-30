@@ -57,19 +57,26 @@ StructFactory.st_register(StructSpecif(S_GENERIC_MBR, [
 # =============================================================================
 #  CLASSES
 # =============================================================================
-
-
+##
+## @brief      Class for mbr.
+##
 class MBR(object):
+    ##
+    ## { item_description }
+    ##
     MBR_SIGN = b'\x55\xaa'
-    # -------------------------------------------------------------------------
-    # MBR
-    # -------------------------------------------------------------------------
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      bf    { parameter_description }
+    ##
     def __init__(self, bf):
-        # ---------------------------------------------------------------------
-        # __init__
-        # ---------------------------------------------------------------------
         super(MBR, self).__init__()
         self.mbr = StructFactory.st_from_file(S_GENERIC_MBR, self.bf)
-
+    ##
+    ## @brief      Determines if valid.
+    ##
+    ## @return     True if valid, False otherwise.
+    ##
     def is_valid(self):
         return self.mbr.signature == self.MBR_SIGN

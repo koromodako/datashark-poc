@@ -41,44 +41,38 @@ LGR = get_logger(__name__)
 # =============================================================================
 # FUNCTIONS
 # =============================================================================
-
-
+##
+## @brief      returns a list of mime types that this dissector can handle
+## @warning    public mandatory function that the module must define
+##
+## @return     a list of mime types
+##
 @trace_func(__name__)
 def mimes():
-    # -------------------------------------------------------------------------
-    # mimes
-    #   /!\ public mandatory function that the module must define /!\
-    #   \brief returns a list of mime types that this dissector can handle
-    #   \return [list(str)]
-    # -------------------------------------------------------------------------
     return [
         'application/octet-stream'
     ]
-
-
+##
+## @brief      configures the dissector internal parameters
+## @warning    public mandatory function that the module must define
+##
+## @param      config  The configuration
+##
+## @return     { description_of_the_return_value }
+##
 @trace_func(__name__)
 def configure(config):
-    # -------------------------------------------------------------------------
-    # configure
-    #   /!\ public mandatory function that the module must define /!\
-    #   \brief configures the dissector internal parameters
-    #   \param [list(tuple(option, value))] config
-    #       configuration taken from Datashark's INI file if found.
-    #       config might be None or empty.
-    # -------------------------------------------------------------------------
     return True
-
-
+##
+## @brief      Determines ability to dissect given container.
+## @warning    public mandatory function that the module must define
+##
+## @param      container  The container
+##
+## @return     True if able to dissect, False otherwise.
+##
 @trace_func(__name__)
 def can_dissect(container):
-    # -------------------------------------------------------------------------
-    # can_dissect
-    #   /!\ public mandatory function that the module must define /!\
-    #   \brief returns true if dissector can effectively dissect given
-    #          container
-    #   \param [Container] container
-    #   \return [bool]
-    # -------------------------------------------------------------------------
     if 'Microsoft Disk Image' not in container.mime_text:
         return False
 
@@ -91,18 +85,17 @@ def can_dissect(container):
 
     ibf.close()
     return True
-
-
+##
+## @brief      performs the dissection of the container and returns a list of
+##             containers found in the dissected container
+## @warning    public mandatory function that the module must define
+##
+## @param      container  The container
+##
+## @return     a list of containers
+##
 @trace_func(__name__)
 def dissect(container):
-    # -------------------------------------------------------------------------
-    # dissect
-    #   /!\ public mandatory function that the module must define /!\
-    #   \brief realize the dissection of the container and returns a list of
-    #          containers found in the dissected container
-    #   \param
-    #   \return [list(Container)]
-    # -------------------------------------------------------------------------
     containers = []
 
     obf = container.obf()
@@ -117,20 +110,24 @@ def dissect(container):
     obf.close()
     ibf.close()
     return containers
-
-
+##
+## @brief      { function_description }
+## @warning    public mandatory function that the module must define
+##
+## @return     { description_of_the_return_value }
+##
 @trace_func(__name__)
 def action_group():
-    # -------------------------------------------------------------------------
-    # action_group()
-    #   /!\ public mandatory function that the module must define /!\
-    #   \brief returns module action group
-    # -------------------------------------------------------------------------
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      keywords  The keywords
+    ## @param      args      The arguments
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace_func(__name__)
     def __action_header(keywords, args):
-        # ---------------------------------------------------------------------
-        # __action_header
-        # ---------------------------------------------------------------------
         for f in args.files:
 
             if not BinaryFile.exists(f):
@@ -149,12 +146,16 @@ def action_group():
             LGR.info(hdr.to_str())
 
         return True
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      keywords  The keywords
+    ## @param      args      The arguments
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace_func(__name__)
     def __action_footer(keywords, args):
-        # ---------------------------------------------------------------------
-        # __action_footer
-        # ---------------------------------------------------------------------
         for f in args.files:
 
             if not BinaryFile.exists(f):
@@ -174,9 +175,6 @@ def action_group():
 
         return True
 
-    # -------------------------------------------------------------------------
-    # ActionGroup
-    # -------------------------------------------------------------------------
     return ActionGroup('vhd', {
         'header': ActionGroup.action(__action_header, "display vhd header."),
         'footer': ActionGroup.action(__action_footer, "display vhd footer.")

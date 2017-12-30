@@ -34,12 +34,10 @@ LGR = get_logger(__name__)
 # =============================================================================
 # CLASSES
 # =============================================================================
-
-
+##
+## @brief      Class for descriptor file.
+##
 class DescriptorFile(object):
-    # -------------------------------------------------------------------------
-    # DescriptorFile
-    # -------------------------------------------------------------------------
     K_CID = 'CID'
     K_VERSION = 'version'
     K_PARENT_CID = 'parentCID'
@@ -78,21 +76,25 @@ class DescriptorFile(object):
             'twoGbMaxExtentSparse'
         ]
     )
-
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      s     { parameter_description }
+    ##
     def __init__(self, s):
-        # ---------------------------------------------------------------------
-        # __init__
-        # ---------------------------------------------------------------------
         super(DescriptorFile, self).__init__()
         self.extents = []
         self.ddb = {}
         self.__valid = (self.__parse(s) and self.__check())
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      s     { parameter_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def __parse(self, s):
-        # ---------------------------------------------------------------------
-        # __parse
-        # ---------------------------------------------------------------------
         for line in s.split('\n'):
             ok = False
             line = line.strip()
@@ -124,12 +126,13 @@ class DescriptorFile(object):
                 LGR.warn("unhandled descriptor file line: {}".format(l))
         # descriptor file parsing step is valid
         return True
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def __check(self):
-        # ---------------------------------------------------------------------
-        # __check
-        # ---------------------------------------------------------------------
         # check parentCID and parentFileNameHint
         if not hasattr(self, self.K_PARENT_CID):
             LGR.error("missing parentCID.")
@@ -150,87 +153,98 @@ class DescriptorFile(object):
             return False
         # descriptor file check step is valid
         return True
-
+    ##
+    ## @brief      Determines if valid.
+    ##
+    ## @return     True if valid, False otherwise.
+    ##
     @trace()
     def is_valid(self):
-        # --------------------------------------------------------------------------
-        # is_valid
-        # --------------------------------------------------------------------------
         return self.__valid
-
+    ##
+    ## @brief      Determines if it has parent.
+    ##
+    ## @return     True if has parent, False otherwise.
+    ##
     @trace()
     def has_parent(self):
-        # --------------------------------------------------------------------------
-        # has_parent
-        # --------------------------------------------------------------------------
         return (getattr(self, self.K_PARENT_CID) != self.CID_NOPARENT)
-
+    ##
+    ## @brief      Determines if monolithic.
+    ##
+    ## @return     True if monolithic, False otherwise.
+    ##
     @trace()
     def is_monolithic(self):
-        # --------------------------------------------------------------------------
-        # is_monolithic
-        # --------------------------------------------------------------------------
         return ('monolithic' in getattr(self, self.K_CREATE_TYPE).lower())
-
+    ##
+    ## @brief      Determines if 2 gigabytes splitted.
+    ##
+    ## @return     True if 2 gigabytes splitted, False otherwise.
+    ##
     @trace()
     def is_2gb_splitted(self):
-        # --------------------------------------------------------------------------
-        # is_2gb_splitted
-        # --------------------------------------------------------------------------
         return ('twogbmaxextent' in getattr(self, self.K_CREATE_TYPE).lower())
-
+    ##
+    ## @brief      Determines if sparse.
+    ##
+    ## @return     True if sparse, False otherwise.
+    ##
     @trace()
     def is_sparse(self):
-        # --------------------------------------------------------------------------
-        # is_sparse
-        # --------------------------------------------------------------------------
         return ('sparse' in getattr(self, self.K_CREATE_TYPE).lower())
-
+    ##
+    ## @brief      Determines if esx disk.
+    ##
+    ## @return     True if esx disk, False otherwise.
+    ##
     @trace()
     def is_esx_disk(self):
-        # --------------------------------------------------------------------------
-        # is_esx_disk
-        # --------------------------------------------------------------------------
         return ('vmfs' in getattr(self, self.K_CREATE_TYPE).lower())
-
+    ##
+    ## @brief      Determines if using physical disk.
+    ##
+    ## @return     True if using physical disk, False otherwise.
+    ##
     @trace()
     def is_using_physical_disk(self):
-        # --------------------------------------------------------------------------
-        # is_using_physical_disk
-        # --------------------------------------------------------------------------
         return (getattr(self, self.K_CREATE_TYPE) in self.PHY_CREATE_TYPES)
-
+    ##
+    ## @brief      Determines if using raw device mapping.
+    ##
+    ## @return     True if using raw device mapping, False otherwise.
+    ##
     @trace()
     def is_using_raw_device_mapping(self):
-        # --------------------------------------------------------------------------
-        # is_using_raw_device_mapping
-        # --------------------------------------------------------------------------
         createType = getattr(self, self.K_CREATE_TYPE)
         return (createType in self.RAW_DEV_MAP_CREATE_TYPES)
-
+    ##
+    ## @brief      Determines if stream optimized.
+    ##
+    ## @return     True if stream optimized, False otherwise.
+    ##
     @trace()
     def is_stream_optimized(self):
-        # --------------------------------------------------------------------------
-        # is_stream_optimized
-        # --------------------------------------------------------------------------
         createType = getattr(self, self.K_CREATE_TYPE)
         return (createType in self.STREAM_OPTIM_CREATE_TYPES)
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def parent_filename(self):
-        # --------------------------------------------------------------------------
-        # parent_filename
-        # --------------------------------------------------------------------------
         if not hasattr(self, self.K_PARENT_FILENAME_HINT):
             return None
 
         return getattr(self, self.K_PARENT_FILENAME_HINT)
-
+    ##
+    ## @brief      Returns a string representation of the object.
+    ##
+    ## @return     String representation of the object.
+    ##
     @trace()
     def to_str(self):
-        # --------------------------------------------------------------------------
-        # to_str
-        # --------------------------------------------------------------------------
         text = "\nDescriptorFile:"
         text += "\n\theader:"
         for key in DescriptorFile.HEADER_KWDS:

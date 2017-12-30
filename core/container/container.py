@@ -73,9 +73,6 @@ class Container(object):
     @staticmethod
     @trace_static('Container')
     def hash(path):
-        # ---------------------------------------------------------------------
-        # hash
-        # ---------------------------------------------------------------------
         if BinaryFile.exists(path):
             hash_func = config.value('hash_func', 'sha256')
             LGR.info("computing <{}> {}... please wait...".format(path,
@@ -93,9 +90,6 @@ class Container(object):
     @staticmethod
     @trace_static('Container')
     def mimes(magic_file, path):
-        # ---------------------------------------------------------------------
-        # mimes
-        # ---------------------------------------------------------------------
         return (Magic(magic_file=magic_file).from_file(path),
                 Magic(magic_file=magic_file, mime=True).from_file(path))
     ##
@@ -106,9 +100,6 @@ class Container(object):
     ## @param      magic_file  The magic file
     ##
     def __init__(self, path, realname, magic_file=None):
-        # ---------------------------------------------------------------------
-        # __init__
-        # ---------------------------------------------------------------------
         super(Container, self).__init__()
         ## @brief Container's unique id
         self.uuid = uuid4()
@@ -139,9 +130,6 @@ class Container(object):
     ##
     @trace()
     def to_dict(self):
-        # ---------------------------------------------------------------------
-        # to_dict
-        # ---------------------------------------------------------------------
         return {
             'uuid': self.uuid,
             'parent_uuid': self.parent_uuid,

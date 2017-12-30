@@ -69,26 +69,30 @@ StructFactory.st_register(StructSpecif(S_VDI_HDR, [
 # =============================================================================
 #  CLASSES
 # =============================================================================
-
-
+##
+## @brief      Class for vdi disk.
+##
 class VdiDisk(object):
+    ##
+    ## { item_description }
+    ##
     VDI_SIGN = b'\x7f\x10\xda\xbe'
-    # -------------------------------------------------------------------------
-    # VdiDisk
-    # -------------------------------------------------------------------------
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      bf    { parameter_description }
+    ##
     def __init__(self, bf):
-        # ---------------------------------------------------------------------
-        # __init__
-        # ---------------------------------------------------------------------
         super(VdiDisk, self).__init__()
         self.bf = bf
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @lazy_getter('_hdr')
     @trace()
     def header(self):
-        # ---------------------------------------------------------------------
-        # header
-        # ---------------------------------------------------------------------
         hdr = StructFactory.st_from_file(S_VDI_HDR, self.bf)
         if hdr is None:
             return hdr
@@ -97,25 +101,29 @@ class VdiDisk(object):
             return None
 
         return hdr
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @lazy_getter('_blk_map')
     @trace()
     def block_map(self):
-        # ---------------------------------------------------------------------
-        # block_map
-        # ---------------------------------------------------------------------
         if self.header() is None:
             LGR.error("cannot parse header => cannot retrieve block map.")
             return None
 
         self.bf.seek(self._hdr.oftBlk)
         return self.bf.read(4 * self._hdr.numBlkInHdd)
-
+    ##
+    ## @brief      Reads a blocks.
+    ##
+    ## @param      n     Index of the block to be read starting from 0.
+    ##
+    ## @return     Block data as raw bytes
+    ##
     @trace()
     def read_block(self, n):
-        # ---------------------------------------------------------------------
-        # read_block
-        # ---------------------------------------------------------------------
         if self.block_map() is None:
             LGR.error("cannot retrieve block map => cannot retrieve a block.")
             return None

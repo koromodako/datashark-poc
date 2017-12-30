@@ -34,12 +34,10 @@ LGR = get_logger(__name__)
 # =============================================================================
 #  CLASSES
 # =============================================================================
-
-
+##
+## @brief      Class for extent.
+##
 class Extent(object):
-    # -------------------------------------------------------------------------
-    # Extent
-    # -------------------------------------------------------------------------
     ACCESS_KWDS = [
         'RW',
         'RDONLY',
@@ -56,19 +54,23 @@ class Extent(object):
         'ZERO',
         'VMFSSPARSE'
     ]
-
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      line  The line
+    ##
     def __init__(self, line):
-        # ---------------------------------------------------------------------
-        # __init__
-        # ---------------------------------------------------------------------
         super(Extent, self).__init__()
         self.__valid = self.__parse(line)
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      line  The line
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def __parse(self, line):
-        # ---------------------------------------------------------------------
-        # __parse
-        # ---------------------------------------------------------------------
         pts = line.split(' ')
 
         if len(pts) < 4:
@@ -95,26 +97,29 @@ class Extent(object):
             self.offset = int(pts[4])
 
         return True
-
+    ##
+    ## @brief      Determines if valid.
+    ##
+    ## @return     True if valid, False otherwise.
+    ##
     @trace()
     def is_valid(self):
-        # ---------------------------------------------------------------------
-        # is_valid
-        # ---------------------------------------------------------------------
         return self.__valid
-
+    ##
+    ## @brief      Determines if flat.
+    ##
+    ## @return     True if flat, False otherwise.
+    ##
     @trace()
     def is_flat(self):
-        # ---------------------------------------------------------------------
-        # is_flat
-        # ---------------------------------------------------------------------
         return (self.type in Extent.FLAT_TYPES)
-
+    ##
+    ## @brief      Returns a string representation of the object.
+    ##
+    ## @return     String representation of the object.
+    ##
     @trace()
     def to_str(self):
-        # ---------------------------------------------------------------------
-        # to_str
-        # ---------------------------------------------------------------------
         offset = '' if self.offset is None else self.offset
 
         return '{} {} {} {} {}'.format(self.access, self.size, self.type,

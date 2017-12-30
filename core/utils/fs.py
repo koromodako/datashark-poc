@@ -48,9 +48,6 @@ LGR = get_logger(__name__)
 ##
 @trace_func(__name__)
 def enumerate_files(dirs, dir_filter, file_filter, recursive):
-    # -------------------------------------------------------------------------
-    # enumerate_files
-    # -------------------------------------------------------------------------
     fpaths = []
 
     for dpath in dirs:

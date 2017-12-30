@@ -95,13 +95,15 @@ StructFactory.st_register(StructSpecif(S_VHD_FOOTER, [
 # =============================================================================
 #  CLASSES
 # =============================================================================
-
-
+##
+## @brief      Enum for vhd disk creator host os.
+##
 class VhdDiskCreatorHostOS(Enum):
     WINDOWS = 0x5769326b    # b'Wi2k'
     MAC = 0x4d616320        # b'Mac '
-
-
+##
+## @brief      Enum for vhd disk type.
+##
 class VhdDiskType(Enum):
     NONE = 0
     RESERVED_0 = 1      # deprecated
@@ -110,8 +112,9 @@ class VhdDiskType(Enum):
     DIFFERENCING = 4
     RESERVED_1 = 5      # deprecated
     RESERVED_2 = 6      # deprecated
-
-
+##
+## @brief      Enum for vhd disk platform code.
+##
 class VhdDiskPlatformCode(Enum):
     NONE = 0x0
     WI2R = 0x57693272   # deprecated
@@ -120,12 +123,10 @@ class VhdDiskPlatformCode(Enum):
     W2KU = 0x57326b75
     MAC = 0x4d616320
     MACX = 0x4d616358
-
-
+##
+## @brief      Class for vhd disk.
+##
 class VhdDisk(object):
-    # -------------------------------------------------------------------------
-    # VhdDisk
-    # -------------------------------------------------------------------------
     # misc
     SECTOR_SZ = 512 # bytes
     # feature flags
@@ -133,40 +134,44 @@ class VhdDisk(object):
     FEATURE_TEMPORARY = 0x1     # is it a temporary disk ?
     FEATURE_RESERVED = 0x2      # must always be set
     # all other should be 0
-
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      bf    { parameter_description }
+    ##
     def __init__(self, bf):
-        # ---------------------------------------------------------------------
-        # __init__
-        # ---------------------------------------------------------------------
         super(VhdDisk, self).__init__()
         self.bf = bf
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @lazy_getter('_ftr')
     @trace()
     def footer(self):
-        # ---------------------------------------------------------------------
-        # footer
-        # ---------------------------------------------------------------------
         return StructFactory.st_from_file(S_VHD_FOOTER, self.bf)
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @lazy_getter('_type')
     @trace()
     def type(self):
-        # ---------------------------------------------------------------------
-        # type
-        # ---------------------------------------------------------------------
         if self.footer() is None:
             LGR.error("cannot parse footer => cannot extract disk type.")
             return None
 
         return VhdDiskType(self._ftr.diskType)
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @lazy_getter('_hdr')
     @trace()
     def header(self):
-        # ---------------------------------------------------------------------
-        # header
-        # ---------------------------------------------------------------------
         if self.type() is None:
             LGR.error("failed to extract disk type.")
             return None
@@ -177,26 +182,28 @@ class VhdDisk(object):
             return None
 
         return StructFactory.st_from_file(S_VHD_HEADER, self.bf, oft=512)
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @lazy_getter('_bat')
     @trace()
     def block_allocation_table(self):
-        # ---------------------------------------------------------------------
-        # block_allocation_table
-        # ---------------------------------------------------------------------
         if self.header() is None:
             LGR.error("")
             return None
 
         self.bf.seek(self._hdr.tableOft)
         return self.bf.read(self._hdr.maxTableEntries * 4)
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @lazy_getter('_blk_cnt')
     @trace()
     def block_count(self):
-        # ---------------------------------------------------------------------
-        # block_count
-        # ---------------------------------------------------------------------
         dtype = self.type()
 
         if dtype == VhdDiskType.FIXED:
@@ -214,12 +221,15 @@ class VhdDisk(object):
 
         LGR.error("unsupported vhd type.")
         return None
-
+    ##
+    ## @brief      Reads a dynamic vhd block.
+    ##
+    ## @param      n     { parameter_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def __read_dynamic_vhd_block(self, n):
-        # ---------------------------------------------------------------------
-        # __read_dynamic_vhd_block
-        # ---------------------------------------------------------------------
         if self.block_allocation_table() is None:
             LGR.error("")
             return None
@@ -238,12 +248,15 @@ class VhdDisk(object):
             data = self.bf.read(blk_sz)
 
         return data
-
+    ##
+    ## @brief      Reads a block.
+    ##
+    ## @param      n     { parameter_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def read_block(self, n):
-        # ---------------------------------------------------------------------
-        # read_block
-        # ---------------------------------------------------------------------
         dtype = self.type()
 
         if dtype == VhdDiskType.FIXED:

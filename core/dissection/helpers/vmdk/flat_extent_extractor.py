@@ -35,27 +35,29 @@ LGR = get_logger(__name__)
 # =============================================================================
 #  CLASSES
 # =============================================================================
-
-
+##
+## @brief      Class for flat extent extractor.
+##
 class FlatExtentExtractor(object):
-    # -------------------------------------------------------------------------
-    # FlatExtentExtractor
-    # -------------------------------------------------------------------------
-
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      wdir  The wdir
+    ## @param      vmdk  The vmdk
+    ## @param      obf   The obf
+    ##
     def __init__(self, wdir, vmdk, obf):
-        # ---------------------------------------------------------------------
-        # __init__
-        # ---------------------------------------------------------------------
         super(FlatExtentExtractor, self).__init__()
         self.wdir = wdir
         self.vmdk = vmdk
         self.obf = obf
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def extract(self):
-        # ---------------------------------------------------------------------
-        # extract
-        # ---------------------------------------------------------------------
         if self.df.is_monolithic():
             todo(LGR, 'implement flat monolithic disk extraction.')
 

@@ -70,9 +70,6 @@ class PluginImporter(object):
     ##
     @trace()
     def __import_failure(self, error):
-        # ---------------------------------------------------------------------
-        # __import_failure
-        # ---------------------------------------------------------------------
         self.valid = False
         LGR.error(error)
         if not self.skip_failing_import:

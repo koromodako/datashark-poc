@@ -39,45 +39,53 @@ LGR = get_logger(__name__)
 # =============================================================================
 #  CLASSES
 # =============================================================================
-
-
+##
+## @brief      Front-end to create structure objects.
+##
 class StructFactory:
-    # -------------------------------------------------------------------------
-    # StructFactory
-    # -------------------------------------------------------------------------
     STRUCTS = {}
     K_SIZE = 'size'
     K_MEMBERS = 'members'
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      st_type  The st type
+    ## @param      log      The log
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @staticmethod
     @trace_static('StructFactory')
     def st_exists(st_type, log=False):
-        # ---------------------------------------------------------------------
-        # st_exists
-        # ---------------------------------------------------------------------
         st = StructFactory.STRUCTS.get(st_type, None)
         if log and st is None:
             LGR.error("object <{}> has not been registered!".format(st_type))
 
         return (st is not None)
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      st_type  The st type
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @staticmethod
     @trace_static('StructFactory')
     def st_size(st_type):
-        # ---------------------------------------------------------------------
-        # st_size
-        # ---------------------------------------------------------------------
         if not StructFactory.st_exists(st_type, log=True):
             return None
 
         return StructFactory.STRUCTS[st_type][StructFactory.K_SIZE]
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      st_specif  The st specif
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @staticmethod
     @trace_static('StructFactory')
     def st_register(st_specif):
-        # ---------------------------------------------------------------------
-        # st_register
-        # ---------------------------------------------------------------------
         if st_specif.valid:
 
             if st_specif.size() == 0:
@@ -98,13 +106,17 @@ class StructFactory:
 
         LGR.error("invalid structure: <{}>".format(st_specif.st_type))
         return False
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      st_type  The st type
+    ## @param      data     The data
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @staticmethod
     @trace_static('StructFactory')
     def st_from_bytes(st_type, data):
-        # ---------------------------------------------------------------------
-        # st_from_bytes
-        # ---------------------------------------------------------------------
         if not StructFactory.st_exists(st_type, log=True):
             return None
 
@@ -128,13 +140,18 @@ class StructFactory:
 
         st.set_size(sz)
         return st
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      st_type  The st type
+    ## @param      fp       { parameter_description }
+    ## @param      oft      The oft
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @staticmethod
     @trace_static('StructFactory')
     def st_from_file(st_type, fp, oft=0):
-        # ---------------------------------------------------------------------
-        # st_from_file
-        # ---------------------------------------------------------------------
         if not StructFactory.st_exists(st_type, log=True):
             return None
 

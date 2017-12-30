@@ -85,13 +85,13 @@ ACTIONS = ActionGroup('datashark', {
 # =============================================================================
 # FUNCTIONS
 # =============================================================================
-
-
+##
+## @brief      { function_description }
+##
+## @return     { description_of_the_return_value }
+##
 @trace_func(__name__)
 def parse_args():
-    # -------------------------------------------------------------------------
-    # parse_args
-    # -------------------------------------------------------------------------
     parser = get_arg_parser()
     # optional arguments
     parser.add_argument('-r', '--recursive', action='store_true',
@@ -147,13 +147,15 @@ def parse_args():
                         help="Files to process.")
 
     return parser.parse_args()
-
-
+##
+## @brief      { function_description }
+##
+## @param      args  The arguments
+##
+## @return     { description_of_the_return_value }
+##
 @trace_func(__name__)
 def handle_action(args):
-    # -------------------------------------------------------------------------
-    # handle_action
-    # -------------------------------------------------------------------------
     config.set_args(args)
     # create FS entry filters
     args.dir_filter = FSEntryFilter(config.value('include_dirs'),
@@ -170,13 +172,13 @@ def handle_action(args):
         return 2
 
     return 0
-
-
+##
+## @brief      { function_description }
+##
+## @return     { description_of_the_return_value }
+##
 @trace_func(__name__)
 def main():
-    # -------------------------------------------------------------------------
-    # main
-    # -------------------------------------------------------------------------
     # parse input arguments
     args = parse_args()
 
@@ -204,8 +206,6 @@ def main():
         workspace.cleanup()
 
     return code
-
-
 # ==============================================================================
 # SCIRPT
 # ==============================================================================

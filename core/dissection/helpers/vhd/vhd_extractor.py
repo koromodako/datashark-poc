@@ -35,26 +35,29 @@ LGR = get_logger(__name__)
 # =============================================================================
 #  CLASSES
 # =============================================================================
-
-
+##
+## @brief      Class for vhd extractor.
+##
 class VhdExtractor(object):
-    # -------------------------------------------------------------------------
-    # VhdExtractor
-    # -------------------------------------------------------------------------
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      wdir  The wdir
+    ## @param      vhd   The vhd
+    ## @param      obf   The obf
+    ##
     def __init__(self, wdir, vhd, obf):
-        # ---------------------------------------------------------------------
-        # __init__
-        # ---------------------------------------------------------------------
         super(VhdExtractor, self).__init__()
         self.wdir = wdir
         self.vhd = vhd
         self.obf = obf
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def extract(self):
-        # ---------------------------------------------------------------------
-        # extract
-        # ---------------------------------------------------------------------
         blk_cnt = self.vhd.block_count()
 
         LGR.info("extracting {} blocks...".format(blk_cnt))

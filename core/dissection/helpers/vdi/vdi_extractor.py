@@ -34,22 +34,28 @@ LGR = get_logger(__name__)
 # =============================================================================
 #  CLASSES
 # =============================================================================
-
-
+##
+## @brief      Class for vdi extractor.
+##
 class VdiExtractor(object):
-    # -------------------------------------------------------------------------
-    # VdiExtractor
-    # -------------------------------------------------------------------------
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      wdir  The wdir
+    ## @param      vdi   The vdi
+    ## @param      obf   The obf
+    ##
     def __init__(self, wdir, vdi, obf):
         self.wdir = wdir
         self.vdi = vdi
         self.obf = obf
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def extract(self):
-        # ---------------------------------------------------------------------
-        # extract
-        # ---------------------------------------------------------------------
         vdi_blk_cnt = self.vdi.header().numBlkInHdd
 
         LGR.info("extracting {} 1MB blocks...".format(vdi_blk_cnt))

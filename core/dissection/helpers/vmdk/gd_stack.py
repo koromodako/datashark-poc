@@ -38,26 +38,29 @@ LGR = get_logger(__name__)
 # =============================================================================
 #  CLASSES
 # =============================================================================
-
-
+##
+## @brief      List of grain directories.
+##
 class GrainDirectoryStack(object):
-    # -------------------------------------------------------------------------
-    # GrainDirectoryStack
-    # -------------------------------------------------------------------------
-
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      wdir  The wdir
+    ## @param      vmdk  The vmdk
+    ##
     def __init__(self, wdir, vmdk):
-        # ---------------------------------------------------------------------
-        # __init__
-        # ---------------------------------------------------------------------
         super(GrainDirectoryStack, self).__init__()
         self.wdir = wdir
         self.base_gd = self.__build_gd(vmdk)
-
+    ##
+    ## @brief      Builds a gd.
+    ##
+    ## @param      vmdk  The vmdk
+    ##
+    ## @return     The gd.
+    ##
     @trace()
     def __build_gd(self, vmdk):
-        # ---------------------------------------------------------------------
-        # __build_gd
-        # ---------------------------------------------------------------------
         df = vmdk.descriptor_file()
 
         parent_filename = df.parent_filename()
@@ -77,17 +80,19 @@ class GrainDirectoryStack(object):
             parent_gd = None
 
         return GrainDirectory(vmdk, parent_gd)
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def base(self):
-        # ---------------------------------------------------------------------
-        # base
-        # ---------------------------------------------------------------------
         return self.base_gd
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def term(self):
-        # ---------------------------------------------------------------------
-        # term
-        # ---------------------------------------------------------------------
         self.base_gd.term()

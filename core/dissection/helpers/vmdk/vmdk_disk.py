@@ -127,7 +127,9 @@ StructFactory.st_register(StructSpecif(S_METADATA_MARKER, [
 # =============================================================================
 #  CLASSES
 # =============================================================================
-
+##
+## @brief      Class for vmdk disk.
+##
 class VmdkDisk(object):
     # misc
     SECTOR_SZ = 512  # bytes
@@ -148,19 +150,22 @@ class VmdkDisk(object):
     MARKER_GD = 1
     MARKER_GT = 2
     MARKER_FOOTER = 3
-    # -------------------------------------------------------------------------
-    # VmdkDisk
-    # -------------------------------------------------------------------------
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      bf    { parameter_description }
+    ##
     def __init__(self, bf):
         super(VmdkDisk, self).__init__()
         self.bf = bf  # never close this bf you dont have the ownership
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @lazy_getter('_hdr')
     @trace()
     def header(self):
-        # ---------------------------------------------------------------------
-        # header
-        # ---------------------------------------------------------------------
         sparse_hdr = StructFactory.st_from_file(S_SPARSE_EXTENT_HDR, self.bf)
         if sparse_hdr is not None:
             if sparse_hdr.magicNumber == self.SIGN_VMDK:
@@ -172,13 +177,14 @@ class VmdkDisk(object):
                 return cowdsk_hdr
 
         return None
-
+    ##
+    ## @brief      Determines if it has footer.
+    ##
+    ## @return     True if has footer, False otherwise.
+    ##
     @lazy_getter('_has_ftr')
     @trace()
     def has_footer(self):   # LAZY METHOD
-        # ---------------------------------------------------------------------
-        # has_footer
-        # ---------------------------------------------------------------------
         if self.header() is None: # requires header
             return False
 
@@ -196,13 +202,14 @@ class VmdkDisk(object):
             return False
 
         return True
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @lazy_getter('_ftr')
     @trace()
     def footer(self):
-        # ---------------------------------------------------------------------
-        # footer
-        # ---------------------------------------------------------------------
         if self.header() is None: # requires header
             return None
 
@@ -215,13 +222,14 @@ class VmdkDisk(object):
         ftr = StructFactory.st_from_file(S_SPARSE_EXTENT_HDR, self.bf, oft)
 
         return ftr
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @lazy_getter('_df')
     @trace()
     def descriptor_file(self):
-        # ---------------------------------------------------------------------
-        # descriptor_file
-        # ---------------------------------------------------------------------
         if self.header() is None: # requires header
             return None
 
@@ -237,12 +245,13 @@ class VmdkDisk(object):
         df_str = df_buf[:df_eos].decode('utf-8')
 
         return DescriptorFile(df_str)
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def metadata(self):
-        # ---------------------------------------------------------------------
-        # metadata
-        # ---------------------------------------------------------------------
         if self.header() is None:
             LGR.error("cannot read disk header => cannot extract metadata.")
             return None

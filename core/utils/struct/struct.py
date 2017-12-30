@@ -37,63 +37,78 @@ LGR = get_logger(__name__)
 # =============================================================================
 # CLASSES
 # =============================================================================
+##
+## @brief      Class for structure.
+##
 class Struct(object):
-    # -------------------------------------------------------------------------
-    # Struct class
-    # -------------------------------------------------------------------------
     K_ST_TYPE = 'st_type'
     K_ST_SIZE = 'st_size'
     RESERVED = [
         K_ST_TYPE,
         K_ST_SIZE
     ]
-
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      st_type  The st type
+    ## @param      st_size  The st size
+    ##
     def __init__(self, st_type, st_size=-1):
-        # ---------------------------------------------------------------------
-        # __init__
-        # ---------------------------------------------------------------------
         super(Struct, self).__init__()
         setattr(self, Struct.K_ST_TYPE, st_type)
         setattr(self, Struct.K_ST_SIZE, st_size)
-
+    ##
+    ## @brief      Sets the member.
+    ##
+    ## @param      name   The name
+    ## @param      value  The value
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def set_member(self, name, value):
-        # ---------------------------------------------------------------------
-        # set_member
-        # ---------------------------------------------------------------------
         if hasattr(self, name):
             return False
 
         setattr(self, name, value)
         return True
-
+    ##
+    ## @brief      Sets the size.
+    ##
+    ## @param      st_size  The st size
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def set_size(self, st_size):
-        # ---------------------------------------------------------------------
-        # set_size
-        # ---------------------------------------------------------------------
         setattr(self, Struct.K_ST_SIZE, st_size)
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def type(self):
-        # ---------------------------------------------------------------------
-        # name
-        # ---------------------------------------------------------------------
         return getattr(self, Struct.K_ST_TYPE)
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def size(self):
-        # ---------------------------------------------------------------------
-        # size
-        # ---------------------------------------------------------------------
         return getattr(self, Struct.K_ST_SIZE)
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      key    The key
+    ## @param      value  The value
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @staticmethod
     @trace_static('Struct')
     def __kv_to_str(key, value):
-        # ---------------------------------------------------------------------
-        # __kv_to_str
-        # ---------------------------------------------------------------------
         if isinstance(value, Struct):
             s = value.to_str().replace("\n", "\n\t")
 
@@ -107,12 +122,13 @@ class Struct(object):
             s = "\n\t+ {}: {}".format(key, value)
 
         return s
-
+    ##
+    ## @brief      Returns a string representation of the object.
+    ##
+    ## @return     String representation of the object.
+    ##
     @trace()
     def to_str(self):
-        # ---------------------------------------------------------------------
-        # to_str
-        # ---------------------------------------------------------------------
         members = vars(self)
         st_type = members.pop(Struct.K_ST_TYPE)
         st_size = members.pop(Struct.K_ST_SIZE)

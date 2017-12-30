@@ -186,9 +186,6 @@ class CLI(object):
     @staticmethod
     @trace_static('CLI')
     def start_proc(args, wait=True, capture_outputs=False, cwd=None):
-        # ---------------------------------------------------------------------
-        # start_proc
-        # ---------------------------------------------------------------------
         LGR.info("start process with: {}".format(' '.join(args)))
         kwargs = {}
         if cwd is not None:

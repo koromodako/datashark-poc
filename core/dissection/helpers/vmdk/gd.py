@@ -39,16 +39,17 @@ SECTOR_SZ = VmdkDisk.SECTOR_SZ
 # =============================================================================
 # CLASSES
 # =============================================================================
-
-
+##
+## @brief      Class for grain directory.
+##
 class GrainDirectory(object):
-    # -------------------------------------------------------------------------
-    # GrainDirectory
-    # -------------------------------------------------------------------------
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      vmdk       The vmdk
+    ## @param      parent_gd  The parent gd
+    ##
     def __init__(self, vmdk, parent_gd=None):
-        # ---------------------------------------------------------------------
-        # __init__
-        # ---------------------------------------------------------------------
         super(GrainDirectory, self).__init__()
 
         self.bf = vmdk.bf
@@ -60,31 +61,41 @@ class GrainDirectory(object):
             LGR.error("failed to load metadata.")
 
         self.gt_coverage = self.hdr.numGTEsPerGT * self.hdr.grainSize
-
+    ##
+    ## @brief      Reads a metadata.
+    ##
+    ## @param      offset  The offset
+    ## @param      skip    The skip
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def __read_metadata(self, offset, skip=0):
-        # ---------------------------------------------------------------------
-        # read_metadata
-        # ---------------------------------------------------------------------
         fmt = '<I'
         sz = calcsize(fmt)
         start = skip+offset*sz
         data = self.metadata[start:start+sz]
         return unpack_one(fmt, data)
-
+    ##
+    ## @brief      Reads a file grain.
+    ##
+    ## @param      gte   The gte
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def __read_file_grain(self, gte):
-        # ---------------------------------------------------------------------
-        # __read_file_grain
-        # ---------------------------------------------------------------------
         self.bf.seek(gte * SECTOR_SZ)
         return self.bf.read(self.hdr.grainSize * SECTOR_SZ)
-
+    ##
+    ## @brief      Reads a grain.
+    ##
+    ## @param      sector  The sector
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def read_grain(self, sector):
-        # ---------------------------------------------------------------------
-        # read_grain
-        # ---------------------------------------------------------------------
         gde_idx = math.floor(sector / self.gt_coverage)
 
         gt_offset = self.__read_metadata(gde_idx)
@@ -103,22 +114,26 @@ class GrainDirectory(object):
             data = self.__read_file_grain(gte)
 
         return data
-
+    ##
+    ## @brief      Reads a sector.
+    ##
+    ## @param      n     { parameter_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def read_sector(self, n):
-        # ---------------------------------------------------------------------
-        # read_sector
-        # ---------------------------------------------------------------------
         grain = self.read_grain(n)
         start = n*SECTOR_SZ
 
         return grain[start:start+SECTOR_SZ]
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @trace()
     def term(self):
-        # ---------------------------------------------------------------------
-        # term
-        # ---------------------------------------------------------------------
         if self.parent_gd is not None:
             self.parent_gd.term()
         self.bf.close()

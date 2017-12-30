@@ -34,66 +34,77 @@ from termcolor import colored, cprint
 # =============================================================================
 #  CLASSES
 # =============================================================================
-
-
+##
+## @brief      { function_description }
+##
+## @return     { description_of_the_return_value }
+##
 def stub():
-    # -------------------------------------------------------------------------
-    # stub
-    # -------------------------------------------------------------------------
     return True
-
-
+##
+## @brief      Class for test.
+##
 class Test(object):
-    # -------------------------------------------------------------------------
-    # Test
-    # -------------------------------------------------------------------------
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      cmd          The command
+    ## @param      expect_code  The expect code
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     @staticmethod
     def exec_cmd(cmd, expect_code=0):
-        # ---------------------------------------------------------------------
-        # exec_cmd
-        # ---------------------------------------------------------------------
         (exit_code, output) = getstatusoutput(' '.join(cmd))
         return (exit_code == expect_code, exit_code, output)
-
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      name         The name
+    ## @param      cmd          The command
+    ## @param      init         The initialize
+    ## @param      term         The term
+    ## @param      expect_code  The expect code
+    ##
     def __init__(self, name, cmd, init=stub, term=stub, expect_code=0):
-        # ---------------------------------------------------------------------
-        # __init__
-        # ---------------------------------------------------------------------
         super(Test, self).__init__()
         self.name = name
         self.cmd = cmd
         self.init = init
         self.term = term
         self.expect_code = expect_code
-
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
     def run(self):
-        # ---------------------------------------------------------------------
-        # run
-        # ---------------------------------------------------------------------
         if not self.init():
             return (False, None, "init() failed.")
         (exit_ok, exit_code, output) = self.exec_cmd(self.cmd,
                                                      self.expect_code)
         self.term()
         return (exit_ok, exit_code, output)
-
 # =============================================================================
 #  FUNCTIONS
 # =============================================================================
-
-
+##
+## @brief      { function_description }
+##
+## @param      msg   The message
+##
+## @return     { description_of_the_return_value }
+##
 def pout(msg):
-    # -------------------------------------------------------------------------
-    # pout
-    # -------------------------------------------------------------------------
     cprint(msg, 'magenta')
-
-
+##
+## @brief      { function_description }
+##
+## @param      tests  The tests
+##
+## @return     { description_of_the_return_value }
+##
 def run_tests(tests):
-    # -------------------------------------------------------------------------
-    # run_tests
-    # -------------------------------------------------------------------------
     makedirs('tmp', exist_ok=True)
     makedirs('logs', exist_ok=True)
     failure = colored("FAILURE", 'red')
@@ -126,7 +137,6 @@ def run_tests(tests):
     pout("\t{}: {}".format(failure, failure_ctr))
     pout("\t{}: {}".format(success, success_ctr))
     pout("\ttotal: {}".format(failure_ctr + success_ctr))
-
 # =============================================================================
 #  GLOBALS
 # ============================================================================
@@ -136,10 +146,12 @@ RENZIK_JPG = '{}renzik_sm.jpg'.format(DATA_DIR)
 # =============================================================================
 # TEST FUNCTIONS
 # =============================================================================
+##
+## @brief      { function_description }
+##
+## @return     { description_of_the_return_value }
+##
 def hashdb_merge_init():
-    # -------------------------------------------------------------------------
-    # hashdb_merge_init
-    # -------------------------------------------------------------------------
     (exit_ok, _, output) = Test.exec_cmd(['datashark', 'hashdb.create',
                                       'config/bhdb-1.conf', DATA_DIR])
     if not exit_ok:

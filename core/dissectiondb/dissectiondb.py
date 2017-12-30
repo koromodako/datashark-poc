@@ -121,9 +121,6 @@ class DissectionDB(object):
     ##
     @trace()
     def persist(self, container):
-        # ---------------------------------------------------------------------
-        # insert
-        # ---------------------------------------------------------------------
         if not self.valid:
             return False
 
