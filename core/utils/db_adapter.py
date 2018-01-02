@@ -91,6 +91,15 @@ class DBAdapter(object):
     def _term_w(self):
         raise NotImplementedError
     ##
+    ## @brief      Returns expected configuration as a ConfigObj
+    ##
+    ## @return     Must return a ConfigObj instance
+    ##
+    @trace()
+    def expected_conf(self):
+        #return ConfigObj({})
+        raise NotImplementedError
+    ##
     ## @brief      { function_description }
     ##
     ## @param      mode  The mode
@@ -130,3 +139,4 @@ class DBAdapter(object):
     @trace()
     def is_valid(self):
         return self.__valid
+

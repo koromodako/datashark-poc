@@ -79,6 +79,7 @@ class HashDB(object):
     def __init__(self, conf):
         super(HashDB, self).__init__()
         self.conf = conf
+        LGR.debug("hashdb configuration:\n{}".format(conf))
         self.name = None
         if self.conf is not None:
             self.name = self.conf.get('name')
@@ -117,7 +118,13 @@ class HashDB(object):
             LGR.error("failed to load adapter: <{}>".format(self.conf.adapter))
             return False
 
-        self.adapter = adapter_mod.instance(self.conf.get(self.conf.adapter))
+        adapter_conf = self.conf.get(self.conf.adapter)
+        LGR.debug("hashdb adapater configuration:\n{}".format(adapter_conf))
+        if adapter_conf is None:
+            LGR.error("expected configuration:\n{}".format(
+                self.adapter.expected_conf()))
+
+        self.adapter = adapter_mod.instance(adapter_conf)
         self.adapter.init(mode)
         if not self.adapter.is_valid():
             LGR.error("invalid adapter instance.")

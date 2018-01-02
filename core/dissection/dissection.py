@@ -169,6 +169,7 @@ class Dissection(object):
     def __init__(self):
         super(Dissection, self).__init__()
         self.conf = config.load_from_value('dissection_config')
+        LGR.debug("dissection configuration:\n{}".format(self.conf))
         self._dissectors = {}
         self._carvers = []
         self.__whitelist = None
@@ -194,7 +195,13 @@ class Dissection(object):
 
         for dissector in pi.plugins.values():
 
-            if not dissector.configure(conf.get(dissector.name)):
+            dissector_conf = conf.get(dissector.name)
+            LGR.debug("{} dissector configuration:\n{}".format(dissector.name,
+                                                               dissector_conf))
+            if dissector_conf is None:
+                LGR.warn("dissector configuration is empty.")
+
+            if not dissector.configure(dissector_conf):
                 LGR.warn("failed to configure dissector, see errors above.")
                 noerr = False
 
@@ -246,7 +253,13 @@ class Dissection(object):
 
         for carver in pi.plugins.values():
 
-            if not carver.configure(conf.get(carver.name)):
+            carver_conf = conf.get(carver.name)
+            LGR.debug("{} carver configuration:\n{}".format(carver.name,
+                                                            carver_conf))
+            if carver_conf is None:
+                LGR.warn("carver configuration is empty.")
+
+            if not carver.configure(carver_conf):
                 LGR.warn("failed to configure dissector, see errors above.")
                 noerr = False
 

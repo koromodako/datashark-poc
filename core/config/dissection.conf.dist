@@ -1,7 +1,12 @@
 {
-    "adapter": "json",
+    "adapter": "sqlite",
     "adapters": {
-        "json": {}
+        "json": {
+            "path": "dissection.json"
+        },
+        "sqlite": {
+            "path": "dissection.db"
+        }
     },
     "dissectors": {
         "vmdk": {},

@@ -78,6 +78,14 @@ class JsonDB(DissectionDBAdapter):
     ## @return     { description_of_the_return_value }
     ##
     @trace()
+    def expected_conf(self):
+        return ConfigObj({"path": "path/to/hash/database/file.json"})
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @trace()
     def _init_r(self):
         if not BinaryFile.exists(self._conf.path):
             return False

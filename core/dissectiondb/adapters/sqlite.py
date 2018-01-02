@@ -1,12 +1,12 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #     file: sqlite.py
-#     date: 2017-12-15
+#     date: 2018-01-02
 #   author: paul.dautry
 #  purpose:
 #
 #  license:
 #    Datashark <progdesc>
-#    Copyright (C) 2017 paul.dautry
+#    Copyright (C) 2018 paul.dautry
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -26,22 +26,22 @@
 #  IMPORTS
 # =============================================================================
 import sqlite3
+from utils.logging import get_logger
 from utils.wrapper import trace
 from utils.wrapper import trace_func
-from utils.logging import get_logger
 from utils.configobj import ConfigObj
-from hashdb.hashdb_adapter import HashDBAdapter
+from dissectiondb.dissectiondb_adapter import DissectionDBAdapter
 # =============================================================================
 #  GLOBALS / CONFIG
 # =============================================================================
 LGR = get_logger(__name__)
 # =============================================================================
-#  CLASSES
+# CLASSES
 # =============================================================================
 ##
-## @brief      Class for sq lite db.
+## @brief      Class for json db.
 ##
-class SQLiteDB(HashDBAdapter):
+class SQLiteDB(DissectionDBAdapter):
     ##
     ## @brief      Constructs the object.
     ##
@@ -49,6 +49,8 @@ class SQLiteDB(HashDBAdapter):
     ##
     def __init__(self, conf):
         super(SQLiteDB, self).__init__(conf)
+        self.bf = None
+        self.cnt = 0
     ##
     ## @brief      { function_description }
     ##
@@ -60,7 +62,6 @@ class SQLiteDB(HashDBAdapter):
             return False
 
         if not self._conf.has('path'):
-            LGR.error("missing path in SQLiteDB adapter configuration.")
             return False
 
         return True
@@ -71,69 +72,7 @@ class SQLiteDB(HashDBAdapter):
     ##
     @trace()
     def expected_conf(self):
-        return ConfigObj({"path": "path/to/hash/database/file.db"})
-    ##
-    ## @brief      { function_description }
-    ##
-    ## @param      hexdigest  The hexdigest
-    ## @param      path       The path
-    ##
-    ## @return     { description_of_the_return_value }
-    ##
-    @trace()
-    def insert(self, hexdigest, path):
-        self._lock.acquire()
-
-        c = self.conn.cursor()
-        c.execute("INSERT INTO container_hash VALUES (?, ?)",
-                  (hexdigest, path))
-        c.close()
-
-        self.conn.commit()
-
-        self._lock.release()
-        return True
-    ##
-    ## @brief      { function_description }
-    ##
-    ## @param      hexdigest  The hexdigest
-    ##
-    ## @return     { description_of_the_return_value }
-    ##
-    @trace()
-    def lookup(self, hexdigest):
-        self._lock()
-
-        c = self.conn.cursor()
-        c.execute("SELECT * FROM container_hash WHERE hash=?", (hexdigest))
-        record = c.fetchone()
-        c.close()
-
-        self._lock.release()
-        return record
-    ##
-    ## @brief      { function_description }
-    ##
-    ## @param      other  The other
-    ##
-    ## @return     { description_of_the_return_value }
-    ##
-    @trace()
-    def merge_into(self, other):
-        self._lock.acquire()
-
-        c = self.conn.cursor()
-        c.execute("SELECT * FROM container_hash")
-
-        v = c.fetchone()
-        while v is not None:
-            other.insert(v[0], v[1])
-            v = c.fetchone()
-
-        c.close()
-
-        self._lock.release()
-        return True
+        return ConfigObj({"path": "path/to/dissection/database/file.db"})
     ##
     ## @brief      { function_description }
     ##
@@ -164,10 +103,12 @@ class SQLiteDB(HashDBAdapter):
             return False
 
         c = self.conn.cursor()
-        c.execute("DROP INDEX IF EXISTS container_hash_idx")
-        c.execute("DROP TABLE IF EXISTS container_hash")
-        c.execute("CREATE TABLE container_hash(hash, abspath)")
-        c.execute("CREATE INDEX container_hash_idx ON container_hash(hash)")
+        c.execute("DROP INDEX IF EXISTS container_parent_uuid")
+        c.execute("DROP INDEX IF EXISTS container_uuid")
+        c.execute("DROP TABLE IF EXISTS container")
+        c.execute("CREATE TABLE container(uuid,parent_uuid,path,realname,hashed,mime_type,mime_text,flagged,whitelisted,blacklisted)")
+        c.execute("CREATE INDEX container_uuid ON container(uuid)")
+        c.execute("CREATE INDEX container_parent_uuid ON container(parent_uuid)")
         c.close()
         self.conn.commit()
 
@@ -188,8 +129,37 @@ class SQLiteDB(HashDBAdapter):
     @trace()
     def _term_w(self):
         self.conn.close()
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      container_dict  The container dictionary
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @trace()
+    def insert(self, container_dict):
+        self._lock.acquire()
+
+        c = self.conn.cursor()
+        c.execute("INSERT INTO container VALUES (?,?,?,?,?,?,?,?,?,?)",
+                  (container_dict.get('uuid'),
+                   container_dict.get('parent_uuid'),
+                   container_dict.get('path'),
+                   container_dict.get('realname'),
+                   container_dict.get('hashed'),
+                   container_dict.get('mime', {}).get('type'),
+                   container_dict.get('mime', {}).get('text'),
+                   container_dict.get('flagged'),
+                   container_dict.get('whitelisted'),
+                   container_dict.get('blacklisted')))
+        c.close()
+
+        self.conn.commit()
+
+        self._lock.release()
+        return True
 # =============================================================================
-#  FUNCTIONS
+# FUNCTIONS
 # =============================================================================
 ##
 ## @brief      { function_description }

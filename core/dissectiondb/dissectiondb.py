@@ -53,6 +53,7 @@ class DissectionDB(object):
     def __init__(self, conf):
         super(DissectionDB, self).__init__()
         self.conf = conf
+        LGR.debug("configuration:\n{}".format(self.conf))
         self.valid = False
         self.adapter = None
         if DissectionDB.ADAPTERS is None:
@@ -93,6 +94,11 @@ class DissectionDB(object):
             return False
 
         adapter_conf = self.conf.adapters.get(self.conf.adapter)
+        LGR.debug("configuration:\n{}".format(adapter_conf))
+        if adapter_conf is None:
+            LGR.error("expected configuration:\n{}".format(
+                self.adapter.expected_conf()))
+
         self.adapter = adapter_mod.instance(adapter_conf)
         self.adapter.init(mode)
         if not self.adapter.is_valid():
@@ -124,7 +130,10 @@ class DissectionDB(object):
         if not self.valid:
             return False
 
-        if not self.adapter.insert(container.to_dict()):
+        container_dict = container.to_dict()
+        LGR.debug("container_dict:\n{}".format(container_dict))
+
+        if not self.adapter.insert(container_dict):
             return False
 
         return True

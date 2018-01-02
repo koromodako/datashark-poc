@@ -64,5 +64,5 @@ def json_dump(obj, fp):
 ##
 ## @return     { description_of_the_return_value }
 ##
-def json_dumps(obj):
-    return json.dumps(obj, separators=SEPARATORS)
+def json_dumps(obj, indent=None):
+    return json.dumps(obj, separators=SEPARATORS, indent=indent)

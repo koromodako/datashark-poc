@@ -130,9 +130,13 @@ class Container(object):
     ##
     @trace()
     def to_dict(self):
+        parent_uuid = self.parent_uuid
+        if parent_uuid is not None:
+            parent_uuid = str(parent_uuid)
+
         return {
-            'uuid': self.uuid,
-            'parent_uuid': self.parent_uuid,
+            'uuid': str(self.uuid),
+            'parent_uuid': parent_uuid,
             'path': self.path,
             'realname': self.realname,
             'hashed': self.hashed,
