@@ -133,7 +133,7 @@ class StructFactory:
             rsz = member.size()
 
             if not st.set_member(member.name, member.read(data[sz:sz+rsz])):
-                LGR.error("failed to set member: {}".format(member.name))
+                LGR.error("failed to set member <{}>".format(member.name))
                 return None
 
             sz += rsz

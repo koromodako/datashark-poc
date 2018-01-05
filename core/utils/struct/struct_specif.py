@@ -61,6 +61,7 @@ import re
 from utils.wrapper import trace
 from utils.logging import get_logger
 from utils.struct.member import Member
+from utils.struct.struct import Struct
 # =============================================================================
 # GLOBAL
 # =============================================================================
@@ -115,6 +116,11 @@ class StructSpecif(object):
 
             if not member.valid:
                 LGR.error("at least one of StructSpecif's members is invalid.")
+                return False
+
+            if member.name in Struct.RESERVED:
+                LGR.error("<{}> is part of Struct reserved keywords "
+                          "<{}>".format(member.name, Struct.RESERVED))
                 return False
 
             names.append(member.name)

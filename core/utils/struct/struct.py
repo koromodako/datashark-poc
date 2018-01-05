@@ -30,6 +30,7 @@ from utils.wrapper import trace
 from utils.logging import get_logger
 from utils.wrapper import trace_static
 from utils.converting import str_to_int
+from utils.formatting import hexdump_lines
 # =============================================================================
 # GLOBAL
 # =============================================================================
@@ -44,60 +45,15 @@ class Struct(object):
     K_ST_TYPE = 'st_type'
     K_ST_SIZE = 'st_size'
     RESERVED = [
+        # attributes
         K_ST_TYPE,
-        K_ST_SIZE
+        K_ST_SIZE,
+        # methods
+        'set_member',
+        'set_size',
+        '__kv_to_str',
+        'to_str'
     ]
-    ##
-    ## @brief      Constructs the object.
-    ##
-    ## @param      st_type  The st type
-    ## @param      st_size  The st size
-    ##
-    def __init__(self, st_type, st_size=-1):
-        super(Struct, self).__init__()
-        setattr(self, Struct.K_ST_TYPE, st_type)
-        setattr(self, Struct.K_ST_SIZE, st_size)
-    ##
-    ## @brief      Sets the member.
-    ##
-    ## @param      name   The name
-    ## @param      value  The value
-    ##
-    ## @return     { description_of_the_return_value }
-    ##
-    @trace()
-    def set_member(self, name, value):
-        if hasattr(self, name):
-            return False
-
-        setattr(self, name, value)
-        return True
-    ##
-    ## @brief      Sets the size.
-    ##
-    ## @param      st_size  The st size
-    ##
-    ## @return     { description_of_the_return_value }
-    ##
-    @trace()
-    def set_size(self, st_size):
-        setattr(self, Struct.K_ST_SIZE, st_size)
-    ##
-    ## @brief      { function_description }
-    ##
-    ## @return     { description_of_the_return_value }
-    ##
-    @trace()
-    def type(self):
-        return getattr(self, Struct.K_ST_TYPE)
-    ##
-    ## @brief      { function_description }
-    ##
-    ## @return     { description_of_the_return_value }
-    ##
-    @trace()
-    def size(self):
-        return getattr(self, Struct.K_ST_SIZE)
     ##
     ## @brief      { function_description }
     ##
@@ -119,9 +75,50 @@ class Struct(object):
                 s += Struct.__kv_to_str('_', elem).replace("\n", "\n\t")
 
         else:
-            s = "\n\t+ {}: {}".format(key, value)
+            if isinstance(value, bytes) or isinstance(value, bytearray):
+                s = "\n\t+ {}:".format(key)
+                for line in hexdump_lines(value):
+                    s += "\n\t\t{}".format(line)
+            else:
+                s = "\n\t+ {}: {}".format(key, value)
 
         return s
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      st_type  The st type
+    ## @param      st_size  The st size
+    ##
+    def __init__(self, st_type, st_size=-1):
+        super(Struct, self).__init__()
+        setattr(self, Struct.K_ST_TYPE, st_type)
+        setattr(self, Struct.K_ST_SIZE, st_size)
+    ##
+    ## @brief      Sets the member.
+    ##
+    ## @param      name   The name
+    ## @param      value  The value
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @trace()
+    def set_member(self, name, value):
+        if hasattr(self, name):
+            LGR.error('member <{}> already exists.'.format(name))
+            return False
+
+        setattr(self, name, value)
+        return True
+    ##
+    ## @brief      Sets the size.
+    ##
+    ## @param      st_size  The st size
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @trace()
+    def set_size(self, st_size):
+        setattr(self, Struct.K_ST_SIZE, st_size)
     ##
     ## @brief      Returns a string representation of the object.
     ##

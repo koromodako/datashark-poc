@@ -19,14 +19,14 @@ MBR is always 512-byte long. Many kinds of MBR exists, yet the PPT
 A partition entry in the PPT is 16-byte long and contains the following
 information.
 
-|        **element**       | **size** |
-|:-------------------------|:--------:|
-| Status                   |    1     |
-| First Abs. Sector CHS    |    3     |
-| Type                     |    1     |
-| Last Abs. Sector CHS     |    3     |
-| First Abs. Sector LBA    |    4     |
-| Number of Sectors        |    4     |
+|        **element**    | **size** | **unit** |
+|:----------------------|:--------:|:--------:|
+| Status                |    1     |   N/A    |
+| First Abs. Sector CHS |    3     |   N/A    |
+| Type                  |    1     |   N/A    |
+| Last Abs. Sector CHS  |    3     |   N/A    |
+| First Abs. Sector LBA |    4     |  sector  |
+| Number of Sectors     |    4     |  sector  |
 
 ### CHS Addressing
 

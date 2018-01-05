@@ -1,12 +1,12 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#     file: vdi_disk.py
-#     date: 2017-12-29
+#     file: mbr_partition_entry.py
+#     date: 2018-01-04
 #   author: paul.dautry
 #  purpose:
 #
 #  license:
 #    Datashark <progdesc>
-#    Copyright (C) 2017 paul.dautry
+#    Copyright (C) 2018 paul.dautry
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -25,58 +25,41 @@
 # =============================================================================
 #  IMPORTS
 # =============================================================================
-from struct import calcsize
 from utils.wrapper import trace
 from utils.logging import get_logger
-from utils.wrapper import lazy_getter
-from utils.converting import unpack_one
-from utils.struct.array_member import ArrayMember
-from utils.struct.struct_member import StructMember
+from utils.struct.simple_member import SimpleMember
 from utils.struct.struct_specif import StructSpecif
 from utils.struct.struct_factory import StructFactory
-from utils.struct.byte_array_member import ByteArrayMember
-from dissection.helpers.mbr.mbr_partition_entry import S_MBR_PART_ENTRY
-from dissection.helpers.mbr.mbr_partition_entry import MBRPartitionEntry
 # =============================================================================
 #  GLOBALS / CONFIG
 # =============================================================================
 LGR = get_logger(__name__)
-S_GENERIC_MBR = 'GenericMBR'
-StructFactory.st_register(StructSpecif(S_GENERIC_MBR, [
-    ByteArrayMember('bootcode', 446),
-    ArrayMember('primary_part_tab', StructMember('_', S_MBR_PART_ENTRY), 4),
-    ByteArrayMember('signature', 2)
+S_MBR_PART_ENTRY = 'MBRPartitionEntry'
+StructFactory.st_register(StructSpecif(S_MBR_PART_ENTRY, [
+    SimpleMember('status', '<B'),
+    SimpleMember('first_chs', '<BH'),   # CHS addr of first sector
+    SimpleMember('type', '<B'),
+    SimpleMember('last_chs', '<BH'),    # CHS addr of last sector
+    SimpleMember('first_lba', '<I'),    # index of first sector (in sectors)
+    SimpleMember('size', '<I')          # count of sectors (in sectors)
 ]))
 # =============================================================================
 #  CLASSES
 # =============================================================================
 ##
-## @brief      Class for mbr.
+## @brief      Class for mbr partition entry.
 ##
-class MBR(object):
-    ##
-    ## { item_description }
-    ##
-    MBR_SIGN = b'\x55\xaa'
+class MBRPartitionEntry(object):
+    SECTOR_SZ = 512
     ##
     ## @brief      Constructs the object.
     ##
-    ## @param      bf    { parameter_description }
-    ##
-    def __init__(self, bf):
-        super(MBR, self).__init__()
+    def __init__(self, bf, st_part):
         self.bf = bf
-        self.mbr = StructFactory.st_from_file(S_GENERIC_MBR, bf)
-    ##
-    ## @brief      Determines if valid.
-    ##
-    ## @return     True if valid, False otherwise.
-    ##
-    def is_valid(self):
-        return self.mbr.signature == self.MBR_SIGN
-    ##
-    def partitions(self):
-        parts = []
-        for st_part in self.mbr.primary_part_tab:
-            parts.append(MBRPartitionEntry(self.bf, st_part))
-        return parts
+        self.st_part = st_part
+
+    def block_count(self):
+        pass
+
+    def read_block(self, n):
+        pass

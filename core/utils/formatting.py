@@ -57,7 +57,7 @@ def __printable(byte):
 ## @return     { description_of_the_return_value }
 ##
 @trace_func(__name__)
-def hexdump(data, col_sz=2, col_num=4, human=True, max_lines=10):
+def hexdump_lines(data, col_sz=2, col_num=4, human=True, max_lines=10):
     lines = []
     row_sz = col_sz * col_num
     r = len(data) % row_sz
@@ -77,7 +77,8 @@ def hexdump(data, col_sz=2, col_num=4, human=True, max_lines=10):
                     lhex += '%02x' % c
                     lhum += __printable(c)
                 else:
-                    lhex += '  '
+                    lhex += ' ' * 2
+                    lhum += ' '
 
         if human:
             lhex += lhum + '|'
@@ -86,9 +87,20 @@ def hexdump(data, col_sz=2, col_num=4, human=True, max_lines=10):
     if max_lines > 1:
         if len(lines) > max_lines:
             ml = max_lines // 2
-            text = '\n'.join(lines[0:ml])
-            text += '\n[snip]\n'
-            text += '\n'.join(lines[-ml:])
-            return text
+            lines = lines[0:ml] + ["[snip]"] + lines[-ml:]
 
-    return '\n'.join(lines)
+    return lines
+##
+## @brief      { function_description }
+##
+## @param      data       The data
+## @param      col_sz     The col size
+## @param      col_num    The col number
+## @param      human      The human
+## @param      max_lines  The maximum lines
+##
+## @return     { description_of_the_return_value }
+##
+def hexdump(data, col_sz=2, col_num=4, human=True, max_lines=10):
+    return '\n'.join(hexdump_lines(data, col_sz, col_num, human, max_lines))
+
