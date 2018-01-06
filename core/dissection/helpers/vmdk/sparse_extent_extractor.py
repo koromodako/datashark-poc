@@ -77,7 +77,7 @@ class SparseExtentExtractor(object):
             evmdk = VmdkDisk(ebf)
 
             hdr = evmdk.header()
-            if hdr is None or hdr.type() != S_SPARSE_EXTENT_HDR:
+            if hdr is None or hdr.st_type != S_SPARSE_EXTENT_HDR:
                 return False
 
             gds = GrainDirectoryStack(self.wdir, evmdk)
