@@ -91,7 +91,7 @@ class MBR(object):
             if st_part.type != 0:
                 parts.append(MBRPartitionEntry(self.bf, st_part))
 
-        return sorted(parts, lambda x: x.start)
+        return sorted(parts, key=lambda x: x.start)
     ##
     ## @brief      { function_description }
     ##
@@ -99,7 +99,7 @@ class MBR(object):
     ##
     @trace()
     @lazy_getter('_unallocated')
-    def unallocated_spaces(self):
+    def unallocated(self):
         unallocated = []
         total_sz = self.bf.size() // SECTOR_SZ
         current_idx = 1 # first sector contains MBR
@@ -121,6 +121,6 @@ class MBR(object):
     ## @return     { description_of_the_return_value }
     ##
     @trace()
-    def full_mapping(self):
+    def drive_mapping(self):
         mapping = self.partitions() + self.unallocated()
-        return sorted(mapping, lambda x: x.start)
+        return sorted(mapping, key=lambda x: x.start)

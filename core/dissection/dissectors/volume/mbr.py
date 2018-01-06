@@ -135,13 +135,49 @@ def action_group():
 
             if not mbr.is_valid():
                 LGR.warn("failed to read header, see previous logs for "
-                            "error details.")
+                         "error details.")
                 continue
 
             LGR.info(mbr.mbr.to_str())
 
         return True
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      keywords  The keywords
+    ## @param      args      The arguments
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @trace_func(__name__)
+    def __action_mapping(keywords, args):
+        for f in args.files:
+
+            if not BinaryFile.exists(f):
+                LGR.warn("invalid path <{}> => skipped.".format(f))
+                continue
+
+            with BinaryFile(f, 'r') as bf:
+                mbr = MBR(bf)
+
+            if not mbr.is_valid():
+                LGR.warn("failed to read header, see previous logs for "
+                         "error details.")
+                continue
+
+            n = 1
+            text = "drive mapping:"
+            for mm in mbr.drive_mapping():
+                text += "\n\t{}. {} ({})".format(n, mm, mm.type)
+                n += 1
+
+            LGR.info(text)
+
+        return True
 
     return ActionGroup('mbr', {
-        'display': ActionGroup.action(__action_display, "display MBR structure.")
+        'display': ActionGroup.action(__action_display,
+                                      "display MBR structure."),
+        'mapping': ActionGroup.action(__action_mapping,
+                                      "display full drive mapping."),
     })

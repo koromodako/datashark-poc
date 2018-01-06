@@ -59,7 +59,8 @@ class MBRPartitionEntry(MemoryMap):
         super(MBRPartitionEntry, self).__init__(bf,
                                                 st_part.first_lba,
                                                 st_part.size,
-                                                SECTOR_SZ)
+                                                SECTOR_SZ,
+                                                'partition')
 
     def sector_count(self):
         return self.size

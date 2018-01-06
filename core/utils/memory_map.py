@@ -27,6 +27,7 @@
 # =============================================================================
 from utils.wrapper import trace
 from utils.logging import get_logger
+from utils.formatting import format_size
 # =============================================================================
 #  GLOBALS / CONFIG
 # =============================================================================
@@ -46,12 +47,13 @@ class MemoryMap(object):
     ## @param      size   The size
     ## @param      unit   The unit
     ##
-    def __init__(self, bf, start, size, unit=1):
+    def __init__(self, bf, start, size, unit=1, type='unallocated'):
         super(MemoryMap, self).__init__()
         self._bf = bf
         self.start = start
         self.size = size
         self.unit = unit
+        self.type = type
     ##
     ## @brief      Reads one.
     ##
@@ -76,4 +78,13 @@ class MemoryMap(object):
     def read_all(self):
         self._bf.seek(self.start * self.unit)
         return self._bf.read(self.size * self.unit)
+    ##
+    ## @brief      Returns a string representation of the object.
+    ##
+    ## @return     String representation of the object.
+    ##
+    def __str__(self):
+        return "MemoryMap(start={},size={},unit={})".format(self.start,
+                                                            self.size,
+                                                            format_size(self.unit))
 

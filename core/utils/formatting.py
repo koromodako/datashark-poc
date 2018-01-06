@@ -103,4 +103,20 @@ def hexdump_lines(data, col_sz=2, col_num=4, human=True, max_lines=10):
 ##
 def hexdump(data, col_sz=2, col_num=4, human=True, max_lines=10):
     return '\n'.join(hexdump_lines(data, col_sz, col_num, human, max_lines))
+##
+## @brief      { function_description }
+##
+## @param      size    The size
+## @param      suffix  The suffix
+##
+## @return     { description_of_the_return_value }
+##
+def format_size(size, suffix='B'):
+    for unit in ['','K','M','G','T','P','E','Z']:
 
+        if abs(size) < 1024.0:
+            return "{:3.1f}{}{}".format(size, unit, suffix)
+
+        size /= 1024.0
+
+    return "{:.1f}{}{}".format(size, 'Y', suffix)
