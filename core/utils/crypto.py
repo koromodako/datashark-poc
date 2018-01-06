@@ -129,14 +129,13 @@ def hashfile(hash_func, path, key=None, digestmod=None):
         LGR.error("invalid hash object returned.")
         return None
 
-    bf = BinaryFile(path, 'r')
-    sz = bf.size()
+    with BinaryFile(path, 'r') as bf:
+        sz = bf.size()
 
-    while sz > 0:
-        h.update(bf.read(RD_BLK_SZ))
-        sz -= RD_BLK_SZ
+        while sz > 0:
+            h.update(bf.read(RD_BLK_SZ))
+            sz -= RD_BLK_SZ
 
-    bf.close()
     return h.digest()
 ##
 ## @brief      { function_description }

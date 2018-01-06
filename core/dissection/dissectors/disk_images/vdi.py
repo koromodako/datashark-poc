@@ -131,10 +131,9 @@ def action_group():
                 LGR.warn("invalid path <{}> => skipped.".format(f))
                 continue
 
-            bf = BinaryFile(f, 'r')
-            vdi = VdiDisk(bf)
-            vdi_hdr = vdi.header()
-            bf.close()
+            with BinaryFile(f, 'r') as bf:
+                vdi = VdiDisk(bf)
+                vdi_hdr = vdi.header()
 
             if vdi_hdr is None:
                 LGR.warn("failed to read header, see previous logs for "

@@ -134,10 +134,9 @@ def action_group():
                 LGR.warn("invalid path <{}> => skipped.".format(f))
                 continue
 
-            bf = BinaryFile(f, 'r')
-            vhd = VhdDisk(bf)
-            hdr = vhd.header()
-            bf.close()
+            with BinaryFile(f, 'r') as bf:
+                vhd = VhdDisk(bf)
+                hdr = vhd.header()
 
             if hdr is None:
                 LGR.warn("fail to read VHD header.")
@@ -162,10 +161,9 @@ def action_group():
                 LGR.warn("invalid path <{}> => skipped.".format(f))
                 continue
 
-            bf = BinaryFile(f, 'r')
-            vhd = VhdDisk(bf)
-            ftr = vhd.footer()
-            bf.close()
+            with BinaryFile(f, 'r') as bf:
+                vhd = VhdDisk(bf)
+                ftr = vhd.footer()
 
             if ftr is None:
                 LGR.warn("fail to read VHD footer.")

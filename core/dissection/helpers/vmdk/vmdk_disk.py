@@ -29,6 +29,7 @@ from utils.logging import todo
 from utils.wrapper import trace
 from utils.logging import get_logger
 from utils.wrapper import lazy_getter
+from utils.constants import SECTOR_SZ
 from utils.struct.union_member import UnionMember
 from utils.struct.simple_member import SimpleMember
 from utils.struct.struct_member import StructMember
@@ -132,7 +133,6 @@ StructFactory.st_register(StructSpecif(S_METADATA_MARKER, [
 ##
 class VmdkDisk(object):
     # misc
-    SECTOR_SZ = 512  # bytes
     GD_AT_END = 0xffffffffffffffff # uint64_t(-1)
     # signatures
     SIGN_VMDK = b'KDMV'
@@ -216,8 +216,8 @@ class VmdkDisk(object):
         if not self.has_footer():
             return None
 
-        sector_cnt = self.bf.size() // self.SECTOR_SZ
-        oft = (sector_cnt - 2) * self.SECTOR_SZ
+        sector_cnt = self.bf.size() // SECTOR_SZ
+        oft = (sector_cnt - 2) * SECTOR_SZ
 
         ftr = StructFactory.st_from_file(S_SPARSE_EXTENT_HDR, self.bf, oft)
 
@@ -239,8 +239,8 @@ class VmdkDisk(object):
         if self._hdr.descriptorOffset == 0:
             return None
 
-        self.bf.seek(self._hdr.descriptorOffset * self.SECTOR_SZ)
-        df_buf = self.bf.read(self._hdr.descriptorSize * self.SECTOR_SZ)
+        self.bf.seek(self._hdr.descriptorOffset * SECTOR_SZ)
+        df_buf = self.bf.read(self._hdr.descriptorSize * SECTOR_SZ)
         df_eos = df_buf.index(b'\x00')
         df_str = df_buf[:df_eos].decode('utf-8')
 
@@ -267,13 +267,13 @@ class VmdkDisk(object):
             # -- Hosted Sparse Extents
             # loads redundant GD & GTs and normal GD & GTs in a single
             # bytearray
-            self.bf.seek(self._hdr.rgdOffset * self.SECTOR_SZ)
-            return self.bf.read(self._hdr.overHead * self.SECTOR_SZ)
+            self.bf.seek(self._hdr.rgdOffset * SECTOR_SZ)
+            return self.bf.read(self._hdr.overHead * SECTOR_SZ)
 
         elif self._hdr.st_type == S_COWD_EXTENT_HDR:
             # -- ESX Server Sparse Extents
             # loads GD only
-            self.bf.seek(self._hdr.gdOffset * self.SECTOR_SZ)
+            self.bf.seek(self._hdr.gdOffset * SECTOR_SZ)
             gde_sz = SimpleMember('_', '<I').size()
             return self.bf.read(self._hdr.numGDEntries * gde_sz)
 

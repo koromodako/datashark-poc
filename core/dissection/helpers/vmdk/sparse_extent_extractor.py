@@ -29,6 +29,7 @@ import os.path
 from utils.logging import todo
 from utils.wrapper import trace
 from utils.logging import get_logger
+from utils.constants import SECTOR_SZ
 from utils.binary_file import BinaryFile
 from dissection.helpers.vmdk.gd_stack import GrainDirectoryStack
 from dissection.helpers.vmdk.vmdk_disk import VmdkDisk
@@ -37,7 +38,6 @@ from dissection.helpers.vmdk.vmdk_disk import S_SPARSE_EXTENT_HDR
 #  GLOBALS
 # =============================================================================
 LGR = get_logger(__name__)
-SECTOR_SZ = VmdkDisk.SECTOR_SZ
 # =============================================================================
 #  CLASSES
 # =============================================================================
@@ -73,31 +73,29 @@ class SparseExtentExtractor(object):
             return False
 
         LGR.info("processing extent: {}".format(extent_path))
-        ebf = BinaryFile(extent_path, 'r')
-        evmdk = VmdkDisk(ebf)
+        with BinaryFile(extent_path, 'r') as ebf:
+            evmdk = VmdkDisk(ebf)
 
-        hdr = evmdk.header()
-        if hdr is None or hdr.type() != S_SPARSE_EXTENT_HDR:
-            ebf.close()
-            return False
+            hdr = evmdk.header()
+            if hdr is None or hdr.type() != S_SPARSE_EXTENT_HDR:
+                return False
 
-        gds = GrainDirectoryStack(self.wdir, evmdk)
+            gds = GrainDirectoryStack(self.wdir, evmdk)
 
-        num_grains = hdr.capacity // hdr.grainSize
+            num_grains = hdr.capacity // hdr.grainSize
 
-        LGR.info("extracting {} grains from extent...".format(num_grains))
-        for gidx in range(num_grains):
+            LGR.info("extracting {} grains from extent...".format(num_grains))
+            for gidx in range(num_grains):
 
-            grain = gds.base().read_grain(gidx*hdr.grainSize)
-            self.obf.write(grain) # output grain
+                grain = gds.base().read_grain(gidx*hdr.grainSize)
+                self.obf.write(grain) # output grain
 
 
-            if (gidx+1) % 100 == 0:
-                LGR.info("{}/{} grains extracted.".format(gidx+1, num_grains))
+                if (gidx+1) % 100 == 0:
+                    LGR.info("{}/{} grains extracted.".format(gidx+1, num_grains))
 
-        LGR.info("extent processed.")
-        gds.term() # close grain directory stack internal binary files
-        ebf.close()
+            LGR.info("extent processed.")
+            gds.term() # close grain directory stack internal binary files
         return True
     ##
     ## @brief      { function_description }

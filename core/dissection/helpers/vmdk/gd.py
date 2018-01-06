@@ -28,14 +28,13 @@ import math
 from struct import calcsize
 from utils.wrapper import trace
 from utils.logging import get_logger
+from utils.constants import SECTOR_SZ
 from utils.converting import unpack_one
 from dissection.helpers.vmdk.vmdk_disk import VmdkDisk
 # =============================================================================
 # GLOBALS
 # =============================================================================
 LGR = get_logger(__name__)
-
-SECTOR_SZ = VmdkDisk.SECTOR_SZ
 # =============================================================================
 # CLASSES
 # =============================================================================

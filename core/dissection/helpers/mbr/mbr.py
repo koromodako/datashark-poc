@@ -29,7 +29,9 @@ from struct import calcsize
 from utils.wrapper import trace
 from utils.logging import get_logger
 from utils.wrapper import lazy_getter
+from utils.constants import SECTOR_SZ
 from utils.converting import unpack_one
+from utils.memory_map import MemoryMap
 from utils.struct.array_member import ArrayMember
 from utils.struct.struct_member import StructMember
 from utils.struct.struct_specif import StructSpecif
@@ -72,11 +74,53 @@ class MBR(object):
     ##
     ## @return     True if valid, False otherwise.
     ##
+    @trace()
     def is_valid(self):
         return self.mbr.signature == self.MBR_SIGN
     ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @trace()
+    @lazy_getter('_parts')
     def partitions(self):
         parts = []
+
         for st_part in self.mbr.primary_part_tab:
-            parts.append(MBRPartitionEntry(self.bf, st_part))
-        return parts
+            if st_part.type != 0:
+                parts.append(MBRPartitionEntry(self.bf, st_part))
+
+        return sorted(parts, lambda x: x.start)
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @trace()
+    @lazy_getter('_unallocated')
+    def unallocated_spaces(self):
+        unallocated = []
+        total_sz = self.bf.size() // SECTOR_SZ
+        current_idx = 1 # first sector contains MBR
+
+        for part in self.partitions():
+
+            if part.start > current_idx:
+                unalloc_sz = part.start - current_idx
+                mm = MemoryMap(self.bf, current_idx, unalloc_sz, SECTOR_SZ)
+                unallocated.append(mm)
+                current_idx += unalloc_sz
+
+            current_idx += part.size
+
+        return unallocated
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @trace()
+    def full_mapping(self):
+        mapping = self.partitions() + self.unallocated()
+        return sorted(mapping, lambda x: x.start)

@@ -70,6 +70,7 @@ class GrainDirectoryStack(object):
 
             if BinaryFile.exists(parent_path):
                 parent_bf = BinaryFile(parent_path)
+                parent_bf.open()
                 parent_vmdk = VmdkDisk(parent_bf)
                 parent_gd = self.__build_gd(parent_vmdk)
 

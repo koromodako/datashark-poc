@@ -44,7 +44,7 @@ LGR = get_logger(__name__)
 # PRIVATE FUNCTIONS
 # =============================================================================
 ##
-## @brief      handles both Hosted Sparse Extent & ESX Server Sparse Extent 
+## @brief      handles both Hosted Sparse Extent & ESX Server Sparse Extent
 ##             dissection
 ##
 ## @param      wdir  The working directory
@@ -207,10 +207,9 @@ def action_group():
                 LGR.warn("invalid path <{}> => skipped.".format(f))
                 continue
 
-            bf = BinaryFile(f, 'r')
-            vmdk = VmdkDisk(bf)
-            hdr = vmdk.header()
-            bf.close()
+            with BinaryFile(f, 'r') as bf:
+                vmdk = VmdkDisk(bf)
+                hdr = vmdk.header()
 
             if hdr is None:
                 LGR.warn("no valid header found.")
@@ -235,30 +234,28 @@ def action_group():
                 LGR.warn("invalid path <{}> => skipped.".format(f))
                 continue
 
-            bf = BinaryFile(f, 'r')
-            vmdk = VmdkDisk(bf)
+            with BinaryFile(f, 'r') as bf:
+                vmdk = VmdkDisk(bf)
 
-            if vmdk.header() is None:
-                LGR.warn("no valid header found.")
-                bf.close()
-                continue
+                if vmdk.header() is None:
+                    LGR.warn("no valid header found.")
+                    continue
 
-            df = vmdk.descriptor_file()
-            bf.close()
+                df = vmdk.descriptor_file()
 
-            if df is None:
-                LGR.warn("only sparse extents have an embedded "
-                            "description file.")
-                continue
+                if df is None:
+                    LGR.warn("only sparse extents have an embedded "
+                                "description file.")
+                    continue
 
-            if not df.is_valid():
-                LGR.warn("invalid DescriptorFile found.")
-                continue
+                if not df.is_valid():
+                    LGR.warn("invalid DescriptorFile found.")
+                    continue
 
-            LGR.info(df.to_str())
+                LGR.info(df.to_str())
 
         return True
-    
+
     return ActionGroup('vmdk', {
         'header': ActionGroup.action(__action_header,
                                      "display vmdk sparse header."),

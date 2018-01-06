@@ -91,7 +91,7 @@ class JsonDB(DissectionDBAdapter):
             return False
 
         self.bf = BinaryFile(self._conf.path, 'r')
-        return True
+        return self.bf.open()
     ##
     ## @brief      { function_description }
     ##
@@ -100,6 +100,10 @@ class JsonDB(DissectionDBAdapter):
     @trace()
     def _init_w(self):
         self.bf = BinaryFile(self._conf.path, 'w')
+
+        if not self.bf.open():
+            return False
+
         self.bf.write_text(self.JSON_BEGIN)
         self.bf.flush()
         return True

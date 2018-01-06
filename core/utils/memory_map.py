@@ -1,6 +1,6 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#     file: mbr_partition_entry.py
-#     date: 2018-01-04
+#     file: memory_map.py
+#     date: 2018-01-05
 #   author: paul.dautry
 #  purpose:
 #
@@ -27,42 +27,53 @@
 # =============================================================================
 from utils.wrapper import trace
 from utils.logging import get_logger
-from utils.constants import SECTOR_SZ
-from utils.memory_map import MemoryMap
-from utils.struct.simple_member import SimpleMember
-from utils.struct.struct_specif import StructSpecif
-from utils.struct.struct_factory import StructFactory
 # =============================================================================
 #  GLOBALS / CONFIG
 # =============================================================================
 LGR = get_logger(__name__)
-S_MBR_PART_ENTRY = 'MBRPartitionEntry'
-StructFactory.st_register(StructSpecif(S_MBR_PART_ENTRY, [
-    SimpleMember('status', '<B'),
-    SimpleMember('first_chs', '<BH'),   # CHS addr of first sector
-    SimpleMember('type', '<B'),
-    SimpleMember('last_chs', '<BH'),    # CHS addr of last sector
-    SimpleMember('first_lba', '<I'),    # index of first sector (in sectors)
-    SimpleMember('size', '<I')          # count of sectors (in sectors)
-]))
 # =============================================================================
 #  CLASSES
 # =============================================================================
 ##
-## @brief      Class for mbr partition entry.
+## @brief      Class for memory map.
 ##
-class MBRPartitionEntry(MemoryMap):
+class MemoryMap(object):
     ##
     ## @brief      Constructs the object.
     ##
-    def __init__(self, bf, st_part):
-        super(MBRPartitionEntry, self).__init__(bf,
-                                                st_part.first_lba,
-                                                st_part.size,
-                                                SECTOR_SZ)
+    ## @param      bf     Binary file
+    ## @param      start  The start
+    ## @param      size   The size
+    ## @param      unit   The unit
+    ##
+    def __init__(self, bf, start, size, unit=1):
+        super(MemoryMap, self).__init__()
+        self._bf = bf
+        self.start = start
+        self.size = size
+        self.unit = unit
+    ##
+    ## @brief      Reads one.
+    ##
+    ## @param      idx   The index
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @trace()
+    def read_one(self, idx):
+        if idx >= self.size:
+            LGR.warn("reading after end of map => None returned.")
+            return None
 
-    def sector_count(self):
-        return self.size
+        self._bf.seek((self.start + idx) * self.unit)
+        return self._bf.read(self.unit)
+    ##
+    ## @brief      Reads all.
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @trace()
+    def read_all(self):
+        self._bf.seek(self.start * self.unit)
+        return self._bf.read(self.size * self.unit)
 
-    def read_sector(self, idx):
-        return self.read_one(idx)

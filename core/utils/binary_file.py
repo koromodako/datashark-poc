@@ -30,6 +30,7 @@ import io
 from utils.wrapper import trace
 from utils.logging import get_logger
 from utils.wrapper import trace_static
+from utils.memory_map import MemoryMap
 # =============================================================================
 # GLOBALS
 # =============================================================================
@@ -59,15 +60,63 @@ class BinaryFile(object):
     ## @param      mode   Open mode ('r' or 'w')
     ##
     def __init__(self, fpath, mode):
+        self.fp = None
         self.path = fpath
+        self.mode = mode
         self.dirname = os.path.dirname(fpath)
         self.basename = os.path.basename(fpath)
         self.abspath = os.path.abspath(fpath)
-        if mode not in ['r', 'w']:
-            self.valid = False
-        else:
-            self.fp = open(fpath, mode+'b')
-            self.valid = True
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def __enter__(self):
+        self.open()
+        return self
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
+    ##
+    ## @brief      Determines if valid.
+    ##
+    ## @return     True if valid, False otherwise.
+    ##
+    def is_valid(self):
+        return (self.fp is not None)
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def open(self):
+        if self.fp is not None:
+            LGR.warn("binary file is already opened.")
+            return False
+
+        try:
+            self.fp = open(self.path, self.mode+'b')
+        except Exception as e:
+            LGR.exception("binary file open operation failed.")
+            self.fp = None
+            return False
+
+        return True
+    ##
+    ## @brief      Releases underlying file handle
+    ##
+    def close(self):
+        if self.fp is None:
+            LGR.warn("binary file is already closed.")
+            return False
+
+        self.fp.close()
+        self.fp = None
+        return True
     ##
     ## @brief      Returns file's stat structure
     ##
@@ -145,8 +194,13 @@ class BinaryFile(object):
     def flush(self):
         self.fp.flush()
     ##
-    ## @brief      Releases underlying file handle
+    ## @brief      { function_description }
     ##
-    def close(self):
-        self.valid = False
-        self.fp.close()
+    ## @param      start  The start
+    ## @param      size   The size
+    ## @param      unit   The unit
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def mmap(self, start, size, unit=1):
+        return MemoryMap(self, start, size, unit)

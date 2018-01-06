@@ -87,6 +87,10 @@ PROG_VERSION = '{}.{}.{}{}'.format(VERS_MAJOR, VERS_MINOR, VERS_FIX, VERS_TAG)
 ## { item_description }
 ##
 PYTHON_VERSION = sys.version_info
+##
+## sector size (bytes)
+##
+SECTOR_SZ = 512
 # =============================================================================
 #  FUNCTIONS
 # =============================================================================

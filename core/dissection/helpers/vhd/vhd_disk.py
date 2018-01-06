@@ -31,6 +31,7 @@ from utils.logging import todo
 from utils.wrapper import trace
 from utils.logging import get_logger
 from utils.wrapper import lazy_getter
+from utils.constants import SECTOR_SZ
 from utils.converting import unpack_one
 from utils.struct.array_member import ArrayMember
 from utils.struct.struct_member import StructMember
@@ -127,8 +128,6 @@ class VhdDiskPlatformCode(Enum):
 ## @brief      Class for vhd disk.
 ##
 class VhdDisk(object):
-    # misc
-    SECTOR_SZ = 512 # bytes
     # feature flags
     FEATURE_NONE = 0x0          # no special feature
     FEATURE_TEMPORARY = 0x1     # is it a temporary disk ?
@@ -235,7 +234,7 @@ class VhdDisk(object):
             return None
 
         blk_sz = self._hdr.blkSz
-        bitmap_sz = (blk_sz // self.SECTOR_SZ) // 8
+        bitmap_sz = (blk_sz // SECTOR_SZ) // 8
 
         fmt = '>I'
         sz = calcsize(fmt)
@@ -244,7 +243,7 @@ class VhdDisk(object):
         if blk_oft == 0xffffffff:
             data = b'\x00' * blk_sz
         else:
-            self.bf.seek(blk_oft * self.SECTOR_SZ + bitmap_sz)
+            self.bf.seek(blk_oft * SECTOR_SZ + bitmap_sz)
             data = self.bf.read(blk_sz)
 
         return data

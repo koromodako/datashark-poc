@@ -130,9 +130,8 @@ def action_group():
                 LGR.warn("invalid path <{}> => skipped.".format(f))
                 continue
 
-            bf = BinaryFile(f, 'r')
-            mbr = MBR(bf)
-            bf.close()
+            with BinaryFile(f, 'r') as bf:
+                mbr = MBR(bf)
 
             if not mbr.is_valid():
                 LGR.warn("failed to read header, see previous logs for "
