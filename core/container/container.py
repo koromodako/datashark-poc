@@ -216,7 +216,9 @@ class Container(object):
     ##
     @trace()
     def ibf(self):
-        return BinaryFile(self.path, 'r')
+        bf = BinaryFile(self.path, 'r')
+        bf.open()
+        return bf
     ##
     ## @brief      { function_description }
     ##
