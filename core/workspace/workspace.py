@@ -107,7 +107,10 @@ class Workspace(object):
         if isdir:
             return self.__mkdir(full_path)
 
-        return BinaryFile(full_path, 'w')
+        bf = BinaryFile(full_path, 'w')
+        bf.open()
+        return bf
+
     ##
     ## @brief      { function_description }
     ##
