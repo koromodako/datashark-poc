@@ -227,8 +227,8 @@ class Container(object):
     ## @return     { description_of_the_return_value }
     ##
     @trace()
-    def obf(self, suffix='ds'):
-        return workspace().tmpfile(suffix=suffix)
+    def obf(self, prefix=''):
+        return workspace().tmpfile(prefix=prefix, suffix='ds')
 ##
 ## @brief      Class for container action group.
 ##

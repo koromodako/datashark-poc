@@ -36,6 +36,29 @@ from dissection.helpers.mbr.mbr import MBR
 # =============================================================================
 LGR = get_logger(__name__)
 # =============================================================================
+# PRIVATE FUNCTIONS
+# =============================================================================
+def _extract_memory_maps(container, mem_maps, prefix):
+    containers = []
+
+    n = 1
+    for mm in mem_maps:
+        name = '{}.{}'.format(prefix, n)
+        obf = container.obf(name)
+
+        LGR.info("extracting {} sectors...".format(mm.size))
+        for i in range(0, mm.size):
+            obf.write(mm.read_one(i))
+
+            if (i+1) % 20480 == 0:
+                LGR.info("{}/{} sectors extracted.".format(i+1, mm.size))
+
+        containers.append(Container(obf.abspath, name))
+        obf.close()
+        n += 1
+
+    return containers
+# =============================================================================
 # PUBLIC FUNCTIONS
 # =============================================================================
 ##
@@ -94,17 +117,19 @@ def can_dissect(container):
 def dissect(container):
     containers = []
 
-    obf = container.obf()
     ibf = container.ibf()
+    mbr = MBR(ibf)
 
-    #extractor = VdiExtractor(container.wdir(), VdiDisk(ibf), obf)
-    #if extractor.extract():
-    #    containers.append(Container(obf.abspath, 'disk.raw'))
-    #else:
-    #    LGR.error("failed to extract data from VDI.")
+    LGR.info("extracting partitions...")
+    containers += _extract_memory_maps(container,
+                                       mbr.partitions(),
+                                       'partition')
 
-    obf.close()
-    ibf.close()
+    LGR.info("extracting unallocated space...")
+    containers += _extract_memory_maps(container,
+                                       mbr.unallocated(),
+                                       'unallocated')
+
     return containers
 ##
 ## @brief      { function_description }

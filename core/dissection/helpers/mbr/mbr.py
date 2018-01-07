@@ -62,21 +62,18 @@ class MBR(object):
     ##
     MBR_SIGN = b'\x55\xaa'
     ##
-    ## { item_description }
-    ##
-    FIRST_EBR_LBA_OFFSET = None
-    ##
     ## @brief      Constructs the object.
     ##
     ## @param      bf    Binary file to read MBR/EBR from
     ## @param      oft   Absolute offset of this MBR/EBR (in bytes)
     ##
-    def __init__(self, bf, oft=0):
+    def __init__(self, bf, oft=0, first_ebr=None):
         super(MBR, self).__init__()
         self._bf = bf
         self._mbr = StructFactory.st_from_file(S_GENERIC_MBR, bf, oft)
         self._next = None
         self._lba_oft = oft // SECTOR_SZ
+        self._first_ebr = first_ebr
         self._part_entries = []
         self._parse()
     ##
@@ -96,12 +93,12 @@ class MBR(object):
             if second_part.is_extended():
                 abs_lba_oft = second_part.start
 
-                if MBR.FIRST_EBR_LBA_OFFSET is None:
-                    MBR.FIRST_EBR_LBA_OFFSET = second_part.start
+                if self._first_ebr is None:
+                    self._first_ebr = second_part.start
                 else:
-                    abs_lba_oft += MBR.FIRST_EBR_LBA_OFFSET
+                    abs_lba_oft += self._first_ebr
 
-                mbr = MBR(self._bf, abs_lba_oft * SECTOR_SZ)
+                mbr = MBR(self._bf, abs_lba_oft * SECTOR_SZ, self._first_ebr)
 
                 if mbr.is_valid():
                     self._next = mbr

@@ -98,12 +98,12 @@ def can_dissect(container):
 def dissect(container):
     containers = []
 
-    obf = container.obf()
+    obf = container.obf('vhd.raw')
     ibf = container.ibf()
 
     extractor = VhdExtractor(container.wdir(), VhdDisk(ibf), obf)
     if extractor.extract():
-        containers.append(Container(obf.abspath, 'disk.raw'))
+        containers.append(Container(obf.abspath, 'vhd.raw'))
     else:
         LGR.error("failed to extract data from VDI.")
 

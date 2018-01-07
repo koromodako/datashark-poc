@@ -162,7 +162,7 @@ def dissect(container):
     containers = []
     wdir = container.wdir()
     ibf = container.ibf()
-    obf = container.obf()
+    obf = container.obf('vmdk.raw')
     vmdk = VmdkDisk(ibf)
     # find and parse descriptor file
     if vmdk.header() is None:
@@ -170,13 +170,13 @@ def dissect(container):
         df = DescriptorFile(ibf.read_text())
 
         if __dissect_from_vmx(wdir, df, obf):
-            containers.append(Container(obf.abspath, 'disk.raw'))
+            containers.append(Container(obf.abspath, 'vmdk.raw'))
         else:
             LGR.warn('failed to dissect from vmx file.')
 
     else:
         if __dissect_from_vmdk(wdir, vmdk, obf):
-            containers.append(Container(obf.abspath, 'disk.raw'))
+            containers.append(Container(obf.abspath, 'vmdk.raw'))
         else:
             LGR.warn('failed to dissect from vmdk file.')
 
