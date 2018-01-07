@@ -25,12 +25,10 @@
 # =============================================================================
 #  IMPORTS
 # =============================================================================
-from struct import calcsize
 from utils.wrapper import trace
 from utils.logging import get_logger
 from utils.wrapper import lazy_getter
 from utils.constants import SECTOR_SZ
-from utils.converting import unpack_one
 from utils.memory_map import MemoryMap
 from utils.struct.array_member import ArrayMember
 from utils.struct.struct_member import StructMember
