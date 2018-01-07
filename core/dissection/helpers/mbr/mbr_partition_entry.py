@@ -53,17 +53,51 @@ StructFactory.st_register(StructSpecif(S_MBR_PART_ENTRY, [
 ##
 class MBRPartitionEntry(MemoryMap):
     ##
+    ## { item_description }
+    ##
+    EXTD_PART_TYPES = {
+        0x05: 'CHS',
+        0x0F: 'LBA',
+        0xC5: 'CHS (secured)',
+        0x85: 'CHS (hidden)',
+        0x15: 'CHS (hidden)',
+        0x1F: 'LBA (hidden)',
+        0x91: 'CHS (hidden)',
+        0x9B: 'LBA (hidden)',
+        0x5E: '(access-restricted)',
+        0x5F: '(access-restricted)',
+        0xCF: 'LBA (secured)',
+        0XD5: 'CHS (secured)'
+    }
+    ##
     ## @brief      Constructs the object.
     ##
     def __init__(self, bf, st_part):
         super(MBRPartitionEntry, self).__init__(bf,
                                                 st_part.first_lba,
                                                 st_part.size,
-                                                SECTOR_SZ,
-                                                'partition')
-
-    def sector_count(self):
-        return self.size
-
-    def read_sector(self, idx):
-        return self.read_one(idx)
+                                                SECTOR_SZ)
+        self.status = st_part.status
+        self.type = st_part.type
+    ##
+    ## @brief      Determines if null.
+    ##
+    ## @return     True if null, False otherwise.
+    ##
+    def is_null(self):
+        return (self.start == 0 and self.size == 0)
+    ##
+    ## @brief      Determines if extended.
+    ##
+    ## @return     True if extended, False otherwise.
+    ##
+    def is_extended(self):
+        return (self.type in list(self.EXTD_PART_TYPES.keys()))
+    ##
+    ## @brief      Returns a string representation of the object.
+    ##
+    ## @return     String representation of the object.
+    ##
+    def __str__(self):
+        return "MBRPartitionEntry(status={},type={},start={},size={})".format(
+            self.status, self.type, self.start, self.size)

@@ -138,7 +138,40 @@ def action_group():
                          "error details.")
                 continue
 
-            LGR.info(mbr.mbr.to_str())
+            LGR.info(mbr.to_str())
+
+        return True
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      keywords  The keywords
+    ## @param      args      The arguments
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @trace_func(__name__)
+    def __action_partitions(keywords, args):
+        for f in args.files:
+
+            if not BinaryFile.exists(f):
+                LGR.warn("invalid path <{}> => skipped.".format(f))
+                continue
+
+            with BinaryFile(f, 'r') as bf:
+                mbr = MBR(bf)
+
+            if not mbr.is_valid():
+                LGR.warn("failed to read header, see previous logs for "
+                         "error details.")
+                continue
+
+            n = 1
+            text = "partitions:"
+            for part in mbr.partitions():
+                text += "\n\t{}. {}".format(n, part)
+                n += 1
+
+            LGR.info(text)
 
         return True
     ##
@@ -166,9 +199,15 @@ def action_group():
                 continue
 
             n = 1
-            text = "drive mapping:"
-            for mm in mbr.drive_mapping():
-                text += "\n\t{}. {} ({})".format(n, mm, mm.type)
+            text = "allocated:"
+            for mm in mbr.allocated():
+                text += "\n\t{}. {}".format(n, mm)
+                n += 1
+
+            n = 1
+            text += "\nunallocated:"
+            for mm in mbr.unallocated():
+                text += "\n\t{}. {}".format(n, mm)
                 n += 1
 
             LGR.info(text)
@@ -177,7 +216,9 @@ def action_group():
 
     return ActionGroup('mbr', {
         'display': ActionGroup.action(__action_display,
-                                      "display MBR structure."),
+                                      "display MBR/EBR structure(s)."),
         'mapping': ActionGroup.action(__action_mapping,
                                       "display full drive mapping."),
+        'partitions': ActionGroup.action(__action_partitions,
+                                      "display partitions.")
     })

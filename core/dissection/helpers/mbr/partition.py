@@ -1,6 +1,6 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#     file: memory_map.py
-#     date: 2018-01-05
+#     file: partition.py
+#     date: 2018-01-07
 #   author: paul.dautry
 #  purpose:
 #
@@ -27,7 +27,8 @@
 # =============================================================================
 from utils.wrapper import trace
 from utils.logging import get_logger
-from utils.formatting import format_size
+from utils.constants import SECTOR_SZ
+from utils.memory_map import MemoryMap
 # =============================================================================
 #  GLOBALS / CONFIG
 # =============================================================================
@@ -36,55 +37,21 @@ LGR = get_logger(__name__)
 #  CLASSES
 # =============================================================================
 ##
-## @brief      Class for memory map.
+## @brief      Class for partition.
 ##
-class MemoryMap(object):
+class Partition(MemoryMap):
     ##
     ## @brief      Constructs the object.
     ##
-    ## @param      bf     Binary file
-    ## @param      start  The start
-    ## @param      size   The size
-    ## @param      unit   The unit
-    ##
-    def __init__(self, bf, start, size, unit=1):
-        super(MemoryMap, self).__init__()
-        self._bf = bf
-        self.start = start
-        self.size = size
-        self.unit = unit
+    def __init__(self, bf, status, type, start, size):
+        super(Partition, self).__init__(bf, start, size, SECTOR_SZ)
+        self.status = status
         self.type = type
-    ##
-    ## @brief      Reads one.
-    ##
-    ## @param      idx   The index
-    ##
-    ## @return     { description_of_the_return_value }
-    ##
-    @trace()
-    def read_one(self, idx):
-        if idx >= self.size:
-            LGR.warn("reading after end of map => None returned.")
-            return None
-
-        self._bf.seek((self.start + idx) * self.unit)
-        return self._bf.read(self.unit)
-    ##
-    ## @brief      Reads all.
-    ##
-    ## @return     { description_of_the_return_value }
-    ##
-    @trace()
-    def read_all(self):
-        self._bf.seek(self.start * self.unit)
-        return self._bf.read(self.size * self.unit)
     ##
     ## @brief      Returns a string representation of the object.
     ##
     ## @return     String representation of the object.
     ##
     def __str__(self):
-        return "MemoryMap(start={},size={},unit={})".format(self.start,
-                                                            self.size,
-                                                            format_size(self.unit))
-
+        return "Partition(status={},type={},start={},size={})".format(
+            hex(self.status), hex(self.type), self.start, self.size)

@@ -37,13 +37,14 @@ from utils.struct.struct_member import StructMember
 from utils.struct.struct_specif import StructSpecif
 from utils.struct.struct_factory import StructFactory
 from utils.struct.byte_array_member import ByteArrayMember
+from dissection.helpers.mbr.partition import Partition
 from dissection.helpers.mbr.mbr_partition_entry import S_MBR_PART_ENTRY
 from dissection.helpers.mbr.mbr_partition_entry import MBRPartitionEntry
 # =============================================================================
 #  GLOBALS / CONFIG
 # =============================================================================
 LGR = get_logger(__name__)
-S_GENERIC_MBR = 'GenericMBR'
+S_GENERIC_MBR = 'MBR_o_EBR'
 StructFactory.st_register(StructSpecif(S_GENERIC_MBR, [
     ByteArrayMember('bootcode', 446),
     ArrayMember('primary_part_tab', StructMember('_', S_MBR_PART_ENTRY), 4),
@@ -53,7 +54,7 @@ StructFactory.st_register(StructSpecif(S_GENERIC_MBR, [
 #  CLASSES
 # =============================================================================
 ##
-## @brief      Class for mbr.
+## @brief      Class for mbr or ebr.
 ##
 class MBR(object):
     ##
@@ -61,14 +62,52 @@ class MBR(object):
     ##
     MBR_SIGN = b'\x55\xaa'
     ##
+    ## { item_description }
+    ##
+    FIRST_EBR_LBA_OFFSET = None
+    ##
     ## @brief      Constructs the object.
     ##
-    ## @param      bf    { parameter_description }
+    ## @param      bf    Binary file to read MBR/EBR from
+    ## @param      oft   Absolute offset of this MBR/EBR (in bytes)
     ##
-    def __init__(self, bf):
+    def __init__(self, bf, oft=0):
         super(MBR, self).__init__()
-        self.bf = bf
-        self.mbr = StructFactory.st_from_file(S_GENERIC_MBR, bf)
+        self._bf = bf
+        self._mbr = StructFactory.st_from_file(S_GENERIC_MBR, bf, oft)
+        self._next = None
+        self._lba_oft = oft // SECTOR_SZ
+        self._part_entries = []
+        self._parse()
+    ##
+    ## @brief      { item_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @trace()
+    def _parse(self):
+        for st_part in self._mbr.primary_part_tab:
+            if st_part.type != 0:
+                self._part_entries.append(MBRPartitionEntry(self._bf, st_part))
+
+        if len(self._part_entries) == 2:
+            second_part = self._part_entries[1]
+
+            if second_part.is_extended():
+                abs_lba_oft = second_part.start
+
+                if MBR.FIRST_EBR_LBA_OFFSET is None:
+                    MBR.FIRST_EBR_LBA_OFFSET = second_part.start
+                else:
+                    abs_lba_oft += MBR.FIRST_EBR_LBA_OFFSET
+
+                mbr = MBR(self._bf, abs_lba_oft * SECTOR_SZ)
+
+                if mbr.is_valid():
+                    self._next = mbr
+                else:
+                    LGR.warn("invalid EBR in linked list.")
+                    LGR.warn(mbr.to_str())
     ##
     ## @brief      Determines if valid.
     ##
@@ -76,7 +115,7 @@ class MBR(object):
     ##
     @trace()
     def is_valid(self):
-        return self.mbr.signature == self.MBR_SIGN
+        return self._mbr.signature == self.MBR_SIGN
     ##
     ## @brief      { function_description }
     ##
@@ -84,14 +123,37 @@ class MBR(object):
     ##
     @trace()
     @lazy_getter('_parts')
-    def partitions(self):
+    def partitions(self, recursive=True):
         parts = []
 
-        for st_part in self.mbr.primary_part_tab:
-            if st_part.type != 0:
-                parts.append(MBRPartitionEntry(self.bf, st_part))
+        for part in self._part_entries:
+
+            if part.is_extended():
+                continue
+
+            start = self._lba_oft + part.start
+            parts.append(Partition(self._bf, part.status, part.type, start, part.size))
+
+        if recursive and self._next is not None:
+            parts += self._next.partitions()
 
         return sorted(parts, key=lambda x: x.start)
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @trace()
+    @lazy_getter('_allocated')
+    def allocated(self):
+        allocated = [ MemoryMap(self._bf, self._lba_oft, 1, SECTOR_SZ) ]
+
+        allocated += self.partitions(recursive=False)
+
+        if self._next is not None:
+            allocated += self._next.allocated()
+
+        return sorted(allocated, key=lambda x: x.start)
     ##
     ## @brief      { function_description }
     ##
@@ -101,26 +163,34 @@ class MBR(object):
     @lazy_getter('_unallocated')
     def unallocated(self):
         unallocated = []
-        total_sz = self.bf.size() // SECTOR_SZ
-        current_idx = 1 # first sector contains MBR
+        sector_cnt = self._bf.size() // SECTOR_SZ
+        index = 0
 
-        for part in self.partitions():
+        for mm in self.allocated():
 
-            if part.start > current_idx:
-                unalloc_sz = part.start - current_idx
-                mm = MemoryMap(self.bf, current_idx, unalloc_sz, SECTOR_SZ)
-                unallocated.append(mm)
-                current_idx += unalloc_sz
+            if index < mm.start:
+                size = mm.start - index
+                unallocated.append(MemoryMap(self._bf, index, size, SECTOR_SZ))
+                index += size
 
-            current_idx += part.size
+            index += mm.size
 
-        return unallocated
+        if index < sector_cnt-1:
+            unallocated.append(MemoryMap(self._bf, index,
+                                         sector_cnt - index, SECTOR_SZ))
+
+        return sorted(unallocated, key=lambda x: x.start)
     ##
-    ## @brief      { function_description }
+    ## @brief      Returns a string representation of the object.
     ##
-    ## @return     { description_of_the_return_value }
+    ## @return     String representation of the object.
     ##
     @trace()
-    def drive_mapping(self):
-        mapping = self.partitions() + self.unallocated()
-        return sorted(mapping, key=lambda x: x.start)
+    def to_str(self):
+        mbr = self
+        text = ""
+        while mbr is not None:
+            text += mbr._mbr.to_str()
+            mbr = mbr._next
+
+        return text

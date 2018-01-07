@@ -144,19 +144,19 @@ class StructFactory:
     ## @brief      { function_description }
     ##
     ## @param      st_type  The st type
-    ## @param      fp       { parameter_description }
+    ## @param      bf       The binary file to read from
     ## @param      oft      The oft
     ##
     ## @return     { description_of_the_return_value }
     ##
     @staticmethod
     @trace_static('StructFactory')
-    def st_from_file(st_type, fp, oft=0):
+    def st_from_file(st_type, bf, oft=0):
         if not StructFactory.st_exists(st_type, log=True):
             return None
 
-        fp.seek(oft)
-        data = fp.read(StructFactory.st_size(st_type))
+        bf.seek(oft)
+        data = bf.read(StructFactory.st_size(st_type))
         st = StructFactory.st_from_bytes(st_type, data)
 
         return st
