@@ -60,6 +60,15 @@ class Ext4FS(object):
         self.blk_sz = blk_sz * 1024
         self.blk_gp_sz = 8 * blk_sz
         self.sb = Ext4SuperBlock(self._bf)
+        self._parse_gds()
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def _parse_gds(self):
+        self.gds = []
+        raise NotImplementedError
     ##
     ## @brief      Determines if valid.
     ##

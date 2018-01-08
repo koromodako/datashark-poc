@@ -25,6 +25,8 @@
 # IMPORTS
 # =============================================================================
 import struct
+from uuid import UUID
+from datetime import datetime
 from utils.logging import get_logger
 from utils.wrapper import trace_func
 # =============================================================================
@@ -64,3 +66,58 @@ def str_to_int(s):
 @trace_func(__name__)
 def unpack_one(fmt, data):
     return struct.unpack(fmt, data)[0]
+##
+## @brief      Merges 2 parts of a number using binary bitwise 'shift' and 'or'
+##             operations.
+##
+## @param      lo    The lower sz bytes
+## @param      hi    The higher sz bytes
+##
+## @return     { description_of_the_return_value }
+##
+@trace_func(__name__)
+def lohi2int(lo, hi, sz=32):
+    return ((hi << sz) | lo)
+##
+## @brief      { function_description }
+##
+## @param      timestamp  The timestamp in seconds since
+##
+## @return     { description_of_the_return_value }
+##
+@trace_func(__name__)
+def utcfromtimestamp(timestamp):
+    return datetime.utcfromtimestamp(timestamp)
+##
+## @brief      { function_description }
+##
+## @param      uuid_bytes  The uuid bytes
+## @param      le          { parameter_description }
+##
+## @return     { description_of_the_return_value }
+##
+@trace_func(__name__)
+def uuid_from_bytes(uuid_bytes, le=False):
+    if le:
+        return UUID(bytes_le=uuid_bytes)
+
+    return UUID(bytes=uuid_bytes)
+##
+## @brief      { function_description }
+##
+## @param      value  The value
+## @param      Class  The class
+## @param      warn   The warning
+##
+## @return     { description_of_the_return_value }
+##
+@trace_func(__name__)
+def int2enum(value, Class, warn=None):
+    try:
+        inst = Class(value)
+    except Exception as e:
+        if warn is not None:
+            LGR.warn(warn)
+        inst = value
+    return inst
+
