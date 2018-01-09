@@ -46,6 +46,7 @@ class StructFactory:
     STRUCTS = {}
     K_SIZE = 'size'
     K_MEMBERS = 'members'
+    K_FORMATTERS = 'formatters'
     ##
     ## @brief      { function_description }
     ##
@@ -100,7 +101,8 @@ class StructFactory:
 
             StructFactory.STRUCTS[st_specif.st_type] = {
                 StructFactory.K_SIZE: st_specif.size(),
-                StructFactory.K_MEMBERS: st_specif.members
+                StructFactory.K_MEMBERS: st_specif.members,
+                StructFactory.K_FORMATTERS: st_specif.formatters
             }
             return True
 
@@ -127,7 +129,9 @@ class StructFactory:
 
         sz = 0
         st_specif = StructFactory.STRUCTS[st_type]
-        st = Struct(st_type, st_specif[StructFactory.K_SIZE])
+        st = Struct(st_type,
+                    st_specif[StructFactory.K_SIZE],
+                    st_specif[StructFactory.K_FORMATTERS])
 
         for member in st_specif[StructFactory.K_MEMBERS]:
             rsz = member.size()

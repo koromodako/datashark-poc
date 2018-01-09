@@ -68,7 +68,7 @@ class Ext4FS(object):
     ##
     def _parse_gds(self):
         self.gds = []
-        raise NotImplementedError
+        #raise NotImplementedError
     ##
     ## @brief      Determines if valid.
     ##

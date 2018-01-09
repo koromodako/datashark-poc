@@ -62,6 +62,7 @@ from utils.wrapper import trace
 from utils.logging import get_logger
 from utils.struct.member import Member
 from utils.struct.struct import Struct
+from utils.struct.simple_member import SimpleMember
 # =============================================================================
 # GLOBAL
 # =============================================================================
@@ -87,6 +88,7 @@ class StructSpecif(object):
         super(StructSpecif, self).__init__()
         self.st_type = st_type
         self.members = members
+        self.formatters = {}
         self.valid = self.__validate()
     ##
     ## @brief      { function_description }
@@ -124,6 +126,9 @@ class StructSpecif(object):
                 return False
 
             names.append(member.name)
+            if isinstance(member, SimpleMember):
+                if member.formatter is not None:
+                    self.formatters[member.name] = member.formatter
 
         if len(names) != len(set(names)):
             LGR.error("at least two members of StructSpecif share the same "

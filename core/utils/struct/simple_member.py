@@ -48,8 +48,9 @@ class SimpleMember(Member):
     ## @param      load   The load
     ## @param      valid  The valid
     ##
-    def __init__(self, name, fmt, load=True, valid=False):
+    def __init__(self, name, fmt, load=True, valid=False, formatter=None):
         self.fmt = fmt
+        self.formatter = formatter
         super(SimpleMember, self).__init__(name, load, valid)
     ##
     ## @brief      { function_description }
