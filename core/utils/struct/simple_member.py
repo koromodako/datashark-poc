@@ -37,7 +37,7 @@ LGR = get_logger(__name__)
 #  CLASSES
 # =============================================================================
 ##
-## @brief
+## @brief      Class for simple member.
 ##
 class SimpleMember(Member):
     ##
@@ -48,9 +48,9 @@ class SimpleMember(Member):
     ## @param      load   The load
     ## @param      valid  The valid
     ##
-    def __init__(self, name, fmt, load=True, valid=False, formatter=None):
+    def __init__(self, name, fmt, load=True, valid=False, fmtr=None):
         self.fmt = fmt
-        self.formatter = formatter
+        self.formatter = fmtr
         super(SimpleMember, self).__init__(name, load, valid)
     ##
     ## @brief      { function_description }

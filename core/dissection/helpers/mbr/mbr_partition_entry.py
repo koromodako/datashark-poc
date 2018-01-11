@@ -30,21 +30,20 @@ from utils.logging import get_logger
 from utils.constants import SECTOR_SZ
 from utils.memory_map import MemoryMap
 from utils.struct.simple_member import SimpleMember
-from utils.struct.struct_specif import StructSpecif
 from utils.struct.struct_factory import StructFactory
 # =============================================================================
 #  GLOBALS / CONFIG
 # =============================================================================
 LGR = get_logger(__name__)
 S_MBR_PART_ENTRY = 'MBRPartitionEntry'
-StructFactory.st_register(StructSpecif(S_MBR_PART_ENTRY, [
+StructFactory.st_register(S_MBR_PART_ENTRY, [
     SimpleMember('status', '<B'),
     SimpleMember('first_chs', '<BH'),   # CHS addr of first sector
     SimpleMember('type', '<B'),
     SimpleMember('last_chs', '<BH'),    # CHS addr of last sector
     SimpleMember('first_lba', '<I'),    # index of first sector (in sectors)
     SimpleMember('size', '<I')          # count of sectors (in sectors)
-]))
+])
 # =============================================================================
 #  CLASSES
 # =============================================================================

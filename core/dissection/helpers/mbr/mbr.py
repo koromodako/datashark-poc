@@ -32,7 +32,6 @@ from utils.constants import SECTOR_SZ
 from utils.memory_map import MemoryMap
 from utils.struct.array_member import ArrayMember
 from utils.struct.struct_member import StructMember
-from utils.struct.struct_specif import StructSpecif
 from utils.struct.struct_factory import StructFactory
 from utils.struct.byte_array_member import ByteArrayMember
 from dissection.helpers.mbr.partition import Partition
@@ -43,11 +42,11 @@ from dissection.helpers.mbr.mbr_partition_entry import MBRPartitionEntry
 # =============================================================================
 LGR = get_logger(__name__)
 S_GENERIC_MBR = 'MBR_o_EBR'
-StructFactory.st_register(StructSpecif(S_GENERIC_MBR, [
+StructFactory.st_register(S_GENERIC_MBR, [
     ByteArrayMember('bootcode', 446),
     ArrayMember('primary_part_tab', StructMember('_', S_MBR_PART_ENTRY), 4),
     ByteArrayMember('signature', 2)
-]))
+])
 # =============================================================================
 #  CLASSES
 # =============================================================================

@@ -30,6 +30,22 @@ import enum
 #  CLASSES
 # =============================================================================
 ##
+## @brief      Class for block group flag.
+##
+class Ext4BGDFlag(enum.Flag):
+    ##
+    ## Inode table and bitmap are not initialized.
+    ##
+    EXT4_BG_INODE_UNINIT = 0x1
+    ##
+    ## Block bitmap is not initialized.
+    ##
+    EXT4_BG_BLOCK_UNINIT = 0x2
+    ##
+    ## Inode table is zeroed.
+    ##
+    EXT4_BG_INODE_ZEROED = 0x4
+##
 ## @brief      Class for extent 4 state.
 ##
 class Ext4State(enum.Flag):

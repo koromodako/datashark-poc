@@ -33,7 +33,6 @@ from utils.constants import SECTOR_SZ
 from utils.struct.union_member import UnionMember
 from utils.struct.simple_member import SimpleMember
 from utils.struct.struct_member import StructMember
-from utils.struct.struct_specif import StructSpecif
 from utils.struct.struct_factory import StructFactory
 from utils.struct.byte_array_member import ByteArrayMember
 from dissection.helpers.vmdk.descriptor_file import DescriptorFile
@@ -42,7 +41,7 @@ from dissection.helpers.vmdk.descriptor_file import DescriptorFile
 # =============================================================================
 LGR = get_logger(__name__)
 S_SPARSE_EXTENT_HDR = 'SparseExtentHeader'
-StructFactory.st_register(StructSpecif(S_SPARSE_EXTENT_HDR, [
+StructFactory.st_register(S_SPARSE_EXTENT_HDR, [
     ByteArrayMember('magicNumber', 4),
     SimpleMember('version', '<I'),
     SimpleMember('flags', '<I'),
@@ -61,21 +60,21 @@ StructFactory.st_register(StructSpecif(S_SPARSE_EXTENT_HDR, [
     ByteArrayMember('doubleEndLineChar2', 1),
     SimpleMember('compressAlgorithm', '<H'),
     ByteArrayMember('pad', 433, load=False)
-]))
+])
 S_COWD_ROOT = 'COWDisk_root'
-StructFactory.st_register(StructSpecif(S_COWD_ROOT, [
+StructFactory.st_register(S_COWD_ROOT, [
     SimpleMember('cylinders', '<I'),
     SimpleMember('heads', '<I'),
     SimpleMember('sectors', '<I')
-]))
+])
 S_COWD_CHILD = 'COWDisk_child'
-StructFactory.st_register(StructSpecif(S_COWD_CHILD, [
+StructFactory.st_register(S_COWD_CHILD, [
     # define COWDISK_MAX_PARENT_FILELEN 1024
     ByteArrayMember('parentFileName', 1024),
     SimpleMember('parentGeneration', '<I')
-]))
+])
 S_COWD_EXTENT_HDR = 'COWDisk_Header'
-StructFactory.st_register(StructSpecif(S_COWD_EXTENT_HDR, [
+StructFactory.st_register(S_COWD_EXTENT_HDR, [
     SimpleMember('magicNumber', '<I'),
     SimpleMember('version', '<I'),
     SimpleMember('flags', '<I'),
@@ -97,34 +96,34 @@ StructFactory.st_register(StructSpecif(S_COWD_EXTENT_HDR, [
     ByteArrayMember('reserved', 8),
     SimpleMember('uncleanShutdown', '<I'),
     ByteArrayMember('padding', 396, load=False)
-]))
+])
 S_MARKER = 'Marker'
-StructFactory.st_register(StructSpecif(S_MARKER, [
+StructFactory.st_register(S_MARKER, [
     SimpleMember('val', '<Q'),
     SimpleMember('size', '<I'),
     SimpleMember('type', '<I')
-]))
+])
 S_GRAIN_MARKER = 'GrainMarker'
-StructFactory.st_register(StructSpecif(S_GRAIN_MARKER, [
+StructFactory.st_register(S_GRAIN_MARKER, [
     SimpleMember('lba', '<Q'),
     SimpleMember('size', '<I'),
     SimpleMember('data', '<B')
-]))
+])
 S_EOS_MARKER = 'EOSMarker'
-StructFactory.st_register(StructSpecif(S_EOS_MARKER, [
+StructFactory.st_register(S_EOS_MARKER, [
     SimpleMember('val', '<Q'),
     SimpleMember('size', '<I'),
     SimpleMember('type', '<I'),
     ByteArrayMember('pad', 496, load=False)
-]))
+])
 S_METADATA_MARKER = 'MetaDataMarker'
-StructFactory.st_register(StructSpecif(S_METADATA_MARKER, [
+StructFactory.st_register(S_METADATA_MARKER, [
     SimpleMember('numSectors', '<Q'),
     SimpleMember('size', '<I'),
     SimpleMember('type', '<I'),
     ByteArrayMember('pad', 496, load=False),
     SimpleMember('metadata', '<B')
-]))
+])
 # =============================================================================
 #  CLASSES
 # =============================================================================

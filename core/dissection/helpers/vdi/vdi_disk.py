@@ -31,7 +31,6 @@ from utils.logging import get_logger
 from utils.wrapper import lazy_getter
 from utils.converting import unpack_one
 from utils.struct.simple_member import SimpleMember
-from utils.struct.struct_specif import StructSpecif
 from utils.struct.struct_factory import StructFactory
 from utils.struct.byte_array_member import ByteArrayMember
 # =============================================================================
@@ -39,7 +38,7 @@ from utils.struct.byte_array_member import ByteArrayMember
 # =============================================================================
 LGR = get_logger(__name__)
 S_VDI_HDR = 'VDIHeader'
-StructFactory.st_register(StructSpecif(S_VDI_HDR, [
+StructFactory.st_register(S_VDI_HDR, [
     ByteArrayMember('magic', 0x40),
     ByteArrayMember('signature', 0x04),
     SimpleMember('vmajor', '<H'),
@@ -65,7 +64,7 @@ StructFactory.st_register(StructSpecif(S_VDI_HDR, [
     ByteArrayMember('linkUuid', 0x10),
     ByteArrayMember('parentUuid', 0x10),
     ByteArrayMember('pad1', 0x38, load=False)
-]))
+])
 # =============================================================================
 #  CLASSES
 # =============================================================================

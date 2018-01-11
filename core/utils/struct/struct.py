@@ -103,7 +103,13 @@ class Struct(object):
                 if fmtr is None:
                     s = "\n{}+ {}: {}".format(tab, key, value)
                 else:
-                    s = "\n{}+ {}: {} ({})".format(tab, key, value, fmtr(value))
+                    try:
+                        formatted = fmtr(value)
+                    except Exception as e:
+                        LGR.exception("failsafe: call to formatter failed.")
+                        formatted = 'invalid'
+
+                    s = "\n{}+ {}: {} ({})".format(tab, key, value, formatted)
 
         return s
     ## @brief      Sets the member.

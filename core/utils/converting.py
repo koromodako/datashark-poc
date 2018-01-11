@@ -86,7 +86,7 @@ def lohi2int(lo, hi, sz=32):
 ## @return     { description_of_the_return_value }
 ##
 @trace_func(__name__)
-def utcfromtimestamp(timestamp):
+def timestamp2utc(timestamp):
     return datetime.utcfromtimestamp(timestamp)
 ##
 ## @brief      { function_description }
@@ -97,27 +97,16 @@ def utcfromtimestamp(timestamp):
 ## @return     { description_of_the_return_value }
 ##
 @trace_func(__name__)
-def uuid_from_bytes(uuid_bytes, le=False):
-    if le:
-        return UUID(bytes_le=uuid_bytes)
-
-    return UUID(bytes=uuid_bytes)
+def lebytes2uuid(bytes):
+    return UUID(bytes_le=bytes)
 ##
 ## @brief      { function_description }
 ##
-## @param      value  The value
-## @param      Class  The class
-## @param      warn   The warning
+## @param      uuid_bytes  The uuid bytes
 ##
 ## @return     { description_of_the_return_value }
 ##
 @trace_func(__name__)
-def int2enum(value, Class, warn=None):
-    try:
-        inst = Class(value)
-    except Exception as e:
-        if warn is not None:
-            LGR.warn(warn)
-        inst = value
-    return inst
+def bebytes2uuid(bytes):
+    return UUID(bytes=bytes)
 

@@ -32,6 +32,7 @@ import struct
 from utils.logging import get_logger
 from utils.wrapper import trace_static
 from utils.struct.struct import Struct
+from utils.struct.struct_specif import StructSpecif
 # =============================================================================
 # GLOBAL
 # =============================================================================
@@ -86,7 +87,9 @@ class StructFactory:
     ##
     @staticmethod
     @trace_static('StructFactory')
-    def st_register(st_specif):
+    def st_register(st_name, st_members):
+        st_specif = StructSpecif(st_name, st_members)
+
         if st_specif.valid:
 
             if st_specif.size() == 0:

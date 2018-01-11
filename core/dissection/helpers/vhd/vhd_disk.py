@@ -36,7 +36,6 @@ from utils.converting import unpack_one
 from utils.struct.array_member import ArrayMember
 from utils.struct.struct_member import StructMember
 from utils.struct.simple_member import SimpleMember
-from utils.struct.struct_specif import StructSpecif
 from utils.struct.struct_factory import StructFactory
 from utils.struct.byte_array_member import ByteArrayMember
 # =============================================================================
@@ -44,15 +43,15 @@ from utils.struct.byte_array_member import ByteArrayMember
 # =============================================================================
 LGR = get_logger(__name__)
 S_VHD_PARENT_LOCATOR_ENT = 'VHD_ParentLocatorEntry'
-StructFactory.st_register(StructSpecif(S_VHD_PARENT_LOCATOR_ENT, [
+StructFactory.st_register(S_VHD_PARENT_LOCATOR_ENT, [
     SimpleMember('platformCode', '>I'),
     SimpleMember('platformDataSpace', '>I'),
     SimpleMember('platformDataLength', '>I'),
     SimpleMember('reserved_0', '>I', load=False), # zeros (needs a check)
     SimpleMember('platformDataOft', '>Q')
-]))
+])
 S_VHD_HEADER = 'VHDHeader'
-StructFactory.st_register(StructSpecif(S_VHD_HEADER, [
+StructFactory.st_register(S_VHD_HEADER, [
     ByteArrayMember('cookie', 8),
     SimpleMember('dataOft', '>Q'),
     SimpleMember('tableOft', '>Q'),
@@ -69,9 +68,9 @@ StructFactory.st_register(StructSpecif(S_VHD_HEADER, [
                 StructMember('_', S_VHD_PARENT_LOCATOR_ENT),
                 8),
     ByteArrayMember('reserved_1', 256, load=False) # zeros (needs a check)
-]))
+])
 S_VHD_FOOTER = 'VHDFooter'
-StructFactory.st_register(StructSpecif(S_VHD_FOOTER, [
+StructFactory.st_register(S_VHD_FOOTER, [
     ByteArrayMember('cookie', 8),                   # identify creator
     SimpleMember('features', '>I'),                 # specific feature support
     SimpleMember('major', '>H'),                    # file format minor version
@@ -92,7 +91,7 @@ StructFactory.st_register(StructSpecif(S_VHD_FOOTER, [
     ByteArrayMember('uuid', 16),                    # UUID (parent linking)
     SimpleMember('savedState', '?'),                # in saved state or not ?
     ByteArrayMember('reserved_0', 427, load=False)  # zeros (needs a check)
-]))
+])
 # =============================================================================
 #  CLASSES
 # =============================================================================
