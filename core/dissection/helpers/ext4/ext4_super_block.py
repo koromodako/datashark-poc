@@ -308,7 +308,7 @@ class Ext4SuperBlock(object):
     def is_valid(self):
         return (self._sb.s_magic == self.SIGN)
     # -------------------------------------------------------------------------
-    #  IMPROVED GETTERS
+    #  ENHANCED GETTERS
     # -------------------------------------------------------------------------
     ##
     ## @brief      { function_description }

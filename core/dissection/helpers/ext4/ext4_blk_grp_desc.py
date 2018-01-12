@@ -29,6 +29,7 @@ from enum import Flag
 from utils.wrapper import trace
 from utils.logging import get_logger
 from utils.wrapper import lazy_getter
+from utils.converting import lohi2int
 from utils.struct.simple_member import SimpleMember
 from utils.struct.struct_member import StructMember
 from utils.struct.struct_factory import StructFactory
@@ -83,8 +84,114 @@ class Ext4BlkGrpDesc(object):
     ##
     def __init__(self, bg_size, bf, oft):
         super(Ext4BlkGrpDesc, self).__init__()
-        if bg_size <= 32:
-            self.grp_desc = StructFactory.st_from_file(S_EXT4_32B_BGD, bf, oft)
+        self.size = bg_size
+        if self.size <= 32:
+            self._bgd = StructFactory.st_from_file(S_EXT4_32B_BGD, bf, oft)
         else:
-            self.grp_desc = StructFactory.st_from_file(S_EXT4_64B_BGD, bf, oft)
+            self._bgd = StructFactory.st_from_file(S_EXT4_64B_BGD, bf, oft)
+    # -------------------------------------------------------------------------
+    #  ENHANCED GETTERS
+    # -------------------------------------------------------------------------
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def block_bitmap(self):
+        if self.size > 32:
+            return lohi2int(self._bgd.bg_block_bitmap_lo,
+                            self._bgd.bg_block_bitmap_hi)
+        return self.bg_block_bitmap_lo
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def inode_bitmap(self):
+        if self.size > 32:
+            return lohi2int(self._bgd.bg_inode_bitmap_lo,
+                            self._bgd.bg_inode_bitmap_hi)
+        return self.bg_inode_bitmap_lo
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def inode_table(self):
+        if self.size > 32:
+            return lohi2int(self._bgd.bg_inode_table_lo,
+                            self._bgd.bg_inode_table_hi)
+        return self.bg_inode_table_lo
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def free_blocks_count(self):
+        if self.size > 32:
+            return lohi2int(self._bgd.bg_free_blocks_count_lo,
+                            self._bgd.bg_free_blocks_count_hi)
+        return self.bg_free_blocks_count_lo
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def free_inodes_count(self):
+        if self.size > 32:
+            return lohi2int(self._bgd.bg_free_inodes_count_lo,
+                            self._bgd.bg_free_inodes_count_hi)
+        return self.bg_free_inodes_count_lo
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def used_dirs_count(self):
+        if self.size > 32:
+            return lohi2int(self._bgd.bg_used_dirs_count_lo,
+                            self._bgd.bg_used_dirs_count_hi)
+        return self.bg_used_dirs_count_lo
 
+    def flags(self):
+        return Ext4BGDFlag(self._bgd.bg_flags)
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def itable_unused(self):
+        if self.size > 32:
+            return lohi2int(self._bgd.bg_itable_unused_lo,
+                            self._bgd.bg_itable_unused_hi)
+        return self.bg_itable_unused_lo
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def exclude_bitmap(self):
+        if self.size > 32:
+            return lohi2int(self._bgd.bg_exclude_bitmap_lo,
+                            self._bgd.bg_exclude_bitmap_hi)
+        return self.bg_exclude_bitmap_lo
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def block_bitmap_csum(self):
+        if self.size > 32:
+            return lohi2int(self._bgd.bg_block_bitmap_csum_lo,
+                            self._bgd.bg_block_bitmap_csum_hi)
+        return self.bg_block_bitmap_csum_lo
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def inode_bitmap_csum(self):
+        if self.size > 32:
+            return lohi2int(self._bgd.bg_inode_bitmap_csum_lo,
+                            self._bgd.bg_inode_bitmap_csum_hi)
+        return self.bg_inode_bitmap_csum_lo
