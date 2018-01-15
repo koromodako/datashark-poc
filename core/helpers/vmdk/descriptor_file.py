@@ -26,7 +26,7 @@
 # =============================================================================
 from utils.wrapper import trace
 from utils.logging import get_logger
-from dissection.helpers.vmdk.extent import Extent
+from helpers.vmdk.extent import Extent
 # =============================================================================
 # GLOBALS / CONFIG
 # =============================================================================

@@ -34,9 +34,9 @@ from utils.struct.array_member import ArrayMember
 from utils.struct.struct_member import StructMember
 from utils.struct.struct_factory import StructFactory
 from utils.struct.byte_array_member import ByteArrayMember
-from dissection.helpers.mbr.partition import Partition
-from dissection.helpers.mbr.mbr_partition_entry import S_MBR_PART_ENTRY
-from dissection.helpers.mbr.mbr_partition_entry import MBRPartitionEntry
+from helpers.mbr.partition import Partition
+from helpers.mbr.mbr_partition_entry import S_MBR_PART_ENTRY
+from helpers.mbr.mbr_partition_entry import MBRPartitionEntry
 # =============================================================================
 #  GLOBALS / CONFIG
 # =============================================================================

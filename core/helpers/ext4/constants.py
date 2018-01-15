@@ -30,7 +30,7 @@ import enum
 #  CLASSES
 # =============================================================================
 ##
-## @brief      Class for block group flag.
+## @brief      Flag for block group flag.
 ##
 class Ext4BGDFlag(enum.Flag):
     ##
@@ -46,21 +46,21 @@ class Ext4BGDFlag(enum.Flag):
     ##
     EXT4_BG_INODE_ZEROED = 0x4
 ##
-## @brief      Class for extent 4 state.
+## @brief      Flag for extent 4 state.
 ##
 class Ext4State(enum.Flag):
     CLEANLY_UNMOUNTED = 0x0001
     ERRORS_DETECTED = 0x0002
     ORPHANS_BEING_RECOVERED = 0x0004
 ##
-## @brief      Class for extent 4 error.
+## @brief      Enum for extent 4 error.
 ##
 class Ext4Error(enum.Enum):
     CONTINUE = 1
     REMOUNT_RO = 2
     PANIC = 3
 ##
-## @brief      Class for extent 4 os.
+## @brief      Enum for extent 4 os.
 ##
 class Ext4OS(enum.Enum):
     LINUX = 0
@@ -69,7 +69,7 @@ class Ext4OS(enum.Enum):
     FREEBSD = 3
     LITES = 4
 ##
-## @brief      Class for extent 4 reverse.
+## @brief      Enum for extent 4 reverse.
 ##
 class Ext4Rev(enum.Enum):
     ORIGINAL_FORMAT = 0
@@ -262,7 +262,7 @@ class Ext4ReadOnlyCompat(enum.Flag):
     ##
     RO_COMPAT_PROJECT = 0x2000
 ##
-## @brief      Class for extent 4 hash algorithm.
+## @brief      Enum for extent 4 hash algorithm.
 ##
 class Ext4HashAlgo(enum.Enum):
     LEGACY = 0
@@ -330,7 +330,7 @@ class Ext4MountOpts(enum.Flag):
     ##
     EXT4_DEFM_NODELALLOC = 0x0800
 ##
-## @brief      Class for extent 4 misc flag.
+## @brief      Flag for extent 4 misc flag.
 ##
 class Ext4MiscFlag(enum.Flag):
     ##
@@ -346,7 +346,7 @@ class Ext4MiscFlag(enum.Flag):
     ##
     EXT4_MISC_DEV_TEST = 0x0004
 ##
-## @brief      Class for extent 4 encrypt algorithm.
+## @brief      Enum for extent 4 encrypt algorithm.
 ##
 class Ext4EncryptAlgo(enum.Enum):
     ##
@@ -365,3 +365,104 @@ class Ext4EncryptAlgo(enum.Enum):
     ## 256-bit AES in CBC mode.
     ##
     ENCRYPTION_MODE_AES_256_CBC = 3
+##
+## @brief      Flag for extent 4 inode mode.
+##
+class Ext4InodeMode(enum.Flag):
+    S_IXOTH = 0x1  # Others may execute
+    S_IWOTH = 0x2  # Others may write
+    S_IROTH = 0x4  # Others may read
+    S_IXGRP = 0x8  # Group members may execute
+    S_IWGRP = 0x10  # Group members may write
+    S_IRGRP = 0x20  # Group members may read
+    S_IXUSR = 0x40  # Owner may execute
+    S_IWUSR = 0x80  # Owner may write
+    S_IRUSR = 0x100  # Owner may read
+    S_ISVTX = 0x200  # Sticky bit
+    S_ISGID = 0x400  # Set GID
+    S_ISUID = 0x800  # Set UID
+    #These are mutually-exclusive file types:
+    S_IFIFO = 0x1000 # FIFO
+    S_IFCHR = 0x2000 # Character device
+    S_IFDIR = 0x4000 # Directory
+    S_IFBLK = 0x6000 # Block device
+    S_IFREG = 0x8000 # Regular file
+    S_IFLNK = 0xA000 # Symbolic link
+    S_IFSOCK = 0xC000 # Socket
+##
+## @brief      Flag for extent 4 inode flag.
+##
+class Ext4InodeFlag(enum.Flag):
+    # This file requires secure deletion. (not implemented)
+    EXT4_SECRM_FL = 0x1
+    # This file should be preserved, should undeletion be desired.
+    # (not implemented)
+    EXT4_UNRM_FL = 0x2
+    # File is compressed. (not really implemented)
+    EXT4_COMPR_FL = 0x4
+    # All writes to the file must be synchronous.
+    EXT4_SYNC_FL = 0x8
+    # File is immutable.
+    EXT4_IMMUTABLE_FL = 0x10
+    # File can only be appended.
+    EXT4_APPEND_FL = 0x20
+    # The dump(1) utility should not dump this file.
+    EXT4_NODUMP_FL = 0x40
+    # Do not update access time.
+    EXT4_NOATIME_FL = 0x80
+    # Dirty compressed file. (not used)
+    EXT4_DIRTY_FL = 0x100
+    # File has one or more compressed clusters. (not used)
+    EXT4_COMPRBLK_FL = 0x200
+    # Do not compress file. (not used)
+    EXT4_NOCOMPR_FL = 0x400
+    # Encrypted inode. This bit value previously was EXT4_ECOMPR_FL
+    # (compression error), which was never used.
+    EXT4_ENCRYPT_FL = 0x800
+    # Directory has hashed indexes.
+    EXT4_INDEX_FL = 0x1000
+    # AFS magic directory.
+    EXT4_IMAGIC_FL = 0x2000
+    # File data must always be written through the journal.
+    EXT4_JOURNAL_DATA_FL = 0x4000
+    # File tail should not be merged. (not used by ext4)
+    EXT4_NOTAIL_FL = 0x8000
+    # All directory entry data should be written synchronously (see dirsync).
+    EXT4_DIRSYNC_FL = 0x10000
+    # Top of directory hierarchy.
+    EXT4_TOPDIR_FL = 0x20000
+    # This is a huge file.
+    EXT4_HUGE_FILE_FL = 0x40000
+    # Inode uses extents.
+    EXT4_EXTENTS_FL = 0x80000
+    # Inode stores a large extended attribute value in its data blocks ().
+    EXT4_EA_INODE_FL = 0x200000
+    # This file has blocks allocated past EOF. (deprecated)
+    EXT4_EOFBLOCKS_FL = 0x400000
+    # Inode is a snapshot. (not in mainline)
+    EXT4_SNAPFILE_FL = 0x01000000
+    # Snapshot is being deleted. (not in mainline)
+    EXT4_SNAPFILE_DELETED_FL = 0x04000000
+    # Snapshot shrink has completed. (not in mainline)
+    EXT4_SNAPFILE_SHRUNK_FL = 0x08000000
+    # Inode has inline data.
+    EXT4_INLINE_DATA_FL = 0x10000000
+    # Create children with the same project ID ().
+    EXT4_PROJINHERIT_FL = 0x20000000
+    # Reserved for ext4 library.
+    EXT4_RESERVED_FL = 0x80000000
+    # ----------- Aggregate flags:
+    # User-visible flags.
+    EXT4_FL_USER_VISIBLE = 0x4BDFFF
+    # User-modifiable flags. Note that while EXT4_JOURNAL_DATA_FL and
+    # EXT4_EXTENTS_FL can be set with setattr, they are not in the kernel's
+    # EXT4_FL_USER_MODIFIABLE mask, since it needs to handle the setting of
+    # these flags in a special manner and they are masked out of the set of
+    # flags that are saved directly to i_flags.
+    EXT4_FL_USER_MODIFIABLE = 0x4B80FF
+##
+## @brief      Class for extent 4 tree node type.
+##
+class Ext4TreeNodeType(enum.Enum):
+    INDEX = 0
+    LEAF = 1

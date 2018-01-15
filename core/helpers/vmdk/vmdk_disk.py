@@ -35,7 +35,7 @@ from utils.struct.simple_member import SimpleMember
 from utils.struct.struct_member import StructMember
 from utils.struct.struct_factory import StructFactory
 from utils.struct.byte_array_member import ByteArrayMember
-from dissection.helpers.vmdk.descriptor_file import DescriptorFile
+from helpers.vmdk.descriptor_file import DescriptorFile
 # =============================================================================
 # GLOBALS / CONFIG
 # =============================================================================

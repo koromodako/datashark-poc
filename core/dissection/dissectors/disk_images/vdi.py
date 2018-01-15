@@ -29,8 +29,8 @@ from utils.wrapper import trace_func
 from utils.binary_file import BinaryFile
 from utils.action_group import ActionGroup
 from container.container import Container
-from dissection.helpers.vdi.vdi_disk import VdiDisk
-from dissection.helpers.vdi.vdi_extractor import VdiExtractor
+from helpers.vdi.vdi_disk import VdiDisk
+from helpers.vdi.vdi_extractor import VdiExtractor
 # =============================================================================
 # GLOBALS / CONFIG
 # =============================================================================

@@ -30,7 +30,7 @@ from utils.wrapper import trace_func
 from utils.binary_file import BinaryFile
 from utils.action_group import ActionGroup
 from container.container import Container
-from dissection.helpers.mbr.mbr import MBR
+from helpers.mbr.mbr import MBR
 # =============================================================================
 # GLOBALS / CONFIG
 # =============================================================================

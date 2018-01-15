@@ -28,7 +28,10 @@
 from enum import IntEnum
 from utils.wrapper import trace
 from utils.logging import get_logger
-from dissection.helpers.ext4.ext4_super_block import Ext4SuperBlock
+from helpers.ext4.tree import Ext4TreeNode
+from helpers.ext4.super_block import Ext4SuperBlock
+from helpers.ext4.inode_table_entry import Ext4Inode
+from helpers.ext4.block_group_descriptor import Ext4BlkGrpDesc
 # =============================================================================
 #  GLOBALS / CONFIG
 # =============================================================================

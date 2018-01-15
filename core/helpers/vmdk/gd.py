@@ -30,7 +30,7 @@ from utils.wrapper import trace
 from utils.logging import get_logger
 from utils.constants import SECTOR_SZ
 from utils.converting import unpack_one
-from dissection.helpers.vmdk.vmdk_disk import VmdkDisk
+from helpers.vmdk.vmdk_disk import VmdkDisk
 # =============================================================================
 # GLOBALS
 # =============================================================================

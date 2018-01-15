@@ -35,17 +35,17 @@ from utils.struct.array_member import ArrayMember
 from utils.struct.simple_member import SimpleMember
 from utils.struct.struct_factory import StructFactory
 from utils.struct.byte_array_member import ByteArrayMember
-from dissection.helpers.ext4.constants import Ext4State
-from dissection.helpers.ext4.constants import Ext4Error
-from dissection.helpers.ext4.constants import Ext4OS
-from dissection.helpers.ext4.constants import Ext4Rev
-from dissection.helpers.ext4.constants import Ext4Compat
-from dissection.helpers.ext4.constants import Ext4Incompat
-from dissection.helpers.ext4.constants import Ext4ReadOnlyCompat
-from dissection.helpers.ext4.constants import Ext4HashAlgo
-from dissection.helpers.ext4.constants import Ext4MountOpts
-from dissection.helpers.ext4.constants import Ext4MiscFlag
-from dissection.helpers.ext4.constants import Ext4EncryptAlgo
+from helpers.ext4.constants import Ext4State
+from helpers.ext4.constants import Ext4Error
+from helpers.ext4.constants import Ext4OS
+from helpers.ext4.constants import Ext4Rev
+from helpers.ext4.constants import Ext4Compat
+from helpers.ext4.constants import Ext4Incompat
+from helpers.ext4.constants import Ext4ReadOnlyCompat
+from helpers.ext4.constants import Ext4HashAlgo
+from helpers.ext4.constants import Ext4MountOpts
+from helpers.ext4.constants import Ext4MiscFlag
+from helpers.ext4.constants import Ext4EncryptAlgo
 # =============================================================================
 #  GLOBALS / CONFIG
 # =============================================================================
@@ -296,9 +296,9 @@ class Ext4SuperBlock(object):
     ##
     ## @param      bf    { parameter_description }
     ##
-    def __init__(self, bf):
+    def __init__(self, bf, oft=1024):
         super(Ext4SuperBlock, self).__init__()
-        self._sb = StructFactory.st_from_file(S_EXT4_SB, bf, 1024)
+        self._sb = StructFactory.st_from_file(S_EXT4_SB, bf, oft)
     ##
     ## @brief      Determines if valid.
     ##
@@ -408,6 +408,7 @@ class Ext4SuperBlock(object):
     ##
     ## @return     { description_of_the_return_value }
     ##
+    @lazy_getter('')
     def feature_compat(self):
         return Ext4Compat(self._sb.s_feature_compat)
     ##
@@ -415,6 +416,7 @@ class Ext4SuperBlock(object):
     ##
     ## @return     { description_of_the_return_value }
     ##
+    @lazy_getter('')
     def feature_incompat(self):
         return Ext4Incompat(self._sb.s_feature_incompat)
     ##
@@ -422,6 +424,7 @@ class Ext4SuperBlock(object):
     ##
     ## @return     { description_of_the_return_value }
     ##
+    @lazy_getter('')
     def feature_ro_compat(self):
         return Ext4ReadOnlyCompat(self._sb.s_feature_ro_compat)
     ##
@@ -429,6 +432,7 @@ class Ext4SuperBlock(object):
     ##
     ## @return     { description_of_the_return_value }
     ##
+    @lazy_getter('')
     def uuid(self):
         return lebytes2uuid(self._sb.s_uuid)
     ##
@@ -436,6 +440,7 @@ class Ext4SuperBlock(object):
     ##
     ## @return     { description_of_the_return_value }
     ##
+    @lazy_getter('')
     def def_hash_version(self):
         return Ext4HashAlgo(self._sb.s_def_hash_version)
     ##
@@ -443,6 +448,7 @@ class Ext4SuperBlock(object):
     ##
     ## @return     { description_of_the_return_value }
     ##
+    @lazy_getter('')
     def default_mount_opts(self):
         return Ext4MountOpts(self._sb.s_default_mount_opts)
     ##
@@ -450,6 +456,7 @@ class Ext4SuperBlock(object):
     ##
     ## @return     { description_of_the_return_value }
     ##
+    @lazy_getter('')
     def mkfs_time(self):
         return timestamp2utc(self._sb.s_mkfs_time)
     ##
@@ -457,6 +464,7 @@ class Ext4SuperBlock(object):
     ##
     ## @return     { description_of_the_return_value }
     ##
+    @lazy_getter('')
     def flags(self):
         return Ext4MiscFlag(self._sb.s_flags)
     ##

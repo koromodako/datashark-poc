@@ -31,9 +31,9 @@ from utils.wrapper import trace
 from utils.logging import get_logger
 from utils.constants import SECTOR_SZ
 from utils.binary_file import BinaryFile
-from dissection.helpers.vmdk.gd_stack import GrainDirectoryStack
-from dissection.helpers.vmdk.vmdk_disk import VmdkDisk
-from dissection.helpers.vmdk.vmdk_disk import S_SPARSE_EXTENT_HDR
+from helpers.vmdk.gd_stack import GrainDirectoryStack
+from helpers.vmdk.vmdk_disk import VmdkDisk
+from helpers.vmdk.vmdk_disk import S_SPARSE_EXTENT_HDR
 # =============================================================================
 #  GLOBALS
 # =============================================================================

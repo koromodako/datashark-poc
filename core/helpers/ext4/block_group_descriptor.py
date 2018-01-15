@@ -33,7 +33,7 @@ from utils.converting import lohi2int
 from utils.struct.simple_member import SimpleMember
 from utils.struct.struct_member import StructMember
 from utils.struct.struct_factory import StructFactory
-from dissection.helpers.ext4.constants import Ext4BGDFlag
+from helpers.ext4.constants import Ext4BGDFlag
 # =============================================================================
 #  GLOBALS / CONFIG
 # =============================================================================
@@ -97,6 +97,7 @@ class Ext4BlkGrpDesc(object):
     ##
     ## @return     { description_of_the_return_value }
     ##
+    @lazy_getter('_block_bitmap')
     def block_bitmap(self):
         if self.size > 32:
             return lohi2int(self._bgd.bg_block_bitmap_lo,
@@ -107,6 +108,7 @@ class Ext4BlkGrpDesc(object):
     ##
     ## @return     { description_of_the_return_value }
     ##
+    @lazy_getter('_inode_bitmap')
     def inode_bitmap(self):
         if self.size > 32:
             return lohi2int(self._bgd.bg_inode_bitmap_lo,
@@ -117,6 +119,7 @@ class Ext4BlkGrpDesc(object):
     ##
     ## @return     { description_of_the_return_value }
     ##
+    @lazy_getter('_inode_table')
     def inode_table(self):
         if self.size > 32:
             return lohi2int(self._bgd.bg_inode_table_lo,
@@ -127,6 +130,7 @@ class Ext4BlkGrpDesc(object):
     ##
     ## @return     { description_of_the_return_value }
     ##
+    @lazy_getter('_free_blocks_count')
     def free_blocks_count(self):
         if self.size > 32:
             return lohi2int(self._bgd.bg_free_blocks_count_lo,
@@ -137,6 +141,7 @@ class Ext4BlkGrpDesc(object):
     ##
     ## @return     { description_of_the_return_value }
     ##
+    @lazy_getter('_free_inodes_count')
     def free_inodes_count(self):
         if self.size > 32:
             return lohi2int(self._bgd.bg_free_inodes_count_lo,
@@ -147,6 +152,7 @@ class Ext4BlkGrpDesc(object):
     ##
     ## @return     { description_of_the_return_value }
     ##
+    @lazy_getter('_used_dirs_count')
     def used_dirs_count(self):
         if self.size > 32:
             return lohi2int(self._bgd.bg_used_dirs_count_lo,
@@ -160,6 +166,7 @@ class Ext4BlkGrpDesc(object):
     ##
     ## @return     { description_of_the_return_value }
     ##
+    @lazy_getter('_itable_unused')
     def itable_unused(self):
         if self.size > 32:
             return lohi2int(self._bgd.bg_itable_unused_lo,
@@ -170,6 +177,7 @@ class Ext4BlkGrpDesc(object):
     ##
     ## @return     { description_of_the_return_value }
     ##
+    @lazy_getter('_exclude_bitmap')
     def exclude_bitmap(self):
         if self.size > 32:
             return lohi2int(self._bgd.bg_exclude_bitmap_lo,
@@ -180,6 +188,7 @@ class Ext4BlkGrpDesc(object):
     ##
     ## @return     { description_of_the_return_value }
     ##
+    @lazy_getter('_block_bitmap_csum')
     def block_bitmap_csum(self):
         if self.size > 32:
             return lohi2int(self._bgd.bg_block_bitmap_csum_lo,
@@ -190,6 +199,7 @@ class Ext4BlkGrpDesc(object):
     ##
     ## @return     { description_of_the_return_value }
     ##
+    @lazy_getter('_inode_bitmap_csum')
     def inode_bitmap_csum(self):
         if self.size > 32:
             return lohi2int(self._bgd.bg_inode_bitmap_csum_lo,

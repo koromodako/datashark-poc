@@ -1,6 +1,6 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#     file: gd_stack.py
-#     date: 2017-12-04
+#     file: vhd_extractor.py
+#     date: 2017-12-09
 #   author: paul.dautry
 #  purpose:
 #
@@ -25,12 +25,9 @@
 # =============================================================================
 #  IMPORTS
 # =============================================================================
-import os.path
 from utils.wrapper import trace
 from utils.logging import get_logger
-from utils.binary_file import BinaryFile
-from dissection.helpers.vmdk.gd import GrainDirectory
-from dissection.helpers.vmdk.vmdk_disk import VmdkDisk
+from helpers.vhd.vhd_disk import VhdDiskType
 # =============================================================================
 #  GLOBALS / CONFIG
 # =============================================================================
@@ -39,61 +36,43 @@ LGR = get_logger(__name__)
 #  CLASSES
 # =============================================================================
 ##
-## @brief      List of grain directories.
+## @brief      Class for vhd extractor.
 ##
-class GrainDirectoryStack(object):
+class VhdExtractor(object):
     ##
     ## @brief      Constructs the object.
     ##
     ## @param      wdir  The wdir
-    ## @param      vmdk  The vmdk
+    ## @param      vhd   The vhd
+    ## @param      obf   The obf
     ##
-    def __init__(self, wdir, vmdk):
-        super(GrainDirectoryStack, self).__init__()
+    def __init__(self, wdir, vhd, obf):
+        super(VhdExtractor, self).__init__()
         self.wdir = wdir
-        self.base_gd = self.__build_gd(vmdk)
-    ##
-    ## @brief      Builds a gd.
-    ##
-    ## @param      vmdk  The vmdk
-    ##
-    ## @return     The gd.
-    ##
-    @trace()
-    def __build_gd(self, vmdk):
-        df = vmdk.descriptor_file()
-
-        parent_filename = df.parent_filename()
-
-        if parent_filename is not None:
-            parent_path = os.path.join(self.wdir, parent_filename)
-
-            if BinaryFile.exists(parent_path):
-                parent_bf = BinaryFile(parent_path)
-                parent_bf.open()
-                parent_vmdk = VmdkDisk(parent_bf)
-                parent_gd = self.__build_gd(parent_vmdk)
-
-            else:
-                LGR.warn("could not find parent disk. Disk image will be "
-                            "incomplete.")
-        else:
-            parent_gd = None
-
-        return GrainDirectory(vmdk, parent_gd)
+        self.vhd = vhd
+        self.obf = obf
     ##
     ## @brief      { function_description }
     ##
     ## @return     { description_of_the_return_value }
     ##
     @trace()
-    def base(self):
-        return self.base_gd
-    ##
-    ## @brief      { function_description }
-    ##
-    ## @return     { description_of_the_return_value }
-    ##
-    @trace()
-    def term(self):
-        self.base_gd.term()
+    def extract(self):
+        blk_cnt = self.vhd.block_count()
+
+        LGR.info("extracting {} blocks...".format(blk_cnt))
+
+        for n in range(blk_cnt):
+            data = self.vhd.read_block(n)
+
+            if data is None:
+                LGR.error("an error occured while extracting data.")
+                return False
+
+            self.obf.write(data)
+
+            if (n+1) % 50 == 0:
+                LGR.info("{}/{} blocks extracted.".format(n+1, blk_cnt))
+
+        LGR.info("extraction completed.")
+        return True

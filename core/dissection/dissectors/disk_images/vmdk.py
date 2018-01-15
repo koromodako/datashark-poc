@@ -32,10 +32,10 @@ from utils.binary_file import BinaryFile
 from utils.action_group import ActionGroup
 from container.container import Container
 # dissection helpers
-from dissection.helpers.vmdk.vmdk_disk import VmdkDisk
-from dissection.helpers.vmdk.descriptor_file import DescriptorFile
-from dissection.helpers.vmdk.flat_extent_extractor import FlatExtentExtractor
-from dissection.helpers.vmdk.sparse_extent_extractor import SparseExtentExtractor
+from helpers.vmdk.vmdk_disk import VmdkDisk
+from helpers.vmdk.descriptor_file import DescriptorFile
+from helpers.vmdk.flat_extent_extractor import FlatExtentExtractor
+from helpers.vmdk.sparse_extent_extractor import SparseExtentExtractor
 # =============================================================================
 # GLOBALS / CONFIG
 # =============================================================================

@@ -77,7 +77,7 @@ def unpack_one(fmt, data):
 ##
 @trace_func(__name__)
 def lohi2int(lo, hi, sz=32):
-    return ((hi << sz) | lo)
+    return ((hi << sz) + lo)
 ##
 ## @brief      { function_description }
 ##
