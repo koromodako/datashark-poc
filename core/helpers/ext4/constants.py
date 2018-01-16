@@ -27,6 +27,10 @@
 # =============================================================================
 import enum
 # =============================================================================
+#  GLOBALS / CONFIG
+# =============================================================================
+EXT4_NAME_LEN = 255
+# =============================================================================
 #  CLASSES
 # =============================================================================
 ##
@@ -461,8 +465,34 @@ class Ext4InodeFlag(enum.Flag):
     # flags that are saved directly to i_flags.
     EXT4_FL_USER_MODIFIABLE = 0x4B80FF
 ##
-## @brief      Class for extent 4 tree node type.
+## @brief      Enum for extent 4 tree node type.
 ##
 class Ext4TreeNodeType(enum.Enum):
     INDEX = 0
     LEAF = 1
+##
+## @brief      Enum for extent 4 dirent version.
+##
+class Ext4DirentVersion(enum.Enum):
+    V1 = 1
+    V2 = 2
+##
+## @brief      Enum for extent 4 file type.
+##
+class Ext4FileType(enum.Enum):
+    # Unknown.
+    UNKNOW = 0x0
+    # Regular file.
+    REG_FILE = 0x1
+    # Directory.
+    DIRECTORY = 0x2
+    # Character device file.
+    CHAR_DEV = 0x3
+    # Block device file.
+    BLK_DEV = 0x4
+    # FIFO.
+    FIFO = 0x5
+    # Socket.
+    SOCKET = 0x6
+    # Symbolic link.
+    SYMLINK = 0x7
