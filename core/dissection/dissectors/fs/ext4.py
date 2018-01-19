@@ -171,10 +171,40 @@ def action_group():
                 LGR.info(bgd._bgd.to_str())
 
         return True
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      keywords  The keywords
+    ## @param      args      The arguments
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @trace_func(__name__)
+    def __action_inodes(keywords, args):
+        for f in args.files:
+
+            if not BinaryFile.exists(f):
+                LGR.warn("invalid path <{}> => skipped.".format(f))
+                continue
+
+            with BinaryFile(f, 'r') as bf:
+                fs = Ext4FS(bf)
+
+                if not fs.is_valid():
+                    LGR.warn("invalid fs or superblock.")
+                    continue
+
+                for inode in fs.inodes():
+                    LGR.info(inode._inode.to_str())
+
+        return True
 
     return ActionGroup('ext4', {
         'superblock': ActionGroup.action(__action_superblock,
                                          "display ext4 fs superblock."),
         'bg_desc': ActionGroup.action(__action_bg_desc,
-                                      "perform block group desc action.")
+                                      "perform block group desc action."),
+        'inodes': ActionGroup.action(__action_inodes,
+                                     "display all inodes present in the "
+                                     "filesystem.")
     })

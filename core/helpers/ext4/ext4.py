@@ -87,6 +87,26 @@ class Ext4FS(object):
             self.bgds.append(bgd)
             oft += bgd_sz
     ##
+    ## @brief      { item_description }
+    ##
+    ## @note       Should be used as an iterator, i.e.
+    ##             ```
+    ##             fs = Ext4FS(...)
+    ##             for inode in fs.inodes():
+    ##                 perform_op_on(inode)
+    ##             ```
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def inodes(self):
+        for bgd in self.bgds:
+            oft = bgd.inode_table() * self.blk_sz
+
+            for inode in range(0, self.sb._sb.s_inodes_per_group):
+                inode = Ext4Inode(self._bf, oft)
+                yield inode
+                oft += self.sb._sb.s_inode_size
+    ##
     ## @brief      Determines if valid.
     ##
     ## @param      self  The object

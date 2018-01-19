@@ -28,6 +28,7 @@
 from utils.wrapper import trace
 from utils.logging import get_logger
 from utils.wrapper import lazy_getter
+from utils.converting import timestamp2utc
 from helpers.ext4.constants import Ext4InodeMode
 from helpers.ext4.constants import Ext4InodeFlag
 from utils.struct.union_member import UnionMember
@@ -82,7 +83,7 @@ StructFactory.st_register(S_OSD2_MASIX, [
 S_EXT4_INODE = 'ext4_inode'
 StructFactory.st_register(S_EXT4_INODE, [
     # File mode.
-    SimpleMember('i_mode', '<H'),
+    SimpleMember('i_mode', '<H', fmtr=Ext4InodeMode),
     # Lower 16-bits of Owner UID.
     SimpleMember('i_uid', '<H'),
     # Lower 32-bits of size in bytes.
@@ -90,19 +91,19 @@ StructFactory.st_register(S_EXT4_INODE, [
     # Last access time, in seconds since the epoch. However, if the EA_INODE
     # inode flag is set, this inode stores an extended attribute value and this
     # field contains the checksum of the value.
-    SimpleMember('i_atime', '<I'),
+    SimpleMember('i_atime', '<I', fmtr=timestamp2utc),
     # Last inode change time, in seconds since the epoch. However, if the
     # EA_INODE inode flag is set, this inode stores an extended attribute value
     # and this field contains the lower 32 bits of the attribute value's
     # reference count.
-    SimpleMember('i_ctime', '<I'),
+    SimpleMember('i_ctime', '<I', fmtr=timestamp2utc),
     # Last data modification time, in seconds since the epoch. However, if the
     # EA_INODE inode flag is set, this inode stores an extended attribute value
     # and this field contains the number of the inode that owns the extended
     # attribute.
-    SimpleMember('i_mtime', '<I'),
+    SimpleMember('i_mtime', '<I', fmtr=timestamp2utc),
     # Deletion Time, in seconds since the epoch.
-    SimpleMember('i_dtime', '<I'),
+    SimpleMember('i_dtime', '<I', fmtr=timestamp2utc),
     # Lower 16-bits of GID.
     SimpleMember('i_gid', '<H'),
     # Hard link count. Normally, ext4 does not permit an inode to have more
@@ -122,7 +123,7 @@ StructFactory.st_register(S_EXT4_INODE, [
     # filesystem blocks on disk.
     SimpleMember('i_blocks_lo', '<I'),
     # Inode flags.
-    SimpleMember('i_flags', '<I'),
+    SimpleMember('i_flags', '<I', fmtr=Ext4InodeFlag),
     UnionMember('osd1', [
         # Inode version. However, if the EA_INODE inode flag is set, this inode
         # stores an extended attribute value and this field contains the upper
@@ -165,7 +166,7 @@ StructFactory.st_register(S_EXT4_INODE, [
     # Extra access time bits. This provides sub-second precision.
     SimpleMember('i_atime_extra', '<I'),
     # File creation time, in seconds since the epoch.
-    SimpleMember('i_crtime', '<I'),
+    SimpleMember('i_crtime', '<I', fmtr=timestamp2utc),
     # Extra file creation time bits. This provides sub-second precision.
     SimpleMember('i_crtime_extra', '<I'),
     # Upper 32-bits for version number.
@@ -193,3 +194,16 @@ class Ext4Inode(object):
     ##
     def is_valid(self):
         return True
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @note       Should be used as an iterator, i.e.
+    ##             ```
+    ##             inode = Ext4Inode(...)
+    ##             for block in inode.blocks():
+    ##                 perform_op_on(block)
+    ##             ```
+    ## @return     { description_of_the_return_value }
+    ##
+    def blocks(self):
+        raise NotImplementedError
