@@ -25,10 +25,13 @@
 # =============================================================================
 #  IMPORTS
 # =============================================================================
+from math import ceil
 from enum import IntEnum
 from utils.wrapper import trace
 from utils.logging import get_logger
+from utils.comparing import is_flag_set
 from helpers.ext4.tree import Ext4TreeNode
+from helpers.ext4.constants import Ext4Incompat
 from helpers.ext4.super_block import Ext4SuperBlock
 from helpers.ext4.inode_table_entry import Ext4Inode
 from helpers.ext4.block_group_descriptor import Ext4BlkGrpDesc
@@ -61,8 +64,8 @@ class Ext4FS(object):
     def __init__(self, bf, blk_sz=Ext4BlockSize.KB4):
         self._bf = bf
         self.blk_sz = blk_sz * 1024
-        self.blk_gp_sz = 8 * blk_sz
-        self.sb = Ext4SuperBlock(self._bf)
+        self.blk_grp_sz = 8 * blk_sz
+        self.sb = Ext4SuperBlock(self._bf, 1024)
         self._parse_gds()
     ##
     ## @brief      { function_description }
@@ -70,8 +73,19 @@ class Ext4FS(object):
     ## @return     { description_of_the_return_value }
     ##
     def _parse_gds(self):
-        self.gds = []
-        #raise NotImplementedError
+        self.bgds = []
+
+        bgd_sz = 32
+        if is_flag_set(self.sb.feature_incompat(), Ext4Incompat.INCOMPAT_64BIT):
+            bgd_sz = self.sb._sb.s_desc_size
+
+        bg_count = ceil(self.sb.blocks_count() / self.sb._sb.s_blocks_per_group)
+
+        oft = self.blk_sz
+        for i in range(0, bg_count):
+            bgd = Ext4BlkGrpDesc(bgd_sz, self._bf, oft)
+            self.bgds.append(bgd)
+            oft += bgd_sz
     ##
     ## @brief      Determines if valid.
     ##

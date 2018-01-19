@@ -307,6 +307,14 @@ class Ext4SuperBlock(object):
     @trace()
     def is_valid(self):
         return (self._sb.s_magic == self.SIGN)
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @trace()
+    def size(self):
+        return self._sb.st_size
     # -------------------------------------------------------------------------
     #  ENHANCED GETTERS
     # -------------------------------------------------------------------------

@@ -28,12 +28,13 @@
 from utils.wrapper import trace
 from utils.logging import get_logger
 from utils.wrapper import lazy_getter
+from helpers.ext4.constants import Ext4InodeMode
+from helpers.ext4.constants import Ext4InodeFlag
 from utils.struct.union_member import UnionMember
 from utils.struct.struct_member import StructMember
 from utils.struct.simple_member import SimpleMember
 from utils.struct.struct_factory import StructFactory
-from helpers.ext4.constants import Ext4InodeMode
-from helpers.ext4.constants import Ext4InodeFlag
+from utils.struct.byte_array_member import ByteArrayMember
 # =============================================================================
 #  GLOBALS / CONFIG
 # =============================================================================
@@ -132,7 +133,8 @@ StructFactory.st_register(S_EXT4_INODE, [
         # ??
         SimpleMember('m_i_reserved', '<I')
     ]),
-0x28    60 bytes    i_block[EXT4_N_BLOCKS=15]   Block map or extent tree. See the section "The Contents of inode.i_block".
+    # Block map or extent tree. See the section "The Contents of inode.i_block".
+    ByteArrayMember('i_block', 60),
     # File version (for NFS).
     SimpleMember('i_generation', '<I'),
     # Lower 32-bits of extended attribute block. ACLs are of course one of
@@ -149,7 +151,7 @@ StructFactory.st_register(S_EXT4_INODE, [
         StructMember('linux2', S_OSD2_LINUX),
         StructMember('hurd2', S_OSD2_HURD),
         StructMember('masix2', S_OSD2_MASIX)
-    ])
+    ]),
     # Size of this inode - 128. Alternately, the size of the extended inode
     # fields beyond the original ext2 inode, including this field.
     SimpleMember('i_extra_isize', '<H'),

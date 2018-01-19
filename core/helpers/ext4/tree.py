@@ -31,7 +31,7 @@ from utils.wrapper import lazy_getter
 from utils.converting import lohi2int
 from utils.struct.simple_member import SimpleMember
 from utils.struct.struct_factory import StructFactory
-from utils.struct.bytearray_member import ByteArrayMember
+from utils.struct.byte_array_member import ByteArrayMember
 from helpers.ext4.constants import Ext4TreeNodeType
 # =============================================================================
 #  GLOBALS / CONFIG

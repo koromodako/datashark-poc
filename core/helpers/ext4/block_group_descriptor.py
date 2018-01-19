@@ -39,7 +39,7 @@ from helpers.ext4.constants import Ext4BGDFlag
 # =============================================================================
 LGR = get_logger(__name__)
 S_EXT4_32B_BGD = 'ext4_32b_blk_grp_desc'
-StructFactory.st_register(S_EXT4_BGD, [
+StructFactory.st_register(S_EXT4_32B_BGD, [
     SimpleMember('bg_block_bitmap_lo', '<I'),       # Lower 32-bits of location of block bitmap.
     SimpleMember('bg_inode_bitmap_lo', '<I'),       # Lower 32-bits of location of inode bitmap.
     SimpleMember('bg_inode_table_lo', '<I'),        # Lower 32-bits of location of inode table.
