@@ -28,7 +28,9 @@
 from utils.wrapper import trace
 from utils.logging import get_logger
 from utils.wrapper import lazy_getter
+from utils.comparing import is_flag_set
 from utils.converting import timestamp2utc
+from helpers.ext4.constants import Ext4FileType
 from helpers.ext4.constants import Ext4InodeMode
 from helpers.ext4.constants import Ext4InodeFlag
 from utils.struct.union_member import UnionMember
@@ -194,6 +196,88 @@ class Ext4Inode(object):
     ##
     def is_valid(self):
         return True
+    # -------------------------------------------------------------------------
+    #  ENHANCED GETTERS
+    # -------------------------------------------------------------------------
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @lazy_getter('_ftype')
+    def ftype(self):
+        mode = self.mode()
+        if is_flag_set(mode, Ext4InodeMode.S_IFIFO):
+            return Ext4FileType.FIFO
+        elif is_flag_set(mode, Ext4InodeMode.S_IFCHR):
+            return Ext4FileType.CHR_DEV
+        elif is_flag_set(mode, Ext4InodeMode.S_IFDIR):
+            return Ext4FileType.DIRECTORY
+        elif is_flag_set(mode, Ext4InodeMode.S_IFBLK):
+            return Ext4FileType.BLK_DEV
+        elif is_flag_set(mode, Ext4InodeMode.S_IFREG):
+            return Ext4FileType.REG_FILE
+        elif is_flag_set(mode, Ext4InodeMode.S_IFLNK):
+            return Ext4FileType.SYMLINK
+        elif is_flag_set(mode, Ext4InodeMode.S_IFSOCK):
+            return Ext4FileType.SOCKET
+        return Ext4FileType.UNKNOWN
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @lazy_getter('_mode')
+    def mode(self):
+        return Ext4InodeMode(self._inode.i_mode)
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @lazy_getter('_atime')
+    def atime(self):
+        return timestamp2utc(self._inode.i_atime)
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @lazy_getter('_ctime')
+    def ctime(self):
+        return timestamp2utc(self._inode.i_ctime)
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @lazy_getter('_mtime')
+    def mtime(self):
+        return timestamp2utc(self._inode.i_mtime)
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @lazy_getter('_dtime')
+    def dtime(self):
+        return timestamp2utc(self._inode.i_dtime)
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @lazy_getter('_flags')
+    def flags(self):
+        return Ext4InodeFlag(self._inode.i_flags)
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @lazy_getter('_crtime')
+    def crtime(self):
+        return timestamp2utc(self._inode.i_crtime)
     ##
     ## @brief      { function_description }
     ##

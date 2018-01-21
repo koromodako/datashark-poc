@@ -487,7 +487,7 @@ class Ext4FileType(enum.Enum):
     # Directory.
     DIRECTORY = 0x2
     # Character device file.
-    CHAR_DEV = 0x3
+    CHR_DEV = 0x3
     # Block device file.
     BLK_DEV = 0x4
     # FIFO.
