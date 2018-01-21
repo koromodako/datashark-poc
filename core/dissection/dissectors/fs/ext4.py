@@ -198,6 +198,44 @@ def action_group():
                     LGR.info(inode._inode.to_str())
 
         return True
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      keywords  The keywords
+    ## @param      args      The arguments
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @trace_func(__name__)
+    def __action_inode(keywords, args):
+        for f in args.files:
+
+            if not BinaryFile.exists(f):
+                LGR.warn("invalid path <{}> => skipped.".format(f))
+                continue
+
+            with BinaryFile(f, 'r') as bf:
+                fs = Ext4FS(bf)
+
+                if not fs.is_valid():
+                    LGR.warn("invalid fs or superblock.")
+                    continue
+
+                i = args.index
+                if i is None:
+                    LGR.error("this action requires an index to be specified "
+                              "using --index option.")
+                    return False
+
+                try:
+                    inode = fs.inode(i)
+                except ValueError as e:
+                    LGR.exception("you should try another index value.")
+                    return False
+
+                LGR.info(inode._inode.to_str())
+
+        return True
 
     return ActionGroup('ext4', {
         'superblock': ActionGroup.action(__action_superblock,
@@ -206,5 +244,9 @@ def action_group():
                                       "perform block group desc action."),
         'inodes': ActionGroup.action(__action_inodes,
                                      "display all inodes present in the "
-                                     "filesystem.")
+                                     "filesystem."),
+        'inode': ActionGroup.action(__action_inode,
+                                     "display seclected inode. This action "
+                                     "requires an index to be specified using "
+                                     "--index option."),
     })

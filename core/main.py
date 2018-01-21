@@ -93,7 +93,7 @@ ACTIONS = ActionGroup('datashark', {
 @trace_func(__name__)
 def parse_args():
     parser = get_arg_parser()
-    # optional arguments
+    # optional configuration
     parser.add_argument('-r', '--recursive', action='store_true',
                         help="Affects only <hashdb.create> action."
                         "Tells it to recurse inside given directories.")
@@ -135,6 +135,10 @@ def parse_args():
                         action='store_true',
                         help="Do not hash containers. Warning: using this "
                         "option prevents the use of white/blacklists.")
+
+    # action arguments
+    parser.add_argument('-i', '--index', type=int,
+                        help="An index meaning an integer value.")
 
     # positional arguments
     parser.add_argument('action',

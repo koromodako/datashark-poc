@@ -72,6 +72,7 @@ class Ext4FS(object):
     ##
     ## @return     { description_of_the_return_value }
     ##
+    @trace()
     def _parse_gds(self):
         self.bgds = []
 
@@ -98,6 +99,7 @@ class Ext4FS(object):
     ##
     ## @return     { description_of_the_return_value }
     ##
+    @trace()
     def inodes(self):
         for bgd in self.bgds:
             oft = bgd.inode_table() * self.blk_sz
@@ -107,11 +109,34 @@ class Ext4FS(object):
                 yield inode
                 oft += self.sb._sb.s_inode_size
     ##
+    ## @brief      { function_description }
+    ##
+    ## @param      n     Index of inode. WARNING: starts with 1 !
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @trace()
+    def inode(self, n):
+        if n < 1 or n > self.sb._sb.s_inodes_count:
+            raise ValueError("inode index out-of-bounds: index starts at 1, "
+                             "see superblock for max inode number.")
+
+        bgd_idx = (n - 1) // self.sb._sb.s_inodes_per_group
+        inode_bg_idx = n - (bgd_idx * self.sb._sb.s_inodes_per_group)
+
+        bgd = self.bgds[bgd_idx]
+
+        oft = bgd.inode_table() * self.blk_sz
+        oft += inode_bg_idx * self.sb._sb.s_inode_size
+
+        return Ext4Inode(self._bf, oft)
+    ##
     ## @brief      Determines if valid.
     ##
     ## @param      self  The object
     ##
     ## @return     True if valid, False otherwise.
     ##
+    @trace()
     def is_valid(self):
         return self.sb.is_valid()
