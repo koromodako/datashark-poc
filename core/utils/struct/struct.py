@@ -43,6 +43,7 @@ LGR = get_logger(__name__)
 ## @brief      Class for structure.
 ##
 class Struct(object):
+    TAB = ' ' * 4
     K_ST_TYPE = 'st_type'
     K_ST_SIZE = 'st_size'
     PK_FORMATTERS = '__formatters'
@@ -79,29 +80,29 @@ class Struct(object):
     ##
     @trace()
     def __kv_to_str(self, key, value):
-        tab = ' ' * 4
         if isinstance(value, Struct):
-            s = value.to_str().replace("\n", "\n{}".format(tab))
+            s = value.to_str().replace("\n", "\n{}".format(self.TAB))
 
         elif isinstance(value, list):
-            s = "\n{}+ {}:".format(tab, key)
+            s = "\n{}+ {}:".format(self.TAB, key)
 
             k = 0
             for elem in value:
-                s += self.__kv_to_str(str(k), elem).replace("\n", "\n{}".format(tab))
+                e_str = self.__kv_to_str(str(k), elem)
+                s += e_str.replace("\n", "\n{}".format(self.TAB))
                 k += 1
 
         else:
             if isinstance(value, bytes) or isinstance(value, bytearray):
-                s = "\n{}+ {}:".format(tab, key)
+                s = "\n{}+ {}:".format(self.TAB, key)
 
                 for line in hexdump_lines(value):
-                    s += "\n{}{}{}".format(tab, tab, line)
+                    s += "\n{t}{t}{l}".format(t=self.TAB, l=line)
             else:
                 fmtr = getattr(self, Struct.PK_FORMATTERS, {}).get(key)
 
                 if fmtr is None:
-                    s = "\n{}+ {}: {}".format(tab, key, value)
+                    s = "\n{}+ {}: {}".format(self.TAB, key, value)
                 else:
                     try:
                         formatted = fmtr(value)
@@ -109,7 +110,8 @@ class Struct(object):
                         LGR.exception("failsafe: call to formatter failed.")
                         formatted = 'invalid'
 
-                    s = "\n{}+ {}: {} ({})".format(tab, key, value, formatted)
+                    s = "\n{}+ {}: {} ({})".format(self.TAB, key, value,
+                                                   formatted)
 
         return s
     ## @brief      Sets the member.
@@ -143,7 +145,7 @@ class Struct(object):
     ## @return     String representation of the object.
     ##
     @trace()
-    def to_str(self):
+    def to_str(self, indent=0):
         members = copy(vars(self))
         members.pop(Struct.PK_FORMATTERS)
         st_type = members.pop(Struct.K_ST_TYPE)
@@ -152,5 +154,8 @@ class Struct(object):
 
         for key, value in members.items():
             s += self.__kv_to_str(key, value)
+
+        if indent > 0:
+            s = s.replace("\n", "\n{}".format(indent * self.TAB))
 
         return s

@@ -26,10 +26,13 @@
 #  IMPORTS
 # =============================================================================
 from utils.wrapper import trace
+from utils.logging import todo
 from utils.logging import get_logger
 from utils.wrapper import lazy_getter
 from utils.comparing import is_flag_set
+from utils.converting import lohi2int
 from utils.converting import timestamp2utc
+from helpers.ext4.tree import Ext4Tree
 from helpers.ext4.constants import Ext4FileType
 from helpers.ext4.constants import Ext4InodeMode
 from helpers.ext4.constants import Ext4InodeFlag
@@ -188,14 +191,40 @@ class Ext4Inode(object):
     ##
     def __init__(self, bf, oft):
         super(Ext4Inode, self).__init__()
+        self._bf = bf
         self._inode = StructFactory.st_from_file(S_EXT4_INODE, bf, oft)
+        self.valid = self._parse()
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def _parse(self):
+        if is_flag_set(self.flags(), Ext4InodeFlag.EXT4_EXTENTS_FL):
+            return self._parse_extents()
+        return self._parse_block_map()
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def _parse_extents(self):
+        self._tree = Ext4Tree(self._bf, self._inode.i_block)
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def _parse_block_map(self):
+        todo("implement block map parsing")
+        return False
     ##
     ## @brief      Determines if valid.
     ##
     ## @return     True if valid, False otherwise.
     ##
     def is_valid(self):
-        return True
+        return self.valid
     # -------------------------------------------------------------------------
     #  ENHANCED GETTERS
     # -------------------------------------------------------------------------
@@ -281,13 +310,41 @@ class Ext4Inode(object):
     ##
     ## @brief      { function_description }
     ##
-    ## @note       Should be used as an iterator, i.e.
-    ##             ```
-    ##             inode = Ext4Inode(...)
-    ##             for block in inode.blocks():
-    ##                 perform_op_on(block)
-    ##             ```
     ## @return     { description_of_the_return_value }
     ##
+    @lazy_getter('_fUnC')
+    def checksum(self):
+        return lohi2int(self._inode.osd2.linux2.l_i_checksum_lo,
+                        self._inode.i_checksum_hi, sz=16)
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @lazy_getter('_fUnC')
+    def size(self):
+        return lohi2int(self._inode.i_size_lo, self._inode.i_size_high)
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @lazy_getter('_fUnC')
     def blocks(self):
-        raise NotImplementedError
+        if is_flag_set(self.flags(), Ext4InodeFlag.EXT4_HUGE_FILE_FL):
+            blocks = self._inode.i_blocks_lo
+            blocks += self._inode.osd2.linux2.l_i_blocks_high
+            blocks <<= 32
+        else:
+            blocks = lohi2int(self._inode.i_blocks_lo,
+                              self._inode.osd2.linux2.l_i_blocks_high)
+        return blocks
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @lazy_getter('_fUnC')
+    def file_acl(self):
+        return lohi2int(self._inode.i_file_acl_lo,
+                        self._inode.osd2.linux2.l_i_file_acl_high)

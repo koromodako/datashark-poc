@@ -66,7 +66,7 @@ StructFactory.st_register(S_TREE_IDX, [
     SimpleMember('ei_leaf_hi', '<H'),
     SimpleMember('ei_unused', '<H', load=False)
 ])
-S_TREE_LEAF = 'ext4_extent'
+S_TREE_LEAF = 'ext4_extent_leaf'
 StructFactory.st_register(S_TREE_LEAF, [
     # First file block number that this extent covers.
     SimpleMember('ee_block', '<I'),
@@ -104,23 +104,46 @@ class Ext4TreeNode(object):
     ## @param      bf    { parameter_description }
     ## @param      oft   The oft
     ##
-    def __init__(self, bf, oft):
-        super(Ext4Tree, self).__init__()
-        self._hdr = StructFactory.st_from_file(S_TREE_HEADER, bf, oft)
+    def __init__(self, bytes, oft=0):
+        super(Ext4TreeNode, self).__init__()
+        self._hdr = StructFactory.st_from_bytes(S_TREE_HEADER, bytes, oft)
         self.type = None
-        body = None
 
+        body = []
         if self._hdr.eh_magic == self.SIGN:
-            hdr_sz = self._hdr.st_size
+            oft += self._hdr.st_size
 
             if self._hdr.eh_depth > 0:
                 self.type = Ext4TreeNodeType.INDEX
-                body = StructFactory.st_from_file(S_TREE_IDX, bf, oft+hdr_sz)
             elif self._hdr.eh_depth == 0:
                 self.type = Ext4TreeNodeType.LEAF
-                body = StructFactory.st_from_file(S_TREE_LEAF, bf, oft+hdr_sz)
+
+            for i in range(0, self._hdr.eh_entries):
+                if self.type == Ext4TreeNodeType.INDEX:
+                    e = StructFactory.st_from_bytes(S_TREE_IDX, bytes, oft)
+                else:
+                    e = StructFactory.st_from_bytes(S_TREE_LEAF, bytes, oft)
+
+                body.append(e)
+                oft += e.st_size
 
         self._body = body
+        self.children = []
+    ##
+    ## @brief      Returns a string representation of the object.
+    ##
+    ## @return     String representation of the object.
+    ##
+    def to_str(self):
+        hdr_str = self._hdr.to_str(indent=2)
+        body_str = "".join([ n.to_str(indent=2) for n in self._body ])
+        return """
+extent_tree_node:
+    + type: {}
+    + header: {}
+    + body: [{}
+    ]
+""".format(self.type, hdr_str, body_str)
     ##
     ## @brief      Determines if valid.
     ##
@@ -133,12 +156,62 @@ class Ext4TreeNode(object):
     ##
     ## @return     { description_of_the_return_value }
     ##
-    def ei_leaf(self):
-        return lohi2int(self._body.ei_leaf_lo, self._body.ei_leaf_hi)
+    def leaf(self):
+        if self.type == Ext4TreeNodeType.INDEX:
+            return lohi2int(self._body.ei_leaf_lo, self._body.ei_leaf_hi)
+        raise ValueError("cannot call leaf() method on a non-INDEX extent "
+                         "node.")
     ##
     ## @brief      { function_description }
     ##
     ## @return     { description_of_the_return_value }
     ##
-    def ee_start(self):
-        return lohi2int(self._body.ee_start_lo, self._body.ee_start_hi)
+    def start(self):
+        if self.type == Ext4TreeNodeType.LEAF:
+            return lohi2int(self._body.ee_start_lo, self._body.ee_start_hi)
+        raise ValueError("cannot call start() method on a non-INDEX extent "
+                         "node.")
+##
+## @brief      Class for extent 4 tree.
+##
+class Ext4Tree(object):
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      bf     { parameter_description }
+    ## @param      bytes  The bytes
+    ##
+    def __init__(self, bf, bytes):
+        super(Ext4Tree, self).__init__()
+        self._bf = bf
+        self._root = Ext4TreeNode(bytes)
+        self._parse(self._root)
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def _parse(self, node):
+        children = []
+
+        if node.type == Ext4TreeNodeType.INDEX:
+            todo("implement extent tree index parsing...")
+
+        node.children = children
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def blocks(self):
+        todo("implement all block retrieval (/!\ as a generator /!\)...")
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      n     { parameter_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def block(self, n):
+        todo("implement single block retrieval...")
+

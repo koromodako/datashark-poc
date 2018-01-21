@@ -234,6 +234,7 @@ def action_group():
                     return False
 
                 LGR.info(inode._inode.to_str())
+                LGR.info(inode._tree._root.to_str())
 
         return True
 

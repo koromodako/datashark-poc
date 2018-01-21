@@ -119,12 +119,14 @@ class StructFactory:
     ##
     @staticmethod
     @trace_static('StructFactory')
-    def st_from_bytes(st_type, data):
+    def st_from_bytes(st_type, data, oft=0):
         if not StructFactory.st_exists(st_type, log=True):
             return None
 
-        if len(data) != StructFactory.st_size(st_type):
-            LGR.warn("given bytearray size does not match <{}> "
+        data = data[oft:]   # keep data if and only if behind oft in buffer
+
+        if len(data) < StructFactory.st_size(st_type):
+            LGR.warn("given bytearray size is to short to match <{}> "
                         "size!".format(st_type))
             return None
 
