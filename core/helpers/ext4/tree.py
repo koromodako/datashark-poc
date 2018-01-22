@@ -26,6 +26,7 @@
 #  IMPORTS
 # =============================================================================
 from utils.wrapper import trace
+from utils.logging import todo
 from utils.logging import get_logger
 from utils.wrapper import lazy_getter
 from utils.converting import lohi2int
@@ -150,7 +151,7 @@ extent_tree_node:
     ## @return     True if valid, False otherwise.
     ##
     def is_valid(self):
-        return (self._hdr.eh_magic == self.SIGN and body is not None)
+        return (self._hdr.eh_magic == self.SIGN and self._body is not None)
     ##
     ## @brief      { function_description }
     ##
@@ -195,16 +196,23 @@ class Ext4Tree(object):
         children = []
 
         if node.type == Ext4TreeNodeType.INDEX:
-            todo("implement extent tree index parsing...")
+            todo(LGR, "implement extent tree index parsing...")
 
         node.children = children
+    ##
+    ## @brief      Determines if valid.
+    ##
+    ## @return     True if valid, False otherwise.
+    ##
+    def is_valid(self):
+        return self._root.is_valid()
     ##
     ## @brief      { function_description }
     ##
     ## @return     { description_of_the_return_value }
     ##
     def blocks(self):
-        todo("implement all block retrieval (/!\ as a generator /!\)...")
+        todo(LGR, "implement all block retrieval (/!\ as a generator /!\)...")
     ##
     ## @brief      { function_description }
     ##
@@ -213,5 +221,13 @@ class Ext4Tree(object):
     ## @return     { description_of_the_return_value }
     ##
     def block(self, n):
-        todo("implement single block retrieval...")
-
+        todo(LGR, "implement single block retrieval...")
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      n     { parameter_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def read(self, n=-1, oft=0):
+        todo(LGR, "implement read() ...")

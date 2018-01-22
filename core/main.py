@@ -214,6 +214,11 @@ def main():
 # SCIRPT
 # ==============================================================================
 if __name__ == '__main__':
-    code = main()
+    try:
+        code = main()
+    except Exception as e:
+        LGR.exception("unhandled internal exception.")
+        LGR.critical("terminating gracefully.")
+        exit(101)
     workspace.term()
     exit(code)

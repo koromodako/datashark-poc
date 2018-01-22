@@ -27,10 +27,12 @@
 # =============================================================================
 from utils.logging import get_logger
 from utils.wrapper import trace_func
+from utils.formatting import hexdump
 from utils.binary_file import BinaryFile
+from helpers.ext4.ext4 import Ext4FS
 from utils.action_group import ActionGroup
 from container.container import Container
-from helpers.ext4.ext4 import Ext4FS
+from helpers.ext4.constants import Ext4FileType
 # =============================================================================
 # GLOBALS / CONFIG
 # =============================================================================
@@ -233,8 +235,30 @@ def action_group():
                     LGR.exception("you should try another index value.")
                     return False
 
+                ftype = inode.ftype()
+                if ftype == Ext4FileType.UNKNOW:
+                    text = "unknown file type."
+                elif ftype == Ext4FileType.REG_FILE:
+                    text = "regular file, content extract:\n"
+                    text += hexdump(inode.read(128))
+                elif ftype == Ext4FileType.DIRECTORY:
+                    text = "directory, entries:\n"
+                    text += "".join(inode.entries())
+                elif ftype == Ext4FileType.CHR_DEV:
+                    text = "character device."
+                elif ftype == Ext4FileType.BLK_DEV:
+                    text = "block device."
+                elif ftype == Ext4FileType.FIFO:
+                    text = "fifo."
+                elif ftype == Ext4FileType.SOCKET:
+                    text = "socket."
+                elif ftype == Ext4FileType.SYMLINK:
+                    text = "symlink, target: {}".format(inode.target())
+                else:
+                    text = "unhandled inode file type ({}).".format(ftype)
+
                 LGR.info(inode._inode.to_str())
-                LGR.info(inode._tree._root.to_str())
+                LGR.info(text)
 
         return True
 
@@ -247,7 +271,8 @@ def action_group():
                                      "display all inodes present in the "
                                      "filesystem."),
         'inode': ActionGroup.action(__action_inode,
-                                     "display seclected inode. This action "
-                                     "requires an index to be specified using "
-                                     "--index option."),
+                                     "display seclected inode and additional "
+                                     "information. This action requires an "
+                                     "index to be specified using --index "
+                                     "option."),
     })

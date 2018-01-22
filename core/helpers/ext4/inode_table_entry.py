@@ -33,6 +33,7 @@ from utils.comparing import is_flag_set
 from utils.converting import lohi2int
 from utils.converting import timestamp2utc
 from helpers.ext4.tree import Ext4Tree
+from helpers.ext4.block_map import Ext4BlockMap
 from helpers.ext4.constants import Ext4FileType
 from helpers.ext4.constants import Ext4InodeMode
 from helpers.ext4.constants import Ext4InodeFlag
@@ -200,8 +201,11 @@ class Ext4Inode(object):
     ## @return     { description_of_the_return_value }
     ##
     def _parse(self):
+        self._tree = None
+        self._block_map = None
         if is_flag_set(self.flags(), Ext4InodeFlag.EXT4_EXTENTS_FL):
             return self._parse_extents()
+
         return self._parse_block_map()
     ##
     ## @brief      { function_description }
@@ -210,14 +214,38 @@ class Ext4Inode(object):
     ##
     def _parse_extents(self):
         self._tree = Ext4Tree(self._bf, self._inode.i_block)
+        return self._tree.is_valid()
     ##
     ## @brief      { function_description }
     ##
     ## @return     { description_of_the_return_value }
     ##
     def _parse_block_map(self):
-        todo("implement block map parsing")
-        return False
+        self._block_map = Ext4BlockMap(self._bf, self._inode.i_block)
+        return self._block_map.is_valid()
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      n     { parameter_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def _read(self, n=-1, oft=0):
+        if self._tree is not None:
+            return self._tree.read(n, oft)
+
+        if self._block_map is not None:
+            return self._block_map.read(n, oft)
+
+        LGR.error("Neither extent tree nor block map was initialized.")
+        return None
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def _entries(self):
+        todo(LGR, "not implemented error.")
     ##
     ## @brief      Determines if valid.
     ##
@@ -236,20 +264,27 @@ class Ext4Inode(object):
     @lazy_getter('_ftype')
     def ftype(self):
         mode = self.mode()
-        if is_flag_set(mode, Ext4InodeMode.S_IFIFO):
+        if is_flag_set(mode, Ext4InodeMode.S_IFLNK):
+            return Ext4FileType.SYMLINK
+
+        elif is_flag_set(mode, Ext4InodeMode.S_IFIFO):
             return Ext4FileType.FIFO
+
         elif is_flag_set(mode, Ext4InodeMode.S_IFCHR):
             return Ext4FileType.CHR_DEV
+
         elif is_flag_set(mode, Ext4InodeMode.S_IFDIR):
             return Ext4FileType.DIRECTORY
+
         elif is_flag_set(mode, Ext4InodeMode.S_IFBLK):
             return Ext4FileType.BLK_DEV
+
         elif is_flag_set(mode, Ext4InodeMode.S_IFREG):
             return Ext4FileType.REG_FILE
-        elif is_flag_set(mode, Ext4InodeMode.S_IFLNK):
-            return Ext4FileType.SYMLINK
+
         elif is_flag_set(mode, Ext4InodeMode.S_IFSOCK):
             return Ext4FileType.SOCKET
+
         return Ext4FileType.UNKNOWN
     ##
     ## @brief      { function_description }
@@ -312,7 +347,7 @@ class Ext4Inode(object):
     ##
     ## @return     { description_of_the_return_value }
     ##
-    @lazy_getter('_fUnC')
+    @lazy_getter('_checksum')
     def checksum(self):
         return lohi2int(self._inode.osd2.linux2.l_i_checksum_lo,
                         self._inode.i_checksum_hi, sz=16)
@@ -321,7 +356,7 @@ class Ext4Inode(object):
     ##
     ## @return     { description_of_the_return_value }
     ##
-    @lazy_getter('_fUnC')
+    @lazy_getter('_size')
     def size(self):
         return lohi2int(self._inode.i_size_lo, self._inode.i_size_high)
     ##
@@ -329,7 +364,7 @@ class Ext4Inode(object):
     ##
     ## @return     { description_of_the_return_value }
     ##
-    @lazy_getter('_fUnC')
+    @lazy_getter('_blocks')
     def blocks(self):
         if is_flag_set(self.flags(), Ext4InodeFlag.EXT4_HUGE_FILE_FL):
             blocks = self._inode.i_blocks_lo
@@ -344,7 +379,60 @@ class Ext4Inode(object):
     ##
     ## @return     { description_of_the_return_value }
     ##
-    @lazy_getter('_fUnC')
+    @lazy_getter('_file_acl')
     def file_acl(self):
         return lohi2int(self._inode.i_file_acl_lo,
                         self._inode.osd2.linux2.l_i_file_acl_high)
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @lazy_getter('_target')
+    def target(self):
+        if self.ftype() != Ext4FileType.SYMLINK:
+            LGR.error("cannot call 'target()' for a non-symlink file.")
+            return None
+
+        if self.size() < 60:
+            return self._inode.i_block
+
+        return self._read()
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      n     { parameter_description }
+    ## @param      oft   The oft
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def read(self, n=-1, oft=0):
+        if self.ftype() != Ext4FileType.REG_FILE:
+            LGR.error("cannot call 'read()' on a non-regular file.")
+            return None
+
+        sz = self.size()
+        if n < 0 or n > sz:
+            n = sz
+
+        if is_flag_set(self.flags(), Ext4InodeFlag.EXT4_INLINE_DATA_FL):
+            data = self._inode.i_block[oft:n]
+
+            if n > 60:
+                data += self._read(n-60)
+
+            return data
+
+        return self._read(n, oft)
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def entries(self):
+        if self.ftype() != Ext4FileType.DIRECTORY:
+            LGR.error("cannot call 'entries()' on a non-directory file.")
+            return None
+
+        return self._entries()
+

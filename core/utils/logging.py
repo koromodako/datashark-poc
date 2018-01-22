@@ -32,8 +32,8 @@ from utils.constants import PROG_NAME
 # =============================================================================
 # CONFIGURATION
 # =============================================================================
-FMT = '(%(asctime)s)[%(levelname)s]{%(process)d:%(module)s} - %(message)s'
-CONSOLE_FMT = '[%(levelname)s]{%(process)d:%(module)s} - %(message)s'
+FMT = '(%(asctime)s)[%(levelname)s]{%(process)d:%(name)s} - %(message)s'
+CONSOLE_FMT = '[%(levelname)s]{%(process)d:%(name)s} - %(message)s'
 COLORED = True
 if assert_ms_windows(no_raise=True):
     COLORED = False
@@ -244,11 +244,12 @@ def get_logger(name):
 ##
 ## @return     { description_of_the_return_value }
 ##
-def todo(lgr, task='', no_raise=False):
+def todo(lgr, task="", no_raise=False):
     msg = 'not implemented [contribute! :)]. TODO: {}'.format(task)
 
-    if no_raise:
-        lgr.warning(msg)
-    else:
+    if not no_raise:
         lgr.error(msg)
         raise NotImplementedError
+
+    lgr.warning(msg)
+
