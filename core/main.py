@@ -47,6 +47,7 @@ from utils.logging import get_logger
 from utils.wrapper import trace_func
 from hashdb.hashdb import HashDBActionGroup
 from utils.filtering import FSEntryFilter
+from utils.converting import str2int
 from utils.action_group import ActionGroup
 from container.container import ContainerActionGroup
 from workspace.workspace import WorkspaceActionGroup
@@ -136,9 +137,13 @@ def parse_args():
                         help="Do not hash containers. Warning: using this "
                         "option prevents the use of white/blacklists.")
 
-    # action arguments
-    parser.add_argument('-i', '--index', type=int,
-                        help="An index meaning an integer value.")
+    # action-specific arguments
+    parser.add_argument('-i', '--index', type=str,
+                        help="An index: integer value as 0b, 0o, 0x or dec.")
+    parser.add_argument('-o', '--offset', type=str,
+                        help="An offset: integer value as 0b, 0o, 0x or dec.")
+    parser.add_argument('-s', '--size', type=str,
+                        help="A size: integer value as 0b, 0o, 0x or dec.")
 
     # positional arguments
     parser.add_argument('action',
@@ -151,6 +156,23 @@ def parse_args():
                         help="Files to process.")
 
     return parser.parse_args()
+##
+## @brief      { function_description }
+##
+## @param      args  The arguments
+##
+## @return     { description_of_the_return_value }
+##
+@trace_func(__name__)
+def convert_args(args):
+    if args.index is not None:
+        args.index = str2int(args.index)
+
+    if args.offset is not None:
+        args.offset = str2int(args.offset)
+
+    if args.size is not None:
+        args.size = str2int(args.size)
 ##
 ## @brief      { function_description }
 ##
@@ -185,8 +207,9 @@ def handle_action(args):
 def main():
     # parse input arguments
     args = parse_args()
+    convert_args(args)
 
-    logging.reconfigure(args.silent, args.verbose, args.debug)
+    logging.reconfigure(args.quiet, args.verbose, args.debug)
     LGR.debug('args: {}'.format(args))
 
     if args.version:
@@ -201,10 +224,15 @@ def main():
         print_license_conditions()
         return 0
 
-    if not args.silent:
+    if not args.quiet:
         print_license()
 
-    code = handle_action(args)
+    try:
+        code = handle_action(args)
+    except Exception as e:
+        LGR.exception("unhandled internal exception.")
+        LGR.critical("terminating gracefully.")
+        code = 707
 
     if args.cleanup:
         workspace.cleanup()
@@ -214,11 +242,6 @@ def main():
 # SCIRPT
 # ==============================================================================
 if __name__ == '__main__':
-    try:
-        code = main()
-    except Exception as e:
-        LGR.exception("unhandled internal exception.")
-        LGR.critical("terminating gracefully.")
-        exit(101)
+    code = main()
     workspace.term()
     exit(code)

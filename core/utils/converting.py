@@ -37,25 +37,6 @@ LGR = get_logger(__name__)
 # FUNCTIONS
 # =============================================================================
 ##
-## @brief   Converts a string to an integer
-##
-## @param   s   String representing an integer
-##
-## @return  integer corresponding to given string
-##
-@trace_func(__name__)
-def str_to_int(s):
-    if s.startswith('0x'):
-        return int(s, 16)
-
-    elif s.startswith('0o'):
-        return int(s, 8)
-
-    elif s.startswith('0b'):
-        return int(s, 2)
-
-    return int(s, 10)
-##
 ## @brief      Unpacks one value from data
 ##
 ## @param      fmt   Format to use for unpacking
@@ -66,6 +47,32 @@ def str_to_int(s):
 @trace_func(__name__)
 def unpack_one(fmt, data):
     return struct.unpack(fmt, data)[0]
+##
+## @brief   Converts a string to an integer
+##
+## @param   s   String representing an integer
+##
+## @return  integer corresponding to given string
+##
+@trace_func(__name__)
+def str2int(s):
+    if not isinstance(s, str):
+        LGR.error("str2int expects input to be a <str> instance.")
+        return None
+
+    if s[0] != '-':
+        prefix = s[0:2]
+    else:
+        prefix = s[1:3]
+
+    if prefix == '0x':
+        return int(s, 16)
+    elif prefix == '0o':
+        return int(s, 8)
+    elif prefix == '0b':
+        return int(s, 2)
+
+    return int(s, 10)
 ##
 ## @brief      Merges 2 parts of a number using binary bitwise 'shift' and 'or'
 ##             operations.

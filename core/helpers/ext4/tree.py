@@ -230,4 +230,6 @@ class Ext4Tree(object):
     ## @return     { description_of_the_return_value }
     ##
     def read(self, n=-1, oft=0):
-        todo(LGR, "implement read() ...")
+        #todo(LGR, "implement read() ...")
+        print(self._root.to_str())
+        return b'\xde\xad\xbe\xef'

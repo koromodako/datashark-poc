@@ -30,7 +30,6 @@ from copy import copy
 from utils.wrapper import trace
 from utils.logging import get_logger
 from utils.wrapper import trace_static
-from utils.converting import str_to_int
 from utils.formatting import hexdump_lines
 # =============================================================================
 # GLOBAL

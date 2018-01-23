@@ -70,10 +70,10 @@ def get_arg_parser():
     parser.add_argument('-c', '--conditions',
                         action='store_true',
                         help="Prints license conditions then exits.")
-    parser.add_argument('-s', '--silent',
+    parser.add_argument('-q', '--quiet',
                         action='store_true',
-                        help="Do not output anything. A log will be produced "
-                        "anyway.")
+                        help="Do not output anything in the console. A log "
+                             "will be produced anyway.")
     parser.add_argument('-v', '--verbose',
                         action='store_true',
                         help="Increase program verbosity.")

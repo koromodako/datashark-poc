@@ -24,20 +24,23 @@
 # =============================================================================
 # IMPORTS
 # =============================================================================
+#
 import os
 import enum
 import utils.config as config
 from uuid import uuid4
 from magic import Magic
-from workspace.workspace import workspace
+#
 from utils.crypto import randstr
 from utils.crypto import hashbuf
 from utils.crypto import hashfile
 from utils.logging import get_logger
 from utils.wrapper import trace
 from utils.wrapper import trace_static
+from utils.formatting import hexdump
 from utils.binary_file import BinaryFile
 from utils.action_group import ActionGroup
+from workspace.workspace import workspace
 # =============================================================================
 # GLOBAL
 # =============================================================================
@@ -285,6 +288,40 @@ class ContainerActionGroup(ActionGroup):
 
         return True
     ##
+    ## @brief      { function_description }
+    ##
+    ## @param      keywords  The keywords
+    ## @param      args      The arguments
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @staticmethod
+    @trace_static('ContainerActionGroup')
+    def read(keywords, args):
+        for f in args.files:
+
+            if not BinaryFile.exists(f):
+                LGR.warn("file not found (<{}>) => skipping.".format(f))
+                continue
+
+            if args.offset is None:
+                args.offset = 0
+
+            if args.size is None:
+                args.size = -1
+
+            with BinaryFile(f, 'r') as bf:
+
+                if args.offset > 0:
+                    bf.seek(args.offset)
+
+                data = bf.read(args.size)
+
+            text = "\n"
+            text += "{} offset={} size={}\n".format(f, args.offset, args.size)
+            text += hexdump(data, col_num=8, max_lines=-1)
+            LGR.info(text)
+    ##
     ## @brief      Constructs the object.
     ##
     def __init__(self):
@@ -292,5 +329,7 @@ class ContainerActionGroup(ActionGroup):
             'hash': ActionGroup.action(ContainerActionGroup.hash,
                                        "container's hash value."),
             'mimes': ActionGroup.action(ContainerActionGroup.mimes,
-                                        "container's mime type and text.")
+                                        "container's mime type and text."),
+            'read': ActionGroup.action(ContainerActionGroup.read,
+                                       "reads a portion of a file.")
         })
