@@ -19,7 +19,7 @@
 
 ## Minimal requirements & dependencies
 
- + Python 3.6.x
+ + Python 3.6.x at least
  + python-magic
  + termcolor
  + PyCrypto
