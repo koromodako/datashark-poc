@@ -54,7 +54,7 @@ LGR = get_logger(__name__)
 ##
 @trace_func(__name__)
 def dissect(container, dissectors):
-    LGR.info('dissection of <{}> begins...'.format(container.realname))
+    LGR.info("dissection of <{}> begins...".format(container.realname))
     containers = []
 
     dissection_mods = dissectors.get(container.mime_type, None)
@@ -79,7 +79,7 @@ def dissect(container, dissectors):
 ##
 @trace_func(__name__)
 def carve(container, carvers):
-    LGR.info('carving of <{}> begins...'.format(container.realname))
+    LGR.info("carving of <{}> begins...".format(container.realname))
     containers = []
 
     for carver in carvers:
@@ -109,13 +109,13 @@ def dissection_routine(container,
     oq = []
     # is the container whitelisted ?
     if whitelist_db.contains(container):
-        LGR.info("matching whitelisted container. skipping!")
+        LGR.info("whitelisted container => skipping!")
         container.set_flag(Container.Flag.WHITELISTED)
         dissection_db.persist(container)
         return (iq, oq)     # interrupt dissection process here
     # is the container blacklisted ?
     if blacklist_db.contains(container):
-        LGR.warn("matching blacklisted container. flagged!")
+        LGR.warn("blacklisted container => flagged!")
         container.set_flag(Container.Flag.BLACKLISTED)
         dissection_db.persist(container)
         return (iq, oq)     # interrupt dissection process here
@@ -285,27 +285,27 @@ class Dissection(object):
     ##
     @trace()
     def dissect(self, path, num_threads=1):
-        LGR.info('starting dissection processes...')
+        LGR.info("starting dissection processes...")
 
-        LGR.info('preparing dissection database...')
+        LGR.info("preparing dissection database...")
         dissection_db = DissectionDB(self.conf)
         if not dissection_db.init('w'):
             LGR.error("failed to init dissection db.")
             return False
 
-        LGR.info('preparing whitelist database...')
+        LGR.info("preparing whitelist database...")
         whitelist_conf = config.load_from_value('whitelist_config')
         whitelist_db = HashDB(whitelist_conf)
         if not whitelist_db.init('r'):
             LGR.warn("failed to init whitelist db.")
 
-        LGR.info('preparing blacklist database...')
+        LGR.info("preparing blacklist database...")
         blacklist_conf = config.load_from_value('blacklist_config')
         blacklist_db = HashDB(blacklist_conf)
         if not blacklist_db.init('r'):
             LGR.warn("failed to init blacklist db.")
 
-        LGR.info('preparing first container...')
+        LGR.info("preparing first container...")
         container = Container(path, os.path.basename(path))
 
         kwargs = {
@@ -320,11 +320,11 @@ class Dissection(object):
         pool = WorkerPool(config.value('num_workers', 1))
         pool.map(dissection_routine, kwargs, tasks=[container])
 
-        LGR.info('closing databases...')
+        LGR.info("closing databases...")
         whitelist_db.term()
         blacklist_db.term()
         dissection_db.term()
-        LGR.info('dissection done.')
+        LGR.info("dissection done.")
 
         return True
 ##
@@ -350,11 +350,11 @@ class DissectionActionGroup(ActionGroup):
             LGR.warn("no dissector registered.")
             return True
 
-        LGR.info('dissectors:')
+        print("dissectors:")
         for mime in dissectors:
-            LGR.info('\t+ {}'.format(mime[0]))
+            print("\t+ {}".format(mime[0]))
             for dissector in mime[1]:
-                LGR.info('\t\t+ {}'.format(dissector))
+                print("\t\t+ {}".format(dissector))
 
         return True
     ##
@@ -376,9 +376,9 @@ class DissectionActionGroup(ActionGroup):
             LGR.warn("no carver registered.")
             return True
 
-        LGR.info('carvers:')
+        print("carvers:")
         for carver in carvers:
-            LGR.info('\t+ {}'.format(carver))
+            print("\t+ {}".format(carver))
 
         return True
     ##

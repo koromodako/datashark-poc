@@ -140,7 +140,7 @@ def action_group():
             if sb is None:
                 continue
 
-            LGR.info(sb._sb.to_str())
+            print(sb._sb.to_str())
 
         return True
     ##
@@ -170,7 +170,7 @@ def action_group():
                 bgds = fs.bgds
 
             for bgd in bgds:
-                LGR.info(bgd._bgd.to_str())
+                print(bgd._bgd.to_str())
 
         return True
     ##
@@ -197,7 +197,7 @@ def action_group():
                     continue
 
                 for inode in fs.inodes():
-                    LGR.info(inode._inode.to_str())
+                    print(inode._inode.to_str())
 
         return True
     ##
@@ -257,8 +257,8 @@ def action_group():
                 else:
                     text = "unhandled inode file type ({}).".format(ftype)
 
-                LGR.info(inode._inode.to_str())
-                LGR.info(text)
+                print(inode._inode.to_str())
+                print(text)
 
         return True
 

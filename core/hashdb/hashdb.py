@@ -215,7 +215,7 @@ class HashDBActionGroup(ActionGroup):
             text += "\n\tno adapter available."
 
         text += "\n"
-        LGR.info(text)
+        print(text)
 
         return True
     ##

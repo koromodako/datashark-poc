@@ -257,7 +257,7 @@ class ContainerActionGroup(ActionGroup):
                 LGR.warn("{}: invalid path => skipped.".format(f))
                 continue
 
-            LGR.info('{}: {}'.format(f, Container.hash(f)))
+            print("{}: {}".format(f, Container.hash(f)))
 
         return True
     ##
@@ -282,9 +282,10 @@ class ContainerActionGroup(ActionGroup):
                 continue
 
             mimes = Container.mimes(config.value('magic_file'), f)
-            LGR.info('{}:\n'
-                     '\tmime: {}\n'
-                     '\ttext: {}'.format(f, mimes[1], mimes[0]))
+
+            print("{}:\n\tmime: {}\n\ttext: {}".format(f,
+                                                       mimes[1],
+                                                       mimes[0]))
 
         return True
     ##
@@ -320,7 +321,7 @@ class ContainerActionGroup(ActionGroup):
             text = "\n"
             text += "{} offset={} size={}\n".format(f, args.offset, args.size)
             text += hexdump(data, col_num=8, max_lines=-1)
-            LGR.info(text)
+            print(text)
     ##
     ## @brief      Constructs the object.
     ##

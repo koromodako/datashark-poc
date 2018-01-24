@@ -140,7 +140,7 @@ def action_group():
                             "error details.")
                 continue
 
-            LGR.info(vdi_hdr.to_str())
+            print(vdi_hdr.to_str())
 
         return True
 

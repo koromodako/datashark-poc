@@ -143,5 +143,5 @@ class ActionGroup(object):
         ptxt = "\n{sep} HELP {name} {sep}".format(sep=sep, name=self.name)
         ptxt += help_txt
         ptxt += "\n{sep}{sep}{sep}".format(sep=sep)
-        LGR.info(ptxt)
+        print(ptxt)
         return True

@@ -166,7 +166,7 @@ class LoggingModule(object):
         self.debug_hdlr.setLevel(logging.DEBUG)
         self.__configure_debug_hdlr()
         # create
-        self.console_hdlr = logging.StreamHandler(stream=sys.stdout)
+        self.console_hdlr = logging.StreamHandler(stream=sys.stderr)
         self.console_hdlr.setFormatter(self.cfmtr)
         self.__configure_console_hdlr()
     ##

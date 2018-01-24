@@ -215,7 +215,7 @@ def action_group():
                 LGR.warn("no valid header found.")
                 continue
 
-            LGR.info(hdr.to_str())
+            print(hdr.to_str())
 
         return True
     ##
@@ -252,7 +252,7 @@ def action_group():
                     LGR.warn("invalid DescriptorFile found.")
                     continue
 
-                LGR.info(df.to_str())
+                print(df.to_str())
 
         return True
 

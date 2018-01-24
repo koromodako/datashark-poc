@@ -26,8 +26,9 @@
 # =============================================================================
 #
 import os
-#
 from shutil import rmtree
+from datetime import datetime
+#
 from utils.crypto import randstr
 from utils.wrapper import trace
 from utils.logging import get_logger
@@ -59,7 +60,9 @@ class Workspace(object):
     ## @brief      Constructs the object.
     ##
     def __init__(self):
-        randdir = '{}{}'.format(self.WS_PREFIX, randstr(4))
+        randdir = '{}{}.{}'.format(self.WS_PREFIX,
+                                   datetime.now().strftime('%Y%m%d.%H%M%S'),
+                                   randstr(4))
         self.__ws_root = os.path.join(self.WS_ROOT_DIR, randdir)
         self.__ws_logdir = os.path.join(self.__ws_root, 'logs')
         self.__ws_tmpdir = os.path.join(self.__ws_root, 'tmp')
@@ -245,7 +248,7 @@ class WorkspaceActionGroup(ActionGroup):
                     text += '\t+ {}\n'.format(full_path)
 
         text += '\ntotal: {}\n'.format(total)
-        LGR.info(text)
+        print(text)
 
         return True
     ##
@@ -270,7 +273,7 @@ class WorkspaceActionGroup(ActionGroup):
 
             if os.path.isdir(full_path):
                 if entry.startswith(Workspace.WS_PREFIX):
-                    LGR.info('removing {}...'.format(full_path))
+                    print("removing {}...".format(full_path))
                     rmtree(full_path)
 
         return True

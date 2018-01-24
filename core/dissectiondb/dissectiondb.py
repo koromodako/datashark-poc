@@ -165,7 +165,7 @@ class DissectionDBActionGroup(ActionGroup):
             text += "\n\tno adapter available."
 
         text += "\n"
-        LGR.info(text)
+        print(text)
         return True
     ##
     ## @brief      Constructs the object.

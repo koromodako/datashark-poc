@@ -163,7 +163,7 @@ def action_group():
                          "error details.")
                 continue
 
-            LGR.info(mbr.to_str())
+            print(mbr.to_str())
 
         return True
     ##
@@ -196,7 +196,7 @@ def action_group():
                 text += "\n\t{}. {}".format(n, part)
                 n += 1
 
-            LGR.info(text)
+            print(text)
 
         return True
     ##
@@ -235,7 +235,7 @@ def action_group():
                 text += "\n\t{}. {}".format(n, mm)
                 n += 1
 
-            LGR.info(text)
+            print(text)
 
         return True
 

@@ -142,7 +142,7 @@ def action_group():
                 LGR.warn("fail to read VHD header.")
                 continue
 
-            LGR.info(hdr.to_str())
+            print(hdr.to_str())
 
         return True
     ##
@@ -169,7 +169,7 @@ def action_group():
                 LGR.warn("fail to read VHD footer.")
                 continue
 
-            LGR.info(ftr.to_str())
+            print(ftr.to_str())
 
         return True
 
