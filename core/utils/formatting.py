@@ -23,13 +23,16 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # IMPORTS
 # =============================================================================
+from termcolor import colored
+#
 from utils.logging import get_logger
 from utils.wrapper import trace_func
 # =============================================================================
 # GLOBAL
 # =============================================================================
 LGR = get_logger(__name__)
-BLANK_LINE = ' ' * 120
+BS = ' '
+BLANK_LINE = BS * 120
 # =============================================================================
 # FUNCTIONS
 # =============================================================================
@@ -48,6 +51,24 @@ def __printable(byte):
 ##
 ## @brief      { function_description }
 ##
+## @param      size    The size
+## @param      suffix  The suffix
+##
+## @return     { description_of_the_return_value }
+##
+@trace_func(__name__)
+def format_size(size, suffix='B'):
+    for unit in ['','K','M','G','T','P','E','Z']:
+
+        if abs(size) < 1024.0:
+            return "{:3.1f}{}{}".format(size, unit, suffix)
+
+        size /= 1024.0
+
+    return "{:.1f}{}{}".format(size, 'Y', suffix)
+##
+## @brief      { function_description }
+##
 ## @param      data       The data
 ## @param      col_sz     The col size
 ## @param      col_num    The col number
@@ -63,22 +84,22 @@ def hexdump_lines(data, col_sz=2, col_num=4, human=True, max_lines=10):
     r = len(data) % row_sz
 
     for k in range(0, (len(data) // row_sz) + 1):
-        lhex = '%#08x: ' % (k * row_sz)
-        lhum = ' |'
+        lhex = "{:#08x}: ".format(k * row_sz)
+        lhum = " |"
         d = data[k * row_sz:(k + 1) * row_sz]
 
         for i in range(0, col_num):
-            lhex += ' '
+            lhex += BS
 
             for j in range(0, col_sz):
                 idx = i * col_sz + j
-                if idx < len(d):
+                if idx < len(d): # len(d) might be smaller than row_sz
                     c = d[idx]
-                    lhex += '%02x' % c
+                    lhex += "{:02x}".format(c)
                     lhum += __printable(c)
                 else:
-                    lhex += ' ' * 2
-                    lhum += ' '
+                    lhex += BS * 2
+                    lhum += BS
 
         if human:
             lhex += lhum + '|'
@@ -101,22 +122,84 @@ def hexdump_lines(data, col_sz=2, col_num=4, human=True, max_lines=10):
 ##
 ## @return     { description_of_the_return_value }
 ##
+@trace_func(__name__)
 def hexdump(data, col_sz=2, col_num=4, human=True, max_lines=10):
     return '\n'.join(hexdump_lines(data, col_sz, col_num, human, max_lines))
 ##
 ## @brief      { function_description }
 ##
-## @param      size    The size
-## @param      suffix  The suffix
+## @param      d1         The d 1
+## @param      d2         The d 2
+## @param      col_sz     The col size
+## @param      col_num    The col number
+## @param      human      The human
+## @param      max_lines  The maximum lines
 ##
 ## @return     { description_of_the_return_value }
 ##
-def format_size(size, suffix='B'):
-    for unit in ['','K','M','G','T','P','E','Z']:
+@trace_func(__name__)
+def hexdiff_lines(d1, d2, col_sz=2, col_num=4, human=True):
+    lines = []
 
-        if abs(size) < 1024.0:
-            return "{:3.1f}{}{}".format(size, unit, suffix)
+    if len(d1) != len(d2):
+        LGR.error("d1 and d2 sizes differs => no diff returned.")
+        return lines
 
-        size /= 1024.0
+    row_sz = col_sz * col_num
+    r = len(d1) % row_sz
 
-    return "{:.1f}{}{}".format(size, 'Y', suffix)
+    for k in range(0, (len(d1) // row_sz) + 1):
+        lhead = "{:#08x}: ".format(k * row_sz)
+        l1hex = ""
+        l2hex = ""
+        l1hum = " |"
+        l2hum = " |"
+
+        sd1 = d1[k * row_sz:(k + 1) * row_sz]
+        sd2 = d2[k * row_sz:(k + 1) * row_sz]
+
+        for i in range(0, col_num):
+            l1hex += BS
+            l2hex += BS
+
+            for j in range(0, col_sz):
+                idx = i * col_sz + j
+                if idx < len(sd1):  # len(sd1) might be smaller than row_sz
+                    c1 = sd1[idx]
+                    c2 = sd2[idx]
+
+                    color = 'green' if c1 == c2 else 'red'
+
+                    l1hex += colored('{:02x}'.format(c1), color)
+                    l1hum += colored(__printable(c1), color)
+                    l2hex += colored('{:02x}'.format(c2), color)
+                    l2hum += colored(__printable(c2), color)
+                else:
+                    l1hex += BS * 2
+                    l1hum += BS
+                    l2hex += BS * 2
+                    l2hum += BS
+
+        if human:
+            l1hex += l1hum + '|'
+            l2hex += l2hum + '|'
+
+        sep = '\\' if (k+1) % 2 == 0 else '/'
+        line = lhead + l1hex + sep + l2hex
+        lines.append(line)
+
+    return lines
+##
+## @brief      { function_description }
+##
+## @param      d1       The d 1
+## @param      d2       The d 2
+## @param      col_sz   The col size
+## @param      col_num  The col number
+## @param      human    The human
+##
+## @return     { description_of_the_return_value }
+##
+@trace_func(__name__)
+def hexdiff(d1, d2, col_sz=2, col_num=4, human=True):
+    return '\n'.join(hexdiff_lines(d1, d2, col_sz, col_num, human))

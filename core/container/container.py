@@ -34,10 +34,11 @@ from magic import Magic
 from utils.crypto import randstr
 from utils.crypto import hashbuf
 from utils.crypto import hashfile
-from utils.logging import get_logger
 from utils.wrapper import trace
+from utils.logging import get_logger
 from utils.wrapper import trace_static
 from utils.formatting import hexdump
+from utils.formatting import hexdiff
 from utils.binary_file import BinaryFile
 from utils.action_group import ActionGroup
 from workspace.workspace import workspace
@@ -312,16 +313,68 @@ class ContainerActionGroup(ActionGroup):
                 args.size = -1
 
             with BinaryFile(f, 'r') as bf:
-
                 if args.offset > 0:
                     bf.seek(args.offset)
 
                 data = bf.read(args.size)
 
-            text = "\n"
-            text += "{} offset={} size={}\n".format(f, args.offset, args.size)
-            text += hexdump(data, col_num=8, max_lines=-1)
-            print(text)
+        text = "\n"
+        text += "{} offset={} size={}\n".format(f, args.offset, args.size)
+        text += hexdump(data, col_num=8, max_lines=-1)
+        print(text)
+
+        return True
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      keywords  The keywords
+    ## @param      args      The arguments
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @staticmethod
+    @trace_static('ContainerActionGroup')
+    def diff(keywords, args):
+        if len(args.files) != 2:
+            LGR.error("diff action expects exactly 2 files.")
+            return False
+
+        first = args.files[0]
+        second = args.files[1]
+
+        if not BinaryFile.exists(first) or not BinaryFile.exists(second):
+            LGR.error("cannot find at least one of given files.")
+            return False
+
+        if args.offset is None:
+            args.offset = 0
+
+        if args.size is None:
+            args.size = -1
+
+        with BinaryFile(first, 'r') as bf:
+            if args.offset > 0:
+                bf.seek(args.offset)
+
+            fdat = bf.read(args.size)
+
+        with BinaryFile(second, 'r') as bf:
+            if args.offset > 0:
+                    bf.seek(args.offset)
+
+            sdat = bf.read(args.size)
+
+        if len(fdat) != len(sdat):
+            LGR.error("cannot compare byte arrays of different size.")
+            return False
+
+        text = "<{}> against <{}> offset={}, size={}\n".format(first,
+                                                               second,
+                                                               args.offset,
+                                                               args.size)
+        text += hexdiff(fdat, sdat)
+        print(text)
+        return True
     ##
     ## @brief      Constructs the object.
     ##
@@ -332,5 +385,8 @@ class ContainerActionGroup(ActionGroup):
             'mimes': ActionGroup.action(ContainerActionGroup.mimes,
                                         "container's mime type and text."),
             'read': ActionGroup.action(ContainerActionGroup.read,
-                                       "reads a portion of a file.")
+                                       "reads a portion of a file."),
+            'diff': ActionGroup.action(ContainerActionGroup.diff,
+                                       "diff to files using the same offset "
+                                       "and size.")
         })
