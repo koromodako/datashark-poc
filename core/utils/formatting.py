@@ -170,9 +170,9 @@ def hexdiff_lines(d1, d2, col_sz=2, col_num=4, human=True):
 
                     color = 'green' if c1 == c2 else 'red'
 
-                    l1hex += colored('{:02x}'.format(c1), color)
+                    l1hex += colored("{:02x}".format(c1), color)
                     l1hum += colored(__printable(c1), color)
-                    l2hex += colored('{:02x}'.format(c2), color)
+                    l2hex += colored("{:02x}".format(c2), color)
                     l2hum += colored(__printable(c2), color)
                 else:
                     l1hex += BS * 2
