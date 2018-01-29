@@ -44,8 +44,9 @@ class Ext4BlockMap(object):
     ## @param      bf     { parameter_description }
     ## @param      bytes  The bytes
     ##
-    def __init__(self, bf, bytes):
+    def __init__(self, blk_sz, bf, bytes):
         super(Ext4BlockMap, self).__init__()
+        self._blk_sz = blk_sz
         self._bf = bf
         self._bytes = bytes
     ##

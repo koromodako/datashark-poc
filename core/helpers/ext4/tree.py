@@ -157,9 +157,19 @@ extent_tree_node:
     ##
     ## @return     { description_of_the_return_value }
     ##
-    def leaf(self):
+    def leaves_count(self):
         if self.type == Ext4TreeNodeType.INDEX:
-            return lohi2int(self._body.ei_leaf_lo, self._body.ei_leaf_hi)
+            return len(self._body)
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      n     { parameter_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def leaf(self, n):
+        if self.type == Ext4TreeNodeType.INDEX:
+            return lohi2int(self._body[n].ei_leaf_lo, self._body[n].ei_leaf_hi)
         raise ValueError("cannot call leaf() method on a non-INDEX extent "
                          "node.")
     ##
@@ -182,8 +192,9 @@ class Ext4Tree(object):
     ## @param      bf     { parameter_description }
     ## @param      bytes  The bytes
     ##
-    def __init__(self, bf, bytes):
+    def __init__(self, blk_sz, bf, bytes):
         super(Ext4Tree, self).__init__()
+        self._blk_sz = blk_sz
         self._bf = bf
         self._root = Ext4TreeNode(bytes)
         self._parse(self._root)
@@ -196,7 +207,10 @@ class Ext4Tree(object):
         children = []
 
         if node.type == Ext4TreeNodeType.INDEX:
-            todo(LGR, "implement extent tree index parsing...")
+            for n in range(node.leaves_count()):
+                blk_num = node.leaf(n)
+                print(self._bf.dump(blk_num*self._blk_sz, self._blk_sz))
+                todo(LGR, "implement extent tree index parsing...")
 
         node.children = children
     ##
@@ -212,7 +226,9 @@ class Ext4Tree(object):
     ## @return     { description_of_the_return_value }
     ##
     def blocks(self):
-        todo(LGR, "implement all block retrieval (/!\ as a generator /!\)...")
+        blk_cnt = self._inode.size() // self._blk_sz
+        for n in range(0, blk_sz):
+            yield self.block(n)
     ##
     ## @brief      { function_description }
     ##

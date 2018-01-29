@@ -31,6 +31,7 @@ from utils.wrapper import trace
 from utils.logging import get_logger
 from utils.wrapper import trace_static
 from utils.memory_map import MemoryMap
+from utils.formatting import hexdump
 # =============================================================================
 # GLOBALS
 # =============================================================================
@@ -204,3 +205,14 @@ class BinaryFile(object):
     ##
     def mmap(self, start, size, unit=1):
         return MemoryMap(self, start, size, unit)
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      start  The start
+    ## @param      size   The size
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def dump(self, start=0, size=-1):
+        self.seek(start)
+        return hexdump(self.read(size))

@@ -190,8 +190,9 @@ class Ext4Inode(object):
     ##
     ## @brief      Constructs the object.
     ##
-    def __init__(self, bf, oft):
+    def __init__(self, fs, bf, oft):
         super(Ext4Inode, self).__init__()
+        self._fs = fs
         self._bf = bf
         self._inode = StructFactory.st_from_file(S_EXT4_INODE, bf, oft)
         self.valid = self._parse()
@@ -201,10 +202,13 @@ class Ext4Inode(object):
     ## @return     { description_of_the_return_value }
     ##
     def _parse(self):
+        self._data = None
         self._tree = None
         self._block_map = None
         if is_flag_set(self.flags(), Ext4InodeFlag.EXT4_EXTENTS_FL):
             return self._parse_extents()
+        elif is_flag_set(self.mode(), Ext4InodeMode.S_IFLNK) and self.size() < 60:
+            return True
 
         return self._parse_block_map()
     ##
@@ -213,7 +217,9 @@ class Ext4Inode(object):
     ## @return     { description_of_the_return_value }
     ##
     def _parse_extents(self):
-        self._tree = Ext4Tree(self._bf, self._inode.i_block)
+        self._tree = Ext4Tree(self._fs.block_size(),
+                              self._bf,
+                              self._inode.i_block)
         return self._tree.is_valid()
     ##
     ## @brief      { function_description }
@@ -221,7 +227,9 @@ class Ext4Inode(object):
     ## @return     { description_of_the_return_value }
     ##
     def _parse_block_map(self):
-        self._block_map = Ext4BlockMap(self._bf, self._inode.i_block)
+        self._block_map = Ext4BlockMap(self._fs.block_size(),
+                                       self._bf,
+                                       self._inode.i_block)
         return self._block_map.is_valid()
     ##
     ## @brief      { function_description }
@@ -245,7 +253,7 @@ class Ext4Inode(object):
     ## @return     { description_of_the_return_value }
     ##
     def _entries(self):
-        todo(LGR, "not implemented error.")
+        todo(LGR, "implement entries listing for a directory.")
     ##
     ## @brief      Determines if valid.
     ##
