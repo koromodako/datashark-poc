@@ -93,6 +93,12 @@ class Ext4FS(object):
     def use_64b(self):
         return self.sb.feature_incompat(Ext4Incompat.INCOMPAT_64BIT)
     ##
+    ## @brief      Does FS support "inline data"
+    ##
+    @lazy_getter('_filetype')
+    def filetype(self):
+        return self.sb.feature_incompat(Ext4Incompat.INCOMPAT_FILETYPE)
+    ##
     ## @brief      Parses the block group descriptor table
     ##
     @trace()
