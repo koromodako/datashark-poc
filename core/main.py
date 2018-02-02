@@ -138,6 +138,9 @@ def parse_args():
                         "option prevents the use of white/blacklists.")
 
     # action-specific arguments
+    parser.add_argument('--max-lines', type=int, default=20,
+                        help="Max number of lines to display when "
+                             "'hexdumping'. Set it to 0 for infinite.")
     parser.add_argument('-i', '--index', type=str,
                         help="An index: integer value as 0b, 0o, 0x or dec.")
     parser.add_argument('-o', '--offset', type=str,

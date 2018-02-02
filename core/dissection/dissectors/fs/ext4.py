@@ -274,11 +274,10 @@ def action_group():
                                   "within given filesystem.")
                     continue
 
-                print(inode.st_to_str())
                 k = 0
                 for blk_id, blk in fs.inode_blocks(inode):
                     print("{}:".format(blk_id))
-                    print(hexdump(blk, max_lines=0))
+                    print(hexdump(blk, max_lines=args.max_lines))
                     k += 1
 
         return True
@@ -325,13 +324,13 @@ def action_group():
                                   "within given filesystem.")
                     continue
 
-
-                print(inode.st_to_str())
-
                 blk_id, blk = fs.inode_block(inode, o)
+                if blk is None:
+                    LGR.error("failed to retrieve file content block.")
+                    return False
 
                 print("{}:".format(blk_id))
-                print(hexdump(blk, max_lines=0))
+                print(hexdump(blk, max_lines=args.max_lines))
 
         return True
 

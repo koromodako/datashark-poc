@@ -60,12 +60,12 @@ class Ext4InodeReader(object):
         self._tree = Ext4Tree(fs, bf, inode)
         self._bmap = Ext4BlockMap(fs, bf, inode)
     ##
-    ## @brief      { function_description }
+    ## @brief      Returns an iblock tuple
     ##
     def _iblock(self):
         return ("iblock", self._iblock)
     ##
-    ## @brief      { function_description }
+    ## @brief      Returns a standard block tuple
     ##
     ## @param      f_blk_idx  The file block index
     ## @param      blk_idx    The block index
@@ -75,6 +75,11 @@ class Ext4InodeReader(object):
                              self._fs_blk_sz * blk_idx)
         name = "block n°(file={},part={})".format(f_blk_idx, blk_idx)
         return (name, data)
+    ##
+    ## @brief      Returns an abort tuple
+    ##
+    def _abort_block(self):
+        return (None, None)
     ##
     ## @brief      Yields blocks of data mapped by the inode.
     ##
@@ -90,8 +95,6 @@ class Ext4InodeReader(object):
             if not self._tree.is_valid():
                 LGR.error("invalid extent tree.")
                 return (None, None)
-
-            print(self._tree.to_str())
 
             k = 0
             for blk_idx in self._tree.file_blocks():
@@ -115,7 +118,7 @@ class Ext4InodeReader(object):
 
             if f_blk_idx > 0:
                 LGR.warn("block index is out-of-bounds. (inline symlink)")
-                return None
+                return (None, None)
 
             return self._iblock()
 
@@ -123,7 +126,7 @@ class Ext4InodeReader(object):
 
             if f_blk_idx > 0:
                 LGR.warn("block index is out-of-bounds. (inline data)")
-                return None
+                return (None, None)
 
             return self._iblock()
 
@@ -132,15 +135,21 @@ class Ext4InodeReader(object):
                 LGR.error("invalid extent tree.")
                 return (None, None)
 
-            print(self._tree.to_str())
-
             # translate file block index to partition block index
             blk_idx = self._tree.file_block(f_blk_idx)
+
+            if blk_idx is None:
+                LGR.error("file block index out-of-bounds.")
+                return (None, None)
 
             return self._block(f_blk_idx, blk_idx)
 
         else:
             # translate file block index to partition block index
             blk_idx = self._bmap.file_block(f_blk_idx)
+
+            if blk_idx is None:
+                LGR.error("file block index out-of-bounds.")
+                return (None, None)
 
             return self._block(f_blk_idx, blk_idx)
