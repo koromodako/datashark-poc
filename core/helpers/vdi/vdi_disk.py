@@ -30,8 +30,8 @@ from utils.wrapper import trace
 from utils.logging import get_logger
 from utils.wrapper import lazy_getter
 from utils.converting import unpack_one
+from utils.struct.factory import StructFactory
 from utils.struct.simple_member import SimpleMember
-from utils.struct.struct_factory import StructFactory
 from utils.struct.byte_array_member import ByteArrayMember
 # =============================================================================
 #  GLOBALS / CONFIG
@@ -112,8 +112,8 @@ class VdiDisk(object):
             LGR.error("cannot parse header => cannot retrieve block map.")
             return None
 
-        self.bf.seek(self._hdr.oftBlk)
-        return self.bf.read(4 * self._hdr.numBlkInHdd)
+        return self.bf.read(4 * self._hdr.numBlkInHdd,
+                            self._hdr.oftBlk)
     ##
     ## @brief      Reads a blocks.
     ##
@@ -134,5 +134,5 @@ class VdiDisk(object):
         if blk_oft < 0:
             return b'\x00' * self._hdr.blkSz
 
-        self.bf.seek(self._hdr.oftDat + blk_oft)
-        return self.bf.read(self._hdr.blkSz)
+        return self.bf.read(self._hdr.blkSz,
+                            self._hdr.oftDat + blk_oft)

@@ -29,8 +29,8 @@ from utils.wrapper import trace
 from utils.logging import get_logger
 from utils.constants import SECTOR_SZ
 from utils.memory_map import MemoryMap
+from utils.struct.factory import StructFactory
 from utils.struct.simple_member import SimpleMember
-from utils.struct.struct_factory import StructFactory
 # =============================================================================
 #  GLOBALS / CONFIG
 # =============================================================================

@@ -34,6 +34,14 @@ EXT4_NAME_LEN = 255
 #  CLASSES
 # =============================================================================
 ##
+## @brief      Enum for extent 4 block size.
+##
+class Ext4BlockSize(enum.IntEnum):
+    KB1 = 1
+    KB2 = 2
+    KB4 = 4
+    KB64 = 64
+##
 ## @brief      Flag for block group flag.
 ##
 class Ext4BGDFlag(enum.Flag):
@@ -199,7 +207,7 @@ class Ext4Incompat(enum.Flag):
 ##
 ## @brief      Flag for extent 4 read only compatible SB field.
 ##
-class Ext4ReadOnlyCompat(enum.Flag):
+class Ext4ROCompat(enum.Flag):
     ##
     ## Sparse superblocks.
     ##
@@ -467,7 +475,7 @@ class Ext4InodeFlag(enum.Flag):
 ##
 ## @brief      Enum for extent 4 tree node type.
 ##
-class Ext4TreeNodeType(enum.Enum):
+class Ext4NodeType(enum.Enum):
     INDEX = 0
     LEAF = 1
 ##

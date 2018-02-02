@@ -76,17 +76,6 @@ class GrainDirectory(object):
         data = self.metadata[start:start+sz]
         return unpack_one(fmt, data)
     ##
-    ## @brief      Reads a file grain.
-    ##
-    ## @param      gte   The gte
-    ##
-    ## @return     { description_of_the_return_value }
-    ##
-    @trace()
-    def __read_file_grain(self, gte):
-        self.bf.seek(gte * SECTOR_SZ)
-        return self.bf.read(self.hdr.grainSize * SECTOR_SZ)
-    ##
     ## @brief      Reads a grain.
     ##
     ## @param      sector  The sector
@@ -110,7 +99,8 @@ class GrainDirectory(object):
             else:
                 data = self.parent_gd.read_grain(sector)
         else:
-            data = self.__read_file_grain(gte)
+            data = self.bf.read(SECTOR_SZ * self.hdr.grainSize,
+                                SECTOR_SZ * gte)
 
         return data
     ##

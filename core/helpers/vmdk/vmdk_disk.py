@@ -30,10 +30,10 @@ from utils.wrapper import trace
 from utils.logging import get_logger
 from utils.wrapper import lazy_getter
 from utils.constants import SECTOR_SZ
+from utils.struct.factory import StructFactory
 from utils.struct.union_member import UnionMember
 from utils.struct.simple_member import SimpleMember
 from utils.struct.struct_member import StructMember
-from utils.struct.struct_factory import StructFactory
 from utils.struct.byte_array_member import ByteArrayMember
 from helpers.vmdk.descriptor_file import DescriptorFile
 # =============================================================================
@@ -238,9 +238,11 @@ class VmdkDisk(object):
         if self._hdr.descriptorOffset == 0:
             return None
 
-        self.bf.seek(self._hdr.descriptorOffset * SECTOR_SZ)
-        df_buf = self.bf.read(self._hdr.descriptorSize * SECTOR_SZ)
+        df_buf = self.bf.read(SECTOR_SZ * self._hdr.descriptorSize,
+                              SECTOR_SZ * self._hdr.descriptorOffset)
+
         df_eos = df_buf.index(b'\x00')
+
         df_str = df_buf[:df_eos].decode('utf-8')
 
         return DescriptorFile(df_str)
@@ -266,15 +268,15 @@ class VmdkDisk(object):
             # -- Hosted Sparse Extents
             # loads redundant GD & GTs and normal GD & GTs in a single
             # bytearray
-            self.bf.seek(self._hdr.rgdOffset * SECTOR_SZ)
-            return self.bf.read(self._hdr.overHead * SECTOR_SZ)
+            return self.bf.read(SECTOR_SZ * self._hdr.overHead,
+                                SECTOR_SZ * self._hdr.rgdOffset)
 
         elif self._hdr.st_type == S_COWD_EXTENT_HDR:
             # -- ESX Server Sparse Extents
             # loads GD only
-            self.bf.seek(self._hdr.gdOffset * SECTOR_SZ)
             gde_sz = SimpleMember('_', '<I').size()
-            return self.bf.read(self._hdr.numGDEntries * gde_sz)
+            return self.bf.read(self._hdr.numGDEntries * gde_sz,
+                                self._hdr.gdOffset * SECTOR_SZ)
 
         LGR.error("unknown header type => cannot extract metadata. "
                   "<{}>".format(self._hdr.st_type))

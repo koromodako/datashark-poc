@@ -30,11 +30,12 @@ from utils.logging import get_logger
 from utils.wrapper import lazy_getter
 from utils.constants import SECTOR_SZ
 from utils.memory_map import MemoryMap
+from utils.struct.factory import StructFactory
+from utils.struct.wrapper import StructWrapper
+from helpers.mbr.partition import Partition
 from utils.struct.array_member import ArrayMember
 from utils.struct.struct_member import StructMember
-from utils.struct.struct_factory import StructFactory
 from utils.struct.byte_array_member import ByteArrayMember
-from helpers.mbr.partition import Partition
 from helpers.mbr.mbr_partition_entry import S_MBR_PART_ENTRY
 from helpers.mbr.mbr_partition_entry import MBRPartitionEntry
 # =============================================================================
@@ -53,7 +54,7 @@ StructFactory.st_register(S_GENERIC_MBR, [
 ##
 ## @brief      Class for mbr or ebr.
 ##
-class MBR(object):
+class MBR(StructWrapper):
     ##
     ## { item_description }
     ##
@@ -65,9 +66,8 @@ class MBR(object):
     ## @param      oft   Absolute offset of this MBR/EBR (in bytes)
     ##
     def __init__(self, bf, oft=0, first_ebr=None):
-        super(MBR, self).__init__()
+        super(MBR, self).__init__(S_GENERIC_MBR, bf=bf, oft=oft)
         self._bf = bf
-        self._mbr = StructFactory.st_from_file(S_GENERIC_MBR, bf, oft)
         self._next = None
         self._lba_oft = oft // SECTOR_SZ
         self._first_ebr = first_ebr
@@ -80,7 +80,7 @@ class MBR(object):
     ##
     @trace()
     def _parse(self):
-        for st_part in self._mbr.primary_part_tab:
+        for st_part in self._s.primary_part_tab:
             if st_part.type != 0:
                 self._part_entries.append(MBRPartitionEntry(self._bf, st_part))
 
@@ -109,7 +109,7 @@ class MBR(object):
     ##
     @trace()
     def is_valid(self):
-        return self._mbr.signature == self.MBR_SIGN
+        return self._s.signature == self.MBR_SIGN
     ##
     ## @brief      { function_description }
     ##
@@ -184,7 +184,7 @@ class MBR(object):
         mbr = self
         text = ""
         while mbr is not None:
-            text += mbr._mbr.to_str()
+            text += mbr._s.to_str()
             mbr = mbr._next
 
         return text

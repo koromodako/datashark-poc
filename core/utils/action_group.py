@@ -24,9 +24,11 @@
 # =============================================================================
 # IMPORTS
 # =============================================================================
+from textwrap import wrap
 from utils.wrapper import trace
 from utils.logging import get_logger
 from utils.wrapper import trace_static
+from utils.constants import TAB
 # =============================================================================
 # GLOBALS
 # =============================================================================
@@ -131,10 +133,11 @@ class ActionGroup(object):
                                          keyword)
             if isinstance(action, ActionGroup):
                 subhelp_txt = action.help(keywords, args, depth+1)
-                help_txt += subhelp_txt.replace("\n", "\n\t")
+                help_txt += subhelp_txt.replace("\n", "\n{}".format(TAB))
                 continue
 
-            help_txt += " " + action[ActionGroup.K_HELP]
+            for line in wrap(action[ActionGroup.K_HELP], width=50):
+                help_txt += "\n{}{}".format(TAB, line)
 
         if depth > 0:
             return help_txt

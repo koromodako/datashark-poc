@@ -26,15 +26,16 @@
 #  IMPORTS
 # =============================================================================
 from math import ceil
-from enum import IntEnum
 from utils.wrapper import trace
 from utils.wrapper import lazy_getter
 from utils.logging import get_logger
 from utils.comparing import is_flag_set
-from helpers.ext4.tree import Ext4TreeNode
+from helpers.ext4.inode import Ext4Inode
 from helpers.ext4.constants import Ext4Incompat
-from helpers.ext4.super_block import Ext4SuperBlock
-from helpers.ext4.inode_table_entry import Ext4Inode
+from helpers.ext4.constants import Ext4ROCompat
+from helpers.ext4.constants import Ext4BlockSize
+from helpers.ext4.superblock import Ext4SuperBlock
+from helpers.ext4.inode_reader import Ext4InodeReader
 from helpers.ext4.block_group_descriptor import Ext4BlkGrpDesc
 # =============================================================================
 #  GLOBALS / CONFIG
@@ -43,14 +44,6 @@ LGR = get_logger(__name__)
 # =============================================================================
 #  CLASSES
 # =============================================================================
-##
-## @brief      Enum for extent 4 block size.
-##
-class Ext4BlockSize(IntEnum):
-    KB1 = 1
-    KB2 = 2
-    KB4 = 4
-    KB64 = 64
 ##
 ## @brief      Class for extent 4 fs.
 ##
@@ -68,27 +61,49 @@ class Ext4FS(object):
         self.sb = Ext4SuperBlock(self._bf, 1024)
         self._parse_gds()
     ##
-    ## @brief      { function_description }
+    ## @brief      Return size in bytes of a "FS block"
     ##
-    ## @return     { description_of_the_return_value }
+    ## @return     int, power of 2
     ##
     @lazy_getter('_block_size')
     def block_size(self):
         return self.blk_sz * 1024
     ##
-    ## @brief      { function_description }
+    ## @brief      Does FS support "huge files"
     ##
-    ## @return     { description_of_the_return_value }
+    @lazy_getter('_huge_file')
+    def huge_file(self):
+        return self.sb.feature_ro_compat(Ext4ROCompat.RO_COMPAT_HUGE_FIL)
+    ##
+    ## @brief      Does FS support "inline data"
+    ##
+    @lazy_getter('_inline_data')
+    def inline_data(self):
+        return self.sb.feature_incompat(Ext4Incompat.INCOMPAT_INLINE_DATA)
+    ##
+    ## @brief      Does FS use extents
+    ##
+    @lazy_getter('_use_extents')
+    def use_extents(self):
+        return self.sb.feature_incompat(Ext4Incompat.INCOMPAT_EXTENTS)
+    ##
+    ## @brief      Does FS support 64bit structures
+    ##
+    @lazy_getter('_use_64b')
+    def use_64b(self):
+        return self.sb.feature_incompat(Ext4Incompat.INCOMPAT_64BIT)
+    ##
+    ## @brief      Parses the block group descriptor table
     ##
     @trace()
     def _parse_gds(self):
         self.bgds = []
 
         bgd_sz = 32
-        if is_flag_set(self.sb.feature_incompat(), Ext4Incompat.INCOMPAT_64BIT):
-            bgd_sz = self.sb._sb.s_desc_size
+        if self.use_64b():
+            bgd_sz = self.sb.desc_size()
 
-        bg_count = ceil(self.sb.blocks_count() / self.sb._sb.s_blocks_per_group)
+        bg_count = ceil(self.sb.blocks_count() / self.sb.blocks_per_group())
 
         oft = self.block_size()
         for i in range(0, bg_count):
@@ -96,7 +111,7 @@ class Ext4FS(object):
             self.bgds.append(bgd)
             oft += bgd_sz
     ##
-    ## @brief      { item_description }
+    ## @brief      Yields all inodes
     ##
     ## @note       Should be used as an iterator, i.e.
     ##             ```
@@ -105,39 +120,57 @@ class Ext4FS(object):
     ##                 perform_op_on(inode)
     ##             ```
     ##
-    ## @return     { description_of_the_return_value }
-    ##
     @trace()
     def inodes(self):
         for bgd in self.bgds:
             oft = bgd.inode_table() * self.block_size()
 
-            for inode in range(0, self.sb._sb.s_inodes_per_group):
-                inode = Ext4Inode(self, self._bf, oft)
+            for inode in range(0, self.sb.inodes_per_group()):
+                inode = Ext4Inode(self._bf, oft)
                 yield inode
-                oft += self.sb._sb.s_inode_size
+                oft += self.sb.inode_size()
     ##
-    ## @brief      { function_description }
+    ## @brief      Returns a specific inode identified by its index (starting
+    ##             from 1)
     ##
     ## @param      n     Index of inode. WARNING: starts with 1 !
     ##
-    ## @return     { description_of_the_return_value }
-    ##
     @trace()
     def inode(self, n):
-        if n < 1 or n > self.sb._sb.s_inodes_count:
+        if n < 1 or n > self.sb.inodes_count():
             raise ValueError("inode index out-of-bounds: index starts at 1, "
                              "see superblock for max inode number.")
 
-        bgd_idx = (n - 1) // self.sb._sb.s_inodes_per_group
-        inode_bg_idx = (n - 1) % self.sb._sb.s_inodes_per_group
+        bgd_idx = (n - 1) // self.sb.inodes_per_group()
+        inode_bg_idx = (n - 1) % self.sb.inodes_per_group()
 
         bgd = self.bgds[bgd_idx]
 
         oft = bgd.inode_table() * self.block_size()
-        oft += inode_bg_idx * self.sb._sb.s_inode_size
+        oft += inode_bg_idx * self.sb.inode_size()
 
-        return Ext4Inode(self, self._bf, oft)
+        return Ext4Inode(self._bf, oft)
+    ##
+    ## @brief      Yields data blocks associated with given inode
+    ##
+    ## @param      inode    Inode to be used
+    ##
+    @trace()
+    def inode_blocks(self, inode):
+        reader = Ext4InodeReader(self, self._bf, inode)
+        for blk_id, blk in reader.blocks():
+            yield (blk_id, blk)
+    ##
+    ## @brief      Returns a single data block based on given inode and block
+    ##             index
+    ##
+    ## @param      inode           The inode
+    ## @param      blk_idx  The file block index
+    ##
+    @trace()
+    def inode_block(self, inode, blk_idx):
+        reader = Ext4InodeReader(self, self._bf, inode)
+        return reader.block(blk_idx)
     ##
     ## @brief      Determines if valid.
     ##

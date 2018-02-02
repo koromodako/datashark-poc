@@ -1,5 +1,5 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#     file: structure_factory.py
+#     file: factory.py
 #     date: 2017-12-06
 #   author: paul.dautry
 #  purpose:
@@ -30,7 +30,7 @@ import struct
 from utils.logging import get_logger
 from utils.wrapper import trace_static
 from utils.struct.struct import Struct
-from utils.struct.struct_specif import StructSpecif
+from utils.struct.specif import StructSpecif
 # =============================================================================
 # GLOBAL
 # =============================================================================
@@ -85,8 +85,8 @@ class StructFactory:
     ##
     @staticmethod
     @trace_static('StructFactory')
-    def st_register(st_name, st_members):
-        st_specif = StructSpecif(st_name, st_members)
+    def st_register(st_type, st_members):
+        st_specif = StructSpecif(st_type, st_members)
 
         if st_specif.valid:
 
@@ -119,13 +119,13 @@ class StructFactory:
     ##
     @staticmethod
     @trace_static('StructFactory')
-    def st_from_bytes(st_type, data, oft=0):
+    def st_from_bytes(st_type, bytes, oft=0):
         if not StructFactory.st_exists(st_type, log=True):
             return None
 
-        data = data[oft:]   # keep data if and only if behind oft in buffer
+        bytes = bytes[oft:]   # keep data if and only if behind oft in buffer
 
-        if len(data) < StructFactory.st_size(st_type):
+        if len(bytes) < StructFactory.st_size(st_type):
             LGR.warn("given bytearray size is to short to match <{}> "
                         "size!".format(st_type))
             return None
@@ -139,7 +139,7 @@ class StructFactory:
         for member in st_specif[StructFactory.K_MEMBERS]:
             rsz = member.size()
 
-            if not st.set_member(member.name, member.read(data[sz:sz+rsz])):
+            if not st.set_member(member.name, member.read(bytes[sz:sz+rsz])):
                 LGR.error("failed to set member <{}>".format(member.name))
                 return None
 
@@ -162,8 +162,7 @@ class StructFactory:
         if not StructFactory.st_exists(st_type, log=True):
             return None
 
-        bf.seek(oft)
-        data = bf.read(StructFactory.st_size(st_type))
+        data = bf.read(StructFactory.st_size(st_type), oft)
         st = StructFactory.st_from_bytes(st_type, data)
 
         return st

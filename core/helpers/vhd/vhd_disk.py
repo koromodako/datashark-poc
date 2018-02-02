@@ -33,10 +33,10 @@ from utils.logging import get_logger
 from utils.wrapper import lazy_getter
 from utils.constants import SECTOR_SZ
 from utils.converting import unpack_one
+from utils.struct.factory import StructFactory
 from utils.struct.array_member import ArrayMember
 from utils.struct.struct_member import StructMember
 from utils.struct.simple_member import SimpleMember
-from utils.struct.struct_factory import StructFactory
 from utils.struct.byte_array_member import ByteArrayMember
 # =============================================================================
 #  GLOBALS / CONFIG
@@ -192,8 +192,8 @@ class VhdDisk(object):
             LGR.error("")
             return None
 
-        self.bf.seek(self._hdr.tableOft)
-        return self.bf.read(self._hdr.maxTableEntries * 4)
+        return self.bf.read(self._hdr.maxTableEntries * 4,
+                            self._hdr.tableOft)
     ##
     ## @brief      { function_description }
     ##
@@ -242,8 +242,8 @@ class VhdDisk(object):
         if blk_oft == 0xffffffff:
             data = b'\x00' * blk_sz
         else:
-            self.bf.seek(blk_oft * SECTOR_SZ + bitmap_sz)
-            data = self.bf.read(blk_sz)
+            data = self.bf.read(blk_sz,
+                                blk_oft * SECTOR_SZ + bitmap_sz)
 
         return data
     ##

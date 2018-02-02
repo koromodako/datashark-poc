@@ -30,6 +30,7 @@ from copy import copy
 from utils.wrapper import trace
 from utils.logging import get_logger
 from utils.wrapper import trace_static
+from utils.constants import TAB
 from utils.formatting import hexdump_lines
 # =============================================================================
 # GLOBAL
@@ -42,7 +43,6 @@ LGR = get_logger(__name__)
 ## @brief      Class for structure.
 ##
 class Struct(object):
-    TAB = ' ' * 4
     K_ST_TYPE = 'st_type'
     K_ST_SIZE = 'st_size'
     PK_FORMATTERS = '__formatters'
@@ -80,28 +80,28 @@ class Struct(object):
     @trace()
     def __kv_to_str(self, key, value):
         if isinstance(value, Struct):
-            s = value.to_str().replace("\n", "\n{}".format(self.TAB))
+            s = value.to_str().replace("\n", "\n{}".format(TAB))
 
         elif isinstance(value, list):
-            s = "\n{}+ {}:".format(self.TAB, key)
+            s = "\n{}+ {}:".format(TAB, key)
 
             k = 0
             for elem in value:
                 e_str = self.__kv_to_str(str(k), elem)
-                s += e_str.replace("\n", "\n{}".format(self.TAB))
+                s += e_str.replace("\n", "\n{}".format(TAB))
                 k += 1
 
         else:
-            if isinstance(value, bytes) or isinstance(value, bytearray):
-                s = "\n{}+ {}:".format(self.TAB, key)
+            if isinstance(value, (bytes, bytearray)):
+                s = "\n{}+ {}:".format(TAB, key)
 
                 for line in hexdump_lines(value):
-                    s += "\n{t}{t}{l}".format(t=self.TAB, l=line)
+                    s += "\n{t}{t}{l}".format(t=TAB, l=line)
             else:
                 fmtr = getattr(self, Struct.PK_FORMATTERS, {}).get(key)
 
                 if fmtr is None:
-                    s = "\n{}+ {}: {}".format(self.TAB, key, value)
+                    s = "\n{}+ {}: {}".format(TAB, key, value)
                 else:
                     try:
                         formatted = fmtr(value)
@@ -109,7 +109,7 @@ class Struct(object):
                         LGR.exception("failsafe: call to formatter failed.")
                         formatted = 'invalid'
 
-                    s = "\n{}+ {}: {} ({})".format(self.TAB, key, value,
+                    s = "\n{}+ {}: {} ({})".format(TAB, key, value,
                                                    formatted)
 
         return s
@@ -155,6 +155,6 @@ class Struct(object):
             s += self.__kv_to_str(key, value)
 
         if indent > 0:
-            s = s.replace("\n", "\n{}".format(indent * self.TAB))
+            s = s.replace("\n", "\n{}".format(indent * TAB))
 
         return s

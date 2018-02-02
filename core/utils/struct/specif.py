@@ -1,5 +1,5 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#     file: structure_specif.py
+#     file: specif.py
 #     date: 2017-12-05
 #   author: paul.dautry
 #  purpose:

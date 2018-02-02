@@ -1,12 +1,12 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#     file: struct_member.py
-#     date: 2017-12-19
+#     file: wrapper.py
+#     date: 2018-02-02
 #   author: paul.dautry
 #  purpose:
 #
 #  license:
 #    Datashark <progdesc>
-#    Copyright (C) 2017 paul.dautry
+#    Copyright (C) 2018 paul.dautry
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -26,7 +26,6 @@
 #  IMPORTS
 # =============================================================================
 from utils.logging import get_logger
-from utils.struct.member import Member
 from utils.struct.factory import StructFactory
 # =============================================================================
 #  GLOBALS / CONFIG
@@ -36,46 +35,35 @@ LGR = get_logger(__name__)
 #  CLASSES
 # =============================================================================
 ##
-## @brief
+## @brief      Class for structure wrapper.
 ##
-class StructMember(Member):
-    ##
-    ## @brief      Constructs the object.
-    ##
-    ## @param      name     The name
-    ## @param      st_type  The st type
-    ## @param      load     The load
-    ## @param      valid    The valid
-    ##
-    def __init__(self, name, st_type, load=True, valid=False):
-        self.st_type = st_type
-        super(StructMember, self).__init__(name, load, valid)
-    ##
-    ## @brief      { function_description }
-    ##
-    ## @return     { description_of_the_return_value }
-    ##
-    def _validate(self):
-        if not StructFactory.st_exists(self.st_type):
-            LGR.error("StructMember's struct_name must refer to an existant "
-                      "structure registered in the StructFactory.")
-            return False
+class StructWrapper(object):
 
-        return True
+    def __init__(self, st_type, bytes=None, bf=None, oft=0):
+        if bf is not None:
+            self._s = StructFactory.st_from_file(st_type, bf, oft)
+        elif bytes is not None:
+            self._s = StructFactory.st_from_bytes(st_type, bytes, oft)
+        else:
+            LGR.error("bytes or bf must be specified.")
     ##
     ## @brief      { function_description }
     ##
     ## @return     { description_of_the_return_value }
     ##
-    def _size(self):
-        return StructFactory.st_size(self.st_type)
+    def st_type(self):
+        return self._s.st_type
     ##
     ## @brief      { function_description }
     ##
-    ## @param      data  The data
+    ## @return     { description_of_the_return_value }
+    ##
+    def st_size(self):
+        return self._s.st_size
+    ##
+    ## @brief      { function_description }
     ##
     ## @return     { description_of_the_return_value }
     ##
-    def _read(self, data):
-
-        return StructFactory.st_from_bytes(self.st_type, data)
+    def st_to_str(self):
+        return self._s.to_str()

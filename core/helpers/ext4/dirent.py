@@ -27,11 +27,12 @@
 # =============================================================================
 from utils.wrapper import trace
 from utils.logging import get_logger
+from utils.struct.factory import StructFactory
+from utils.struct.wrapper import StructWrapper
 from helpers.ext4.constants import EXT4_NAME_LEN
 from helpers.ext4.constants import Ext4FileType
 from helpers.ext4.constants import Ext4DirentVersion
 from utils.struct.simple_member import SimpleMember
-from utils.struct.struct_factory import StructFactory
 from utils.struct.byte_array_member import ByteArrayMember
 # =============================================================================
 #  GLOBALS / CONFIG
@@ -80,18 +81,17 @@ StructFactory.st_register(S_EXT4_DIR_ENTRY_TAIL, [
 ##
 ## @brief      Class for dirent.
 ##
-class Ext4Dirent(object):
+class Ext4Dirent(StructWrapper):
 
     def __init__(self, version, bf, oft):
-        super(Ext4Dirent, self).__init__()
         self.valid = False
         self.version = version
         if self.version == Ext4DirentVersion.V1:
-            self._dirent = StructFactory.st_from_file(S_EXT4_DIR_ENTRY,
-                                                      bf, oft)
+            st_type = S_EXT4_DIR_ENTRY
         elif self.version == Ext4DirentVersion.V2:
-            self._dirent = StructFactory.st_from_file(S_EXT4_DIR_ENTRY_2,
-                                                      bf, oft)
+            st_type = S_EXT4_DIR_ENTRY_2
         else:
             LGR.error("unknown ext4 dirent version.")
             return
+        super(Ext4Dirent, self).__init__(st_type, bf=bf, oft=oft)
+

@@ -28,24 +28,26 @@
 from utils.wrapper import trace
 from utils.logging import get_logger
 from utils.wrapper import lazy_getter
+from utils.comparing import is_flag_set
 from utils.converting import lohi2int
 from utils.converting import lebytes2uuid
 from utils.converting import timestamp2utc
-from utils.struct.array_member import ArrayMember
-from utils.struct.simple_member import SimpleMember
-from utils.struct.struct_factory import StructFactory
-from utils.struct.byte_array_member import ByteArrayMember
+from utils.struct.factory import StructFactory
+from utils.struct.wrapper import StructWrapper
 from helpers.ext4.constants import Ext4State
 from helpers.ext4.constants import Ext4Error
 from helpers.ext4.constants import Ext4OS
 from helpers.ext4.constants import Ext4Rev
 from helpers.ext4.constants import Ext4Compat
 from helpers.ext4.constants import Ext4Incompat
-from helpers.ext4.constants import Ext4ReadOnlyCompat
+from helpers.ext4.constants import Ext4ROCompat
 from helpers.ext4.constants import Ext4HashAlgo
 from helpers.ext4.constants import Ext4MountOpts
 from helpers.ext4.constants import Ext4MiscFlag
 from helpers.ext4.constants import Ext4EncryptAlgo
+from utils.struct.array_member import ArrayMember
+from utils.struct.simple_member import SimpleMember
+from utils.struct.byte_array_member import ByteArrayMember
 # =============================================================================
 #  GLOBALS / CONFIG
 # =============================================================================
@@ -130,7 +132,7 @@ StructFactory.st_register(S_EXT4_SB, [
     SimpleMember('s_feature_incompat', '<I', fmtr=Ext4Incompat),
     # Readonly-compatible feature set. If the kernel doesn't understand one of
     # these bits, it can still mount read-only.
-    SimpleMember('s_feature_ro_compat', '<I', fmtr=Ext4ReadOnlyCompat),
+    SimpleMember('s_feature_ro_compat', '<I', fmtr=Ext4ROCompat),
     # 128-bit UUID for volume.
     ByteArrayMember('s_uuid', 16),
     # Volume label.
@@ -286,7 +288,7 @@ StructFactory.st_register(S_EXT4_SB, [
 ##
 ## @brief      Class for extent 4 super block.
 ##
-class Ext4SuperBlock(object):
+class Ext4SuperBlock(StructWrapper):
     ##
     ## ext4 SuperBlock signature
     ##
@@ -297,8 +299,7 @@ class Ext4SuperBlock(object):
     ## @param      bf    { parameter_description }
     ##
     def __init__(self, bf, oft=1024):
-        super(Ext4SuperBlock, self).__init__()
-        self._sb = StructFactory.st_from_file(S_EXT4_SB, bf, oft)
+        super(Ext4SuperBlock, self).__init__(S_EXT4_SB, bf=bf, oft=oft)
     ##
     ## @brief      Determines if valid.
     ##
@@ -306,15 +307,47 @@ class Ext4SuperBlock(object):
     ##
     @trace()
     def is_valid(self):
-        return (self._sb.s_magic == self.SIGN)
+        return (self._s.s_magic == self.SIGN)
     ##
     ## @brief      { function_description }
     ##
     ## @return     { description_of_the_return_value }
     ##
     @trace()
-    def size(self):
-        return self._sb.st_size
+    def desc_size(self):
+        return self._s.s_desc_size
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @trace()
+    def blocks_per_group(self):
+        return self._s.s_blocks_per_group
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @trace()
+    def inodes_per_group(self):
+        return self._s.s_inodes_per_group
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @trace()
+    def inode_size(self):
+        return self._s.s_inode_size
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @trace()
+    def inodes_count(self):
+        return self._s.s_inodes_count
     # -------------------------------------------------------------------------
     #  ENHANCED GETTERS
     # -------------------------------------------------------------------------
@@ -326,8 +359,8 @@ class Ext4SuperBlock(object):
     @trace()
     @lazy_getter('_blocks_count')
     def blocks_count(self):
-        return lohi2int(self._sb.s_blocks_count_lo,
-                        self._sb.s_blocks_count_hi)
+        return lohi2int(self._s.s_blocks_count_lo,
+                        self._s.s_blocks_count_hi)
     ##
     ## @brief      { function_description }
     ##
@@ -336,8 +369,8 @@ class Ext4SuperBlock(object):
     @trace()
     @lazy_getter('_r_blocks_count')
     def r_blocks_count(self):
-        return lohi2int(self._sb.s_r_blocks_count_lo,
-                        self._sb.s_r_blocks_count_hi)
+        return lohi2int(self._s.s_r_blocks_count_lo,
+                        self._s.s_r_blocks_count_hi)
     ##
     ## @brief      { function_description }
     ##
@@ -346,8 +379,8 @@ class Ext4SuperBlock(object):
     @trace()
     @lazy_getter('_free_blocks_count')
     def free_blocks_count(self):
-        return lohi2int(self._sb.s_free_blocks_count_lo,
-                        self._sb.s_free_blocks_count_hi)
+        return lohi2int(self._s.s_free_blocks_count_lo,
+                        self._s.s_free_blocks_count_hi)
     ##
     ## @brief      { function_description }
     ##
@@ -356,7 +389,7 @@ class Ext4SuperBlock(object):
     @trace()
     @lazy_getter('_mtime')
     def mtime(self):
-        return timestamp2utc(self._sb.s_mtime)
+        return timestamp2utc(self._s.s_mtime)
     ##
     ## @brief      { function_description }
     ##
@@ -365,7 +398,7 @@ class Ext4SuperBlock(object):
     @trace()
     @lazy_getter('_wtime')
     def wtime(self):
-        return timestamp2utc(self._sb.s_wtime)
+        return timestamp2utc(self._s.s_wtime)
     ##
     ## @brief      { function_description }
     ##
@@ -374,7 +407,7 @@ class Ext4SuperBlock(object):
     @trace()
     @lazy_getter('_state')
     def state(self):
-        return Ext4State(self._sb.s_state)
+        return Ext4State(self._s.s_state)
     ##
     ## @brief      { function_description }
     ##
@@ -383,7 +416,7 @@ class Ext4SuperBlock(object):
     @trace()
     @lazy_getter('_errors')
     def errors(self):
-        return Ext4Error(self._sb.s_errors)
+        return Ext4Error(self._s.s_errors)
     ##
     ## @brief      { function_description }
     ##
@@ -392,7 +425,7 @@ class Ext4SuperBlock(object):
     @trace()
     @lazy_getter('_lastcheck')
     def lastcheck(self):
-        return timestamp2utc(self._sb.s_lastcheck)
+        return timestamp2utc(self._s.s_lastcheck)
     ##
     ## @brief      { function_description }
     ##
@@ -401,7 +434,7 @@ class Ext4SuperBlock(object):
     @trace()
     @lazy_getter('_creator_os')
     def creator_os(self):
-        return Ext4OS(self._sb.s_creator_os)
+        return Ext4OS(self._s.s_creator_os)
     ##
     ## @brief      { function_description }
     ##
@@ -410,93 +443,106 @@ class Ext4SuperBlock(object):
     @trace()
     @lazy_getter('_rev_level')
     def rev_level(self):
-        return Ext4Rev(self._sb.s_rev_level)
+        return Ext4Rev(self._s.s_rev_level)
     ##
     ## @brief      { function_description }
     ##
     ## @return     { description_of_the_return_value }
     ##
-    @lazy_getter('')
-    def feature_compat(self):
-        return Ext4Compat(self._sb.s_feature_compat)
+    def feature_compat(self, has=None):
+        flags = Ext4Compat(self._s.s_feature_compat)
+        if has is None:
+            return flags
+        return is_flag_set(flags, has)
     ##
     ## @brief      { function_description }
     ##
     ## @return     { description_of_the_return_value }
     ##
-    @lazy_getter('')
-    def feature_incompat(self):
-        return Ext4Incompat(self._sb.s_feature_incompat)
+    def feature_incompat(self, has=None):
+        flags = Ext4Incompat(self._s.s_feature_incompat)
+        if has is None:
+            return flags
+        return is_flag_set(flags, has)
     ##
     ## @brief      { function_description }
     ##
     ## @return     { description_of_the_return_value }
     ##
-    @lazy_getter('')
-    def feature_ro_compat(self):
-        return Ext4ReadOnlyCompat(self._sb.s_feature_ro_compat)
+    def feature_ro_compat(self, has=None):
+        flags = Ext4ROCompat(self._s.s_feature_ro_compat)
+        if has is None:
+            return flags
+        return is_flag_set(flags, has)
     ##
     ## @brief      { function_description }
     ##
     ## @return     { description_of_the_return_value }
     ##
-    @lazy_getter('')
+    @lazy_getter('_uuid')
     def uuid(self):
-        return lebytes2uuid(self._sb.s_uuid)
+        return lebytes2uuid(self._s.s_uuid)
     ##
     ## @brief      { function_description }
     ##
     ## @return     { description_of_the_return_value }
     ##
-    @lazy_getter('')
-    def def_hash_version(self):
-        return Ext4HashAlgo(self._sb.s_def_hash_version)
+    @lazy_getter('_hash_version')
+    def hash_version(self):
+        return Ext4HashAlgo(self._s.s_def_hash_version)
     ##
     ## @brief      { function_description }
     ##
     ## @return     { description_of_the_return_value }
     ##
-    @lazy_getter('')
-    def default_mount_opts(self):
-        return Ext4MountOpts(self._sb.s_default_mount_opts)
+    def mount_opts(self, has=None):
+        flags = Ext4MountOpts(self._s.s_default_mount_opts)
+        if has is None:
+            return flags
+        return is_flag_set(flags, has)
     ##
     ## @brief      { function_description }
     ##
     ## @return     { description_of_the_return_value }
     ##
-    @lazy_getter('')
+    @lazy_getter('_mkfs_time')
     def mkfs_time(self):
-        return timestamp2utc(self._sb.s_mkfs_time)
+        return timestamp2utc(self._s.s_mkfs_time)
     ##
     ## @brief      { function_description }
     ##
     ## @return     { description_of_the_return_value }
     ##
-    @lazy_getter('')
-    def flags(self):
-        return Ext4MiscFlag(self._sb.s_flags)
+    def flags(self, has=None):
+        flags = Ext4MiscFlag(self._s.s_flags)
+        if has is None:
+            return flags
+        return is_flag_set(flags, has)
     ##
     ## @brief      { function_description }
     ##
     ## @return     { description_of_the_return_value }
     ##
+    @lazy_getter('_first_error_time')
     def first_error_time(self):
-        return timestamp2utc(self._sb.s_first_error_time)
+        return timestamp2utc(self._s.s_first_error_time)
     ##
     ## @brief      { function_description }
     ##
     ## @return     { description_of_the_return_value }
     ##
+    @lazy_getter('_last_error_time')
     def last_error_time(self):
-        return timestamp2utc(self._sb.s_last_error_time)
+        return timestamp2utc(self._s.s_last_error_time)
     ##
     ## @brief      { function_description }
     ##
     ## @return     { description_of_the_return_value }
     ##
+    @lazy_getter('_encrypt_algos')
     def encrypt_algos(self):
         algos = []
-        for algo in self._sb.s_encrypt_algos:
+        for algo in self._s.s_encrypt_algos:
             algo = Ext4EncryptAlgo(algo)
             algos.append(algo)
         return algos

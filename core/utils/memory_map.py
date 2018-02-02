@@ -67,8 +67,8 @@ class MemoryMap(object):
             LGR.warn("reading after end of map => None returned.")
             return None
 
-        self._bf.seek((self.start + idx) * self.unit)
-        return self._bf.read(self.unit)
+        return self._bf.read(self.unit,
+                             self.unit * (self.start + idx))
     ##
     ## @brief      Reads all.
     ##
@@ -76,8 +76,8 @@ class MemoryMap(object):
     ##
     @trace()
     def read_all(self):
-        self._bf.seek(self.start * self.unit)
-        return self._bf.read(self.size * self.unit)
+        return self._bf.read(self.unit * self.size,
+                             self.unit * self.start)
     ##
     ## @brief      Returns a string representation of the object.
     ##

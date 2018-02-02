@@ -166,8 +166,7 @@ def dissect(container):
     vmdk = VmdkDisk(ibf)
     # find and parse descriptor file
     if vmdk.header() is None:
-        ibf.seek(0)
-        df = DescriptorFile(ibf.read_text())
+        df = DescriptorFile(ibf.read_text(offset=0))
 
         if __dissect_from_vmx(wdir, df, obf):
             containers.append(Container(obf.abspath, 'vmdk.raw'))

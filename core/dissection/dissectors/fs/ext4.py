@@ -140,7 +140,7 @@ def action_group():
             if sb is None:
                 continue
 
-            print(sb._sb.to_str())
+            print(sb.st_to_str())
 
         return True
     ##
@@ -170,7 +170,7 @@ def action_group():
                 bgds = fs.bgds
 
             for bgd in bgds:
-                print(bgd._bgd.to_str())
+                print(bgd.st_to_str())
 
         return True
     ##
@@ -197,7 +197,7 @@ def action_group():
                     continue
 
                 for inode in fs.inodes():
-                    print(inode._inode.to_str())
+                    print(inode.st_to_str())
 
         return True
     ##
@@ -235,30 +235,103 @@ def action_group():
                     LGR.exception("you should try another index value.")
                     return False
 
-                ftype = inode.ftype()
-                if ftype == Ext4FileType.UNKNOW:
-                    text = "unknown file type."
-                elif ftype == Ext4FileType.REG_FILE:
-                    text = "regular file, content extract:\n"
-                    text += hexdump(inode.read(128))
-                elif ftype == Ext4FileType.DIRECTORY:
-                    text = "directory, entries:\n"
-                    text += "".join(inode.entries())
-                elif ftype == Ext4FileType.CHR_DEV:
-                    text = "character device."
-                elif ftype == Ext4FileType.BLK_DEV:
-                    text = "block device."
-                elif ftype == Ext4FileType.FIFO:
-                    text = "fifo."
-                elif ftype == Ext4FileType.SOCKET:
-                    text = "socket."
-                elif ftype == Ext4FileType.SYMLINK:
-                    text = "symlink, target: {}".format(inode.target())
-                else:
-                    text = "unhandled inode file type ({}).".format(ftype)
+                print(inode.st_to_str())
 
-                print(inode._inode.to_str())
-                print(text)
+        return True
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      keywords  The keywords
+    ## @param      args      The arguments
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @trace_func(__name__)
+    def __action_inode_blocks(keywords, args):
+        for f in args.files:
+
+            if not BinaryFile.exists(f):
+                LGR.warn("invalid path <{}> => skipped.".format(f))
+                continue
+
+            with BinaryFile(f, 'r') as bf:
+                fs = Ext4FS(bf)
+
+                if not fs.is_valid():
+                    LGR.warn("invalid fs or superblock.")
+                    continue
+
+                i = args.index
+                if i is None:
+                    LGR.error("this action requires an index to be specified "
+                              "using --index option.")
+                    return False
+
+                try:
+                    inode = fs.inode(i)
+                except Exception as e:
+                    LGR.exception("this inode index seems to be inexistant "
+                                  "within given filesystem.")
+                    continue
+
+                print(inode.st_to_str())
+                k = 0
+                for blk_id, blk in fs.inode_blocks(inode):
+                    print("{}:".format(blk_id))
+                    print(hexdump(blk, max_lines=0))
+                    k += 1
+
+        return True
+
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      keywords  The keywords
+    ## @param      args      The arguments
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    @trace_func(__name__)
+    def __action_inode_block(keywords, args):
+        for f in args.files:
+
+            if not BinaryFile.exists(f):
+                LGR.warn("invalid path <{}> => skipped.".format(f))
+                continue
+
+            with BinaryFile(f, 'r') as bf:
+                fs = Ext4FS(bf)
+
+                if not fs.is_valid():
+                    LGR.warn("invalid fs or superblock.")
+                    continue
+
+                i = args.index
+                if i is None:
+                    LGR.error("this action requires an index to be specified "
+                              "using --index option.")
+                    return False
+
+                o = args.offset
+                if o is None:
+                    LGR.error("this action requires an index to be specified "
+                              "using --offset option.")
+                    return False
+
+                try:
+                    inode = fs.inode(i)
+                except Exception as e:
+                    LGR.exception("this inode index seems to be inexistant "
+                                  "within given filesystem.")
+                    continue
+
+
+                print(inode.st_to_str())
+
+                blk_id, blk = fs.inode_block(inode, o)
+
+                print("{}:".format(blk_id))
+                print(hexdump(blk, max_lines=0))
 
         return True
 
@@ -275,4 +348,13 @@ def action_group():
                                      "information. This action requires an "
                                      "index to be specified using --index "
                                      "option."),
+        'inode_blocks': ActionGroup.action(__action_inode_blocks,
+                                           "display inode blocks. This action "
+                                           "requires an index to be specified "
+                                           "using --index option."),
+        'inode_block': ActionGroup.action(__action_inode_block,
+                                           "display inode blocks. This action "
+                                           "requires an index and offset to "
+                                           "be specified using --index and "
+                                           "--offset options.")
     })
