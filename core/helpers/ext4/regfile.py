@@ -1,6 +1,6 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#     file: block_map.py
-#     date: 2018-01-22
+#     file: regfile.py
+#     date: 2018-02-05
 #   author: paul.dautry
 #  purpose:
 #
@@ -25,8 +25,9 @@
 # =============================================================================
 #  IMPORTS
 # =============================================================================
-from utils.logging import todo
+from utils.wrapper import trace
 from utils.logging import get_logger
+from helpers.ext4.file import Ext4File
 # =============================================================================
 #  GLOBALS / CONFIG
 # =============================================================================
@@ -35,29 +36,14 @@ LGR = get_logger(__name__)
 #  CLASSES
 # =============================================================================
 ##
-## @brief      Class for extent 4 block map.
+## @brief      Class for extent 4 regular file.
 ##
-class Ext4BlockMap(object):
+class Ext4RegularFile(Ext4File):
     ##
     ## @brief      Constructs the object.
     ##
-    ## @param      bf     { parameter_description }
-    ## @param      bytes  The bytes
+    ## @param      inode  The inode
     ##
-    def __init__(self, blk_sz, bf, bytes):
-        super(Ext4BlockMap, self).__init__()
-        self._blk_sz = blk_sz
-        self._bf = bf
-        self._bytes = bytes
-    ##
-    ## @brief      Determines if valid.
-    ##
-    ## @return     True if valid, False otherwise.
-    ##
-    def is_valid(self):
-        todo(LGR, "implement block map is_valid() ...", no_raise=True)
-        return False
-    ##
-    def read(self, size=-1, seek=0):
-        todo(LGR, "implement block map read() ...", no_raise=True)
-        return None
+    def __init__(self, fs, bf, inode):
+        super(Ext4RegularFile, self).__init__(fs, bf, inode)
+

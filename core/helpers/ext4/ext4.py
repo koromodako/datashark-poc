@@ -36,7 +36,7 @@ from helpers.ext4.constants import Ext4ROCompat
 from helpers.ext4.constants import Ext4BlockSize
 from helpers.ext4.superblock import Ext4SuperBlock
 from helpers.ext4.inode_reader import Ext4InodeReader
-from helpers.ext4.block_group_descriptor import Ext4BlkGrpDesc
+from helpers.ext4.bg_descriptor import Ext4BlkGrpDesc
 # =============================================================================
 #  GLOBALS / CONFIG
 # =============================================================================

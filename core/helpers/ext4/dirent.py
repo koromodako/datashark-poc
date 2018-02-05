@@ -40,14 +40,14 @@ from utils.struct.byte_array_member import ByteArrayMember
 LGR = get_logger(__name__)
 S_EXT4_DIR_ENTRY = 'ext4_dir_entry'
 StructFactory.st_register(S_EXT4_DIR_ENTRY, [
-     # Number of the inode that this directory entry points to.
-     SimpleMember('inode', '<I'),
-     # Length of this directory entry.
-     SimpleMember('rec_len', '<H'),
-     # Length of the file name.
-     SimpleMember('name_len', '<H'),
-     # File name.
-     ByteArrayMember('name', EXT4_NAME_LEN)
+    # Number of the inode that this directory entry points to.
+    SimpleMember('inode', '<I'),
+    # Length of this directory entry.
+    SimpleMember('rec_len', '<H'),
+    # Length of the file name.
+    SimpleMember('name_len', '<H'),
+    # File name.
+    ByteArrayMember('name', EXT4_NAME_LEN)
 ])
 S_EXT4_DIR_ENTRY_2 = 'ext4_dir_entry_2'
 StructFactory.st_register(S_EXT4_DIR_ENTRY_2, [
@@ -60,7 +60,7 @@ StructFactory.st_register(S_EXT4_DIR_ENTRY_2, [
     # File type code, one of:
     SimpleMember('file_type', 'B', fmtr=Ext4FileType),
     # File name.
-     ByteArrayMember('name', EXT4_NAME_LEN)
+    ByteArrayMember('name', EXT4_NAME_LEN)
 ])
 S_EXT4_DIR_ENTRY_TAIL = 'ext4_dir_entry_tail'
 StructFactory.st_register(S_EXT4_DIR_ENTRY_TAIL, [
@@ -79,19 +79,55 @@ StructFactory.st_register(S_EXT4_DIR_ENTRY_TAIL, [
 #  CLASSES
 # =============================================================================
 ##
-## @brief      Class for dirent.
+## @brief      Class for extent 4 directory entry.
 ##
 class Ext4Dirent(StructWrapper):
-
-    def __init__(self, version, bf, oft):
-        self.valid = False
-        self.version = version
-        if self.version == Ext4DirentVersion.V1:
-            st_type = S_EXT4_DIR_ENTRY
-        elif self.version == Ext4DirentVersion.V2:
-            st_type = S_EXT4_DIR_ENTRY_2
-        else:
-            LGR.error("unknown ext4 dirent version.")
-            return
-        super(Ext4Dirent, self).__init__(st_type, bf=bf, oft=oft)
-
+        ##
+        ## @brief      Constructs the object.
+        ##
+        ## @param      version  The version
+        ## @param      bf       { parameter_description }
+        ## @param      oft      The oft
+        ##
+        def __init__(self, version, bytes, oft):
+            self.valid = False
+            self.version = version
+            if self.version == Ext4DirentVersion.V1:
+                st_type = S_EXT4_DIR_ENTRY
+            elif self.version == Ext4DirentVersion.V2:
+                st_type = S_EXT4_DIR_ENTRY_2
+            else:
+                LGR.error("unknown ext4 dirent version.")
+                return
+            super(Ext4Dirent, self).__init__(st_type, bytes=bytes, oft=oft)
+            self.valid = True
+        ##
+        ## @brief      { function_description }
+        ##
+        def inode_num(self):
+            return self._s.inode
+        ##
+        ## @brief      { function_description }
+        ##
+        def rec_len(self):
+            return self._s.rec_len
+        ##
+        ## @brief      { function_description }
+        ##
+        def name_len(self):
+            return self._s.name_len
+        ##
+        ## @brief      { function_description }
+        ##
+        @lazy_getter('_file_type')
+        def file_type(self):
+            if self.version == Ext4DirentVersion.V2:
+                return Ext4FileType(self._s.file_type)
+            LGR.warn("calling file_type() on ext4 dirent structure 1st "
+                     "version.")
+            return None
+        ##
+        ## @brief      { function_description }
+        ##
+        def name(self):
+            return self._s.name

@@ -1,5 +1,5 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#     file: ext4_blk_grp_desc.py
+#     file: bg_descriptor.py
 #     date: 2018-01-08
 #   author: paul.dautry
 #  purpose:

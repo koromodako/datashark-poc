@@ -1,5 +1,5 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#     file: dir_tree.py
+#     file: fs_explorer.py
 #     date: 2018-02-02
 #   author: paul.dautry
 #  purpose:
@@ -29,8 +29,9 @@ from pathlib import Path
 from fnmatch import fnmatch
 from utils.logging import todo
 from utils.logging import get_logger
-from helpers.ext4.dirent import Ext4Dirent
-from helpers.ext4.constants import Ext4DirentVersion
+from helpers.ext4.symlink import Ext4Symlink
+from helpers.ext4.regfile import Ext4RegularFile
+from helpers.ext4.directory import Ext4Directory
 # =============================================================================
 #  GLOBALS / CONFIG
 # =============================================================================
@@ -39,21 +40,19 @@ LGR = get_logger(__name__)
 #  CLASSES
 # =============================================================================
 ##
-## @brief      Class for extent 4 dir tree.
+## @brief      Class for extent 4 fs explorer.
 ##
-class Ext4DirTree(object):
+class Ext4FSExplorer(object):
     ##
     ## @brief      Constructs the object.
     ##
     ## @param      fs    The file system
+    ## @param      bf    { parameter_description }
     ##
-    def __init__(self, fs):
-        super(Ext4DirTree, self).__init__()
+    def __init__(self, fs, bf):
+        super(Ext4FSExplorer, self).__init__()
         self._fs = fs
-        if self._fs.filetype():
-            self._dirent_vers = Ext4DirentVersion.V2
-        else:
-            self._dirent_vers = Ext4DirentVersion.V1
+        self._bf = bf
     ##
     ## @brief      { function_description }
     ##

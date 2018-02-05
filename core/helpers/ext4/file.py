@@ -1,6 +1,6 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#     file: block_map.py
-#     date: 2018-01-22
+#     file: file.py
+#     date: 2018-02-05
 #   author: paul.dautry
 #  purpose:
 #
@@ -25,8 +25,9 @@
 # =============================================================================
 #  IMPORTS
 # =============================================================================
-from utils.logging import todo
+from utils.wrapper import trace
 from utils.logging import get_logger
+from helpers.ext4.inode_reader import Ext4InodeReader
 # =============================================================================
 #  GLOBALS / CONFIG
 # =============================================================================
@@ -35,29 +36,45 @@ LGR = get_logger(__name__)
 #  CLASSES
 # =============================================================================
 ##
-## @brief      Class for extent 4 block map.
+## @brief      Class for extent 4 file.
 ##
-class Ext4BlockMap(object):
+class Ext4File(object):
     ##
     ## @brief      Constructs the object.
     ##
-    ## @param      bf     { parameter_description }
-    ## @param      bytes  The bytes
+    ## @param      inode  The inode
     ##
-    def __init__(self, blk_sz, bf, bytes):
-        super(Ext4BlockMap, self).__init__()
-        self._blk_sz = blk_sz
+    def __init__(self, fs, bf, inode):
+        super(Ext4File, self).__init__()
+        self._fs = fs
+        self._fs_blk_size = fs.block_size()
         self._bf = bf
-        self._bytes = bytes
+        self._inode = inode
+        self._reader = Ext4InodeReader(fs, bf, inode)
     ##
-    ## @brief      Determines if valid.
+    ## @brief      { function_description }
     ##
-    ## @return     True if valid, False otherwise.
+    ## @param      size  The size
+    ## @param      seek  The seek
     ##
-    def is_valid(self):
-        todo(LGR, "implement block map is_valid() ...", no_raise=True)
-        return False
+    ## @return     { description_of_the_return_value }
     ##
     def read(self, size=-1, seek=0):
-        todo(LGR, "implement block map read() ...", no_raise=True)
-        return None
+        if seek < 0:
+            LGR.error("seek value cannot be smaller than zero.")
+            return None
+
+        if size == 0:
+            LGR.warn("reading with size=0 is awkward.")
+            return b''
+
+        fst_blk_idx = seek // self._fs_blk_size
+        lst_blk_idx = (seek + size - 1) // self._fs_blk_size
+
+        data = b''
+        for k in range(fst_blk_idx, lst_blk_idx+1):
+            data += self._reader.block(k)
+
+        rseek = seek - (fst_blk_idx * self._fs_blk_size)
+        return data[rseek:rseek+size]
+

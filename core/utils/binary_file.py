@@ -150,7 +150,7 @@ class BinaryFile(object):
     ##
     ## @return     str
     ##
-    def read_text(self, n=-1, seek=None, encoding='utf-8'):
+    def read_text(self, size=-1, seek=None, encoding='utf-8'):
         return self.read(n, seek).decode(encoding)
     ##
     ## @brief      Reads n bytes from file.
@@ -159,10 +159,10 @@ class BinaryFile(object):
     ##
     ## @return     bytes
     ##
-    def read(self, n=-1, seek=None):
+    def read(self, size=-1, seek=None):
         if isinstance(seek, int):
             self.seek(seek)
-        return self.fp.read(n)
+        return self.fp.read(size)
     ##
     ## @brief      Reads bytes N bytes into given buffer, N being buffer size.
     ##

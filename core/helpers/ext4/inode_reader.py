@@ -49,7 +49,9 @@ class Ext4InodeReader(object):
     ## @param      inode  The inode
     ##
     def __init__(self, fs, bf, inode):
+        self._fs = fs
         self._bf = bf
+        self._inode = inode
         self._fs_blk_sz = fs.block_size()
         self._fs_inline_data = fs.inline_data()
         self._fs_use_extents = fs.use_extents()
@@ -57,8 +59,6 @@ class Ext4InodeReader(object):
         self._i_size = inode.size()
         self._i_block = inode.block()
         self._i_inline = inode.flags(Ext4InodeFlag.EXT4_INLINE_DATA_FL)
-        self._tree = Ext4Tree(fs, bf, inode)
-        self._bmap = Ext4BlockMap(fs, bf, inode)
     ##
     ## @brief      Returns an iblock tuple
     ##
@@ -78,8 +78,20 @@ class Ext4InodeReader(object):
     ##
     ## @brief      Returns an abort tuple
     ##
-    def _abort_block(self):
+    def _null_block(self):
         return (None, None)
+    ##
+    ## @brief      { function_description }
+    ##
+    @lazy_getter('_tree')
+    def tree(self):
+        return Ext4Tree(self._fs, self._bf, self._inode)
+    ##
+    ## @brief      { function_description }
+    ##
+    @lazy_getter('_bmap')
+    def bmap(self):
+        return Ext4BlockMap(self._fs, self._bf, self._inode)
     ##
     ## @brief      Yields blocks of data mapped by the inode.
     ##
@@ -92,18 +104,18 @@ class Ext4InodeReader(object):
             yield self._iblock()
 
         elif self._fs_use_extents:
-            if not self._tree.is_valid():
+            if not self.tree().is_valid():
                 LGR.error("invalid extent tree.")
-                return (None, None)
+                return self._null_block()
 
             k = 0
-            for blk_idx in self._tree.file_blocks():
+            for blk_idx in self.tree().file_blocks():
                 yield self._block(k, blk_idx)
                 k += 1
 
         else:
             k = 0
-            for blk_idx in self._bmap.file_blocks():
+            for blk_idx in self.bmap().file_blocks():
                 yield self._block(k, blk_idx)
                 k += 1
     ##
@@ -118,7 +130,7 @@ class Ext4InodeReader(object):
 
             if f_blk_idx > 0:
                 LGR.warn("block index is out-of-bounds. (inline symlink)")
-                return (None, None)
+                return self._null_block()
 
             return self._iblock()
 
@@ -126,30 +138,30 @@ class Ext4InodeReader(object):
 
             if f_blk_idx > 0:
                 LGR.warn("block index is out-of-bounds. (inline data)")
-                return (None, None)
+                return self._null_block()
 
             return self._iblock()
 
         elif self._fs_use_extents:
-            if not self._tree.is_valid():
+            if not self.tree().is_valid():
                 LGR.error("invalid extent tree.")
-                return (None, None)
+                return self._null_block()
 
             # translate file block index to partition block index
-            blk_idx = self._tree.file_block(f_blk_idx)
+            blk_idx = self.tree().file_block(f_blk_idx)
 
             if blk_idx is None:
                 LGR.error("file block index out-of-bounds.")
-                return (None, None)
+                return self._null_block()
 
             return self._block(f_blk_idx, blk_idx)
 
         else:
             # translate file block index to partition block index
-            blk_idx = self._bmap.file_block(f_blk_idx)
+            blk_idx = self.bmap().file_block(f_blk_idx)
 
             if blk_idx is None:
                 LGR.error("file block index out-of-bounds.")
-                return (None, None)
+                return self._null_block()
 
             return self._block(f_blk_idx, blk_idx)
