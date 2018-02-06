@@ -485,6 +485,13 @@ class Ext4DirentVersion(enum.Enum):
     V1 = 1
     V2 = 2
 ##
+## @brief      Class for extent 4 inode version.
+##
+class Ext4InodeVersion(enum.Enum):
+    LINUX = 1
+    HURD = 2
+    MASIX = 3
+##
 ## @brief      Enum for extent 4 file type.
 ##
 class Ext4FileType(enum.Enum):

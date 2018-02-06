@@ -181,7 +181,7 @@ class BinaryFile(object):
     ## @return     { description_of_the_return_value }
     ##
     def write_text(self, text, encoding='utf-8'):
-        return self.fp.write(text.encode('utf-8'))
+        return self.fp.write(text.encode(encoding))
     ##
     ## @brief      Writes bytes to file.
     ##

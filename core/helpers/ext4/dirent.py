@@ -129,5 +129,7 @@ class Ext4Dirent(StructWrapper):
         ##
         ## @brief      { function_description }
         ##
-        def name(self):
+        def name(self, string=False):
+            if string:
+                return self._s.name[:self.name_len()].decode()
             return self._s.name

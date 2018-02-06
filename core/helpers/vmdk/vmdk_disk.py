@@ -243,7 +243,7 @@ class VmdkDisk(object):
 
         df_eos = df_buf.index(b'\x00')
 
-        df_str = df_buf[:df_eos].decode('utf-8')
+        df_str = df_buf[:df_eos].decode()
 
         return DescriptorFile(df_str)
     ##

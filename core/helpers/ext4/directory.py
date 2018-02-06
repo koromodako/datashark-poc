@@ -71,9 +71,9 @@ class Ext4Directory(Ext4File):
                 data = data[dirent.st_size():]
                 entries.append(Ext4Dirent(self._dirent_vers, bytes=data))
 
-        self._slack_space = b''
+        self.slack_space = b''
         if len(data) > 0:
-            self._slack_space = data
+            self.slack_space = data
     ##
     ## @brief      Yields entries as Ext4File subclasses instances
     ##
@@ -88,10 +88,14 @@ class Ext4Directory(Ext4File):
             ftype = inode.ftype()
 
             if ftype == Ext4FileType.DIRECTORY:
-                yield Ext4Directory(self._fs, self._bf, inode)
+                yield Ext4Directory(entry.name(string=True),
+                                    self._fs, self._bf, inode)
             elif ftype == Ext4FileType.SYMLINK:
-                yield Ext4Symlink(self._fs, self._bf, inode)
+                yield Ext4Symlink(entry.name(string=True),
+                                  self._fs, self._bf, inode)
             elif ftype == Ext4FileType.REG_FILE:
-                yield Ext4RegularFile(self._fs, self._bf, inode)
+                yield Ext4RegularFile(entry.name(string=True),
+                                      self._fs, self._bf, inode)
             else:
-                yield Ext4File(self._fs, self._bf, inode)
+                yield Ext4File(entry.name(string=True),
+                               self._fs, self._bf, inode)

@@ -37,6 +37,7 @@ from utils.struct.wrapper import StructWrapper
 from helpers.ext4.constants import Ext4FileType
 from helpers.ext4.constants import Ext4InodeMode
 from helpers.ext4.constants import Ext4InodeFlag
+from helpers.ext4.constants import Ext4InodeVersion
 from utils.struct.union_member import UnionMember
 from utils.struct.struct_member import StructMember
 from utils.struct.simple_member import SimpleMember
@@ -154,9 +155,9 @@ StructFactory.st_register(S_EXT4_INODE, [
     # (Obsolete) fragment address.
     SimpleMember('i_obso_faddr', '<I'),
     UnionMember('osd2', [
-        StructMember('linux2', S_OSD2_LINUX),
-        StructMember('hurd2', S_OSD2_HURD),
-        StructMember('masix2', S_OSD2_MASIX)
+        StructMember('linux', S_OSD2_LINUX),
+        StructMember('hurd', S_OSD2_HURD),
+        StructMember('masix', S_OSD2_MASIX)
     ]),
     # Size of this inode - 128. Alternately, the size of the extended inode
     # fields beyond the original ext2 inode, including this field.
@@ -189,8 +190,10 @@ class Ext4Inode(StructWrapper):
     ##
     ## @brief      Constructs the object.
     ##
-    def __init__(self, bf, oft):
+    def __init__(self, number, bf, oft, version=Ext4InodeVersion.LINUX):
         super(Ext4Inode, self).__init__(S_EXT4_INODE, bf=bf, oft=oft)
+        self.number = number
+        self.version = version
     ##
     ## @brief      Determines if valid.
     ##
@@ -200,19 +203,32 @@ class Ext4Inode(StructWrapper):
         todo("should check checksum here...", no_raise=True)
         return True
     ##
-    ## @brief      { function_description }
-    ##
-    ## @return     { description_of_the_return_value }
+    ## @brief      Returns i_block's bytes
     ##
     def block(self):
         return self._s.i_block
+    ##
+    ## @brief      Returns hardlinks count
+    ##
+    def links_count(self):
+        return self._s.i_links_count
     # -------------------------------------------------------------------------
     #  ENHANCED GETTERS
     # -------------------------------------------------------------------------
     ##
-    ## @brief      { function_description }
+    ## @brief      Returns mode as a flag instance (including file type and
+    #              permissions)
     ##
-    ## @return     { description_of_the_return_value }
+    @lazy_getter('_mode')
+    def mode(self):
+        mode = self._s.i_mode
+
+        if self.version == Ext4InodeVersion.HURD:
+            mode = lohi2int(mode, self._s.os2.hurd2.h_i_mode_high, 16)
+
+        return Ext4InodeMode(mode)
+    ##
+    ## @brief      Returns file type
     ##
     @lazy_getter('_ftype')
     def ftype(self):
@@ -240,54 +256,112 @@ class Ext4Inode(StructWrapper):
 
         return Ext4FileType.UNKNOWN
     ##
+    ## @brief      Returns file permissions using POSIX syntax
+    ##
+    @lazy_getter('_permissions')
+    def permissions(self):
+        perm = ['-' for k in range(10)]
+
+        ftype = self.ftype()
+
+        if ftype == Ext4FileType.SYMLINK:
+            perm[0] = 'l'
+        elif ftype == Ext4FileType.DIRECTORY:
+            perm[0] = 'd'
+
+        mode = self.mode()
+
+        perm[1] = "r" if is_flag_set(mode, Ext4InodeMode.S_IRUSR) else "-"
+        perm[2] = "w" if is_flag_set(mode, Ext4InodeMode.S_IWUSR) else "-"
+        perm[3] = "x" if is_flag_set(mode, Ext4InodeMode.S_IXUSR) else "-"
+        perm[4] = "r" if is_flag_set(mode, Ext4InodeMode.S_IRGRP) else "-"
+        perm[5] = "w" if is_flag_set(mode, Ext4InodeMode.S_IWGRP) else "-"
+        perm[6] = "x" if is_flag_set(mode, Ext4InodeMode.S_IXGRP) else "-"
+        perm[7] = "r" if is_flag_set(mode, Ext4InodeMode.S_IROTH) else "-"
+        perm[8] = "w" if is_flag_set(mode, Ext4InodeMode.S_IWOTH) else "-"
+        perm[9] = "x" if is_flag_set(mode, Ext4InodeMode.S_IXOTH) else "-"
+
+        perm[3] = "s" if is_flag_set(mode, Ext4InodeMode.S_ISUID) else perm[3]
+        perm[6] = "s" if is_flag_set(mode, Ext4InodeMode.S_ISGID) else perm[6]
+        perm[9] = "t" if is_flag_set(mode, Ext4InodeMode.S_ISVTX) else perm[9]
+
+        return ''.join(perm)
+    ##
+    ## @brief      Returns file user id
+    ##
+    @lazy_getter('_uid')
+    def uid(self):
+        uid = self._s.i_uid
+
+        if self.version == Ext4InodeVersion.LINUX:
+            uid = lohi2int(uid, self._s.osd2.linux.l_i_uid_high, 16)
+        elif self.version == Ext4InodeVersion.HURD:
+            uid = lohi2int(uid, self._s.osd2.hurd.h_i_uid_high, 16)
+
+        return uid
+    ##
+    ## @brief      Returns file group id
+    ##
+    @lazy_getter('_gid')
+    def gid(self):
+        gid = self._s.i_gid
+
+        if self.version == Ext4InodeVersion.LINUX:
+            gid = lohi2int(gid, self._s.osd2.linux.l_i_gid_high, 16)
+        elif self.version == Ext4InodeVersion.HURD:
+            gid = lohi2int(gid, self._s.osd2.hurd.h_i_gid_high, 16)
+
+        return gid
+    ##
     ## @brief      { function_description }
     ##
     ## @return     { description_of_the_return_value }
     ##
-    @lazy_getter('_mode')
-    def mode(self):
-        return Ext4InodeMode(self._s.i_mode)
+    @lazy_getter('_file_acl')
+    def file_acl(self):
+        acl = self._s.i_file_acl_lo
+
+        if self.version == Ext4InodeVersion.LINUX:
+            acl = lohi2int(acl, self._s.osd2.linux.l_i_file_acl_high)
+        elif self.version == Ext4InodeVersion.MASIX:
+            acl = lohi2int(acl, self._s.osd2.masix.m_i_file_acl_high)
+
+        return acl
     ##
-    ## @brief      { function_description }
-    ##
-    ## @return     { description_of_the_return_value }
-    ##
-    @lazy_getter('_atime')
-    def atime(self):
-        return timestamp2utc(self._s.i_atime)
-    ##
-    ## @brief      { function_description }
-    ##
-    ## @return     { description_of_the_return_value }
+    ## @brief      Last status change time
     ##
     @lazy_getter('_ctime')
     def ctime(self):
         return timestamp2utc(self._s.i_ctime)
     ##
-    ## @brief      { function_description }
+    ## @brief      Last access time
     ##
-    ## @return     { description_of_the_return_value }
+    @lazy_getter('_atime')
+    def atime(self):
+        return timestamp2utc(self._s.i_atime)
+    ##
+    ## @brief      Last modification time
     ##
     @lazy_getter('_mtime')
     def mtime(self):
         return timestamp2utc(self._s.i_mtime)
     ##
-    ## @brief      { function_description }
-    ##
-    ## @return     { description_of_the_return_value }
+    ## @brief      Deletion time
     ##
     @lazy_getter('_dtime')
     def dtime(self):
         return timestamp2utc(self._s.i_dtime)
     ##
-    ## @brief      { function_description }
+    ## @brief      Returns flags or check if a flag is set
     ##
-    ## @return     { description_of_the_return_value }
+    ## @param      has   Flag to check
     ##
     def flags(self, has=None):
         flags = Ext4InodeFlag(self._s.i_flags)
+
         if has is None:
             return flags
+
         return is_flag_set(flags, has)
     ##
     ## @brief      { function_description }
@@ -304,8 +378,12 @@ class Ext4Inode(StructWrapper):
     ##
     @lazy_getter('_checksum')
     def checksum(self):
-        return lohi2int(self._s.osd2.linux2.l_i_checksum_lo,
-                        self._s.i_checksum_hi, sz=16)
+        checksum = self._s.i_checksum_hi
+
+        if self.version == Ext4InodeVersion.LINUX:
+            checksum = lohi2int(self._s.osd2.linux.l_i_checksum_lo, checksum, 16)
+
+        return checksum
     ##
     ## @brief      { function_description }
     ##
@@ -321,21 +399,16 @@ class Ext4Inode(StructWrapper):
     ##
     @lazy_getter('_blocks')
     def blocks(self):
-        if is_flag_set(self.flags(), Ext4InodeFlag.EXT4_HUGE_FILE_FL):
-            blocks = self._s.i_blocks_lo
-            blocks += self._s.osd2.linux2.l_i_blocks_high
-            blocks <<= 32
+        if self.version == Ext4InodeVersion.LINUX:
+            if is_flag_set(self.flags(), Ext4InodeFlag.EXT4_HUGE_FILE_FL):
+                blocks = self._s.i_blocks_lo
+                blocks += self._s.osd2.linux.l_i_blocks_high
+                blocks <<= 32
+            else:
+                blocks = lohi2int(self._s.i_blocks_lo,
+                                  self._s.osd2.linux.l_i_blocks_high)
         else:
-            blocks = lohi2int(self._s.i_blocks_lo,
-                              self._s.osd2.linux2.l_i_blocks_high)
+            blocks = self._s.i_blocks_lo
+
         return blocks
-    ##
-    ## @brief      { function_description }
-    ##
-    ## @return     { description_of_the_return_value }
-    ##
-    @lazy_getter('_file_acl')
-    def file_acl(self):
-        return lohi2int(self._s.i_file_acl_lo,
-                        self._s.osd2.linux2.l_i_file_acl_high)
 

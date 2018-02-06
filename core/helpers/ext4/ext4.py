@@ -128,13 +128,14 @@ class Ext4FS(object):
     ##
     @trace()
     def inodes(self):
+        n = 1
         for bgd in self.bgds:
             oft = bgd.inode_table() * self.block_size()
 
             for inode in range(0, self.sb.inodes_per_group()):
-                inode = Ext4Inode(self._bf, oft)
-                yield inode
+                yield Ext4Inode(n, self._bf, oft)
                 oft += self.sb.inode_size()
+                n += 1
     ##
     ## @brief      Returns a specific inode identified by its index (starting
     ##             from 1)
@@ -155,7 +156,7 @@ class Ext4FS(object):
         oft = bgd.inode_table() * self.block_size()
         oft += inode_bg_idx * self.sb.inode_size()
 
-        return Ext4Inode(self._bf, oft)
+        return Ext4Inode(n, self._bf, oft)
     ##
     ## @brief      Yields data blocks associated with given inode
     ##

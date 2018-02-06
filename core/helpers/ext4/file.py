@@ -27,6 +27,7 @@
 # =============================================================================
 from utils.wrapper import trace
 from utils.logging import get_logger
+from utils.formatting import format_size
 from helpers.ext4.inode_reader import Ext4InodeReader
 # =============================================================================
 #  GLOBALS / CONFIG
@@ -44,8 +45,12 @@ class Ext4File(object):
     ##
     ## @param      inode  The inode
     ##
-    def __init__(self, fs, bf, inode):
+    def __init__(self, fname, fs, bf, inode):
         super(Ext4File, self).__init__()
+        if not isinstance(type, Ext4FileType):
+            LGR.error("Ext4File type argument must be a instance of "
+                      "Ext4FileType.")
+        self._fname = fname
         self._fs = fs
         self._fs_blk_size = fs.block_size()
         self._bf = bf
@@ -54,19 +59,50 @@ class Ext4File(object):
     ##
     ## @brief      { function_description }
     ##
+    def ftype(self):
+        return self._inode.ftype()
+    ##
+    ## @brief      Returns the description using the following format
+    ##             10228426 -rw-r--r-- 1 paul paul  1,4G janv.  7 15:33 partition.3.1c566bda.ds
+    ##
+    def description(self, human=False):
+        uid = self._inode.uid()
+        gid = self._inode.gid()
+        size = self._inode.size()
+
+        if human:
+            uid = "{} ({})".format(uid, "root" if uid == 0 else "unknown")
+            gid = "{} ({})".format(gid, "root" if gid == 0 else "unknown")
+            size = format_size(size)
+
+        return "{} {} {} {} {} {} {} {}".format(self._inode.number,
+                                                self._inode.permissions(),
+                                                self._inode.links_count(),
+                                                uid, gid, size,
+                                                self._inode.ctime(),
+                                                self._inode.atime(),
+                                                self._inode.mtime(),
+                                                self._inode.dtime(),
+                                                self._fname)
+    ##
+    ## @brief      { function_description }
+    ##
     ## @param      size  The size
     ## @param      seek  The seek
     ##
-    ## @return     { description_of_the_return_value }
-    ##
     def read(self, size=-1, seek=0):
-        if seek < 0:
-            LGR.error("seek value cannot be smaller than zero.")
+        max_size = self.size()
+
+        if seek < 0 or seek > (max_size-1):
+            LGR.error("seek value cannot be smaller than zero or greater "
+                      "than inode.size()-1.")
             return None
 
         if size == 0:
             LGR.warn("reading with size=0 is awkward.")
             return b''
+        elif size < 0 or size > max_size:
+            size = max_size - seek
 
         fst_blk_idx = seek // self._fs_blk_size
         lst_blk_idx = (seek + size - 1) // self._fs_blk_size
@@ -77,4 +113,3 @@ class Ext4File(object):
 
         rseek = seek - (fst_blk_idx * self._fs_blk_size)
         return data[rseek:rseek+size]
-
