@@ -89,8 +89,8 @@ class Ext4Dirent(StructWrapper):
         ## @param      bf       { parameter_description }
         ## @param      oft      The oft
         ##
-        def __init__(self, version, bytes, oft):
-            self.valid = False
+        def __init__(self, fs, version, bytes, oft):
+            self._fs = fs
             self.version = version
             if self.version == Ext4DirentVersion.V1:
                 st_type = S_EXT4_DIR_ENTRY
@@ -100,12 +100,22 @@ class Ext4Dirent(StructWrapper):
                 LGR.error("unknown ext4 dirent version.")
                 return
             super(Ext4Dirent, self).__init__(st_type, bytes=bytes, oft=oft)
-            self.valid = True
         ##
         ## @brief      { function_description }
         ##
         def inode_num(self):
             return self._s.inode
+        ##
+        ## @brief      { function_description }
+        ##
+        @lazy_getter('_inode')
+        def inode(self):
+            n = self.inode_num()
+
+            if n <= 0:
+                return None
+
+            return self._fs.inode(n)
         ##
         ## @brief      { function_description }
         ##
@@ -119,13 +129,13 @@ class Ext4Dirent(StructWrapper):
         ##
         ## @brief      { function_description }
         ##
-        @lazy_getter('_file_type')
-        def file_type(self):
+        @lazy_getter('_ftype')
+        def ftype(self):
             if self.version == Ext4DirentVersion.V2:
                 return Ext4FileType(self._s.file_type)
-            LGR.warn("calling file_type() on ext4 dirent structure 1st "
-                     "version.")
-            return None
+
+            inode = self.inode()
+            return (None if inode is None else inode.ftype())
         ##
         ## @brief      { function_description }
         ##
@@ -133,3 +143,14 @@ class Ext4Dirent(StructWrapper):
             if string:
                 return self._s.name[:self.name_len()].decode()
             return self._s.name
+        ##
+        ## @brief      Returns the description using the following format
+        ##             10228426 -rw-r--r-- 1 paul paul  1,4G janv.  7 15:33 partition.3.1c566bda.ds
+        ##
+        def description(self, human=False):
+            inode = self.inode()
+
+            if inode is None:
+                return "[empty dirent]"
+
+            return inode.description(self.name(string=True), human)

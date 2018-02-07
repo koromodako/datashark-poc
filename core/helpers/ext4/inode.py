@@ -411,4 +411,26 @@ class Ext4Inode(StructWrapper):
             blocks = self._s.i_blocks_lo
 
         return blocks
+    ##
+    ## @brief      Returns the description using the following format
+    ##             10228426 -rw-r--r-- 1 paul paul  1,4G janv.  7 15:33 partition.3.1c566bda.ds
+    ##
+    def description(self, name, human=False):
+        uid = self.uid()
+        gid = self.gid()
+        size = self.size()
 
+        if human:
+            uid = "({}:{})".format(uid, "root" if uid == 0 else "unknown")
+            gid = "({}:{})".format(gid, "root" if gid == 0 else "unknown")
+            size = format_size(size)
+
+        return "{} {} {} {} {} {} {} {}".format(self.number,
+                                                self.permissions(),
+                                                self.links_count(),
+                                                uid, gid, size,
+                                                self.ctime(),
+                                                self.atime(),
+                                                self.mtime(),
+                                                self.dtime(),
+                                                name)

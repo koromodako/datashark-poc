@@ -32,6 +32,7 @@ from utils.logging import get_logger
 from helpers.ext4.symlink import Ext4Symlink
 from helpers.ext4.regfile import Ext4RegularFile
 from helpers.ext4.directory import Ext4Directory
+from helpers.ext4.constants import Ext4FileType
 # =============================================================================
 #  GLOBALS / CONFIG
 # =============================================================================
@@ -56,13 +57,6 @@ class Ext4FSExplorer(object):
     ##
     ## @brief      { function_description }
     ##
-    ## @param      inode  The inode
-    ##
-    def _parse_entries(self, inode):
-        todo("implement directory parsing...")
-    ##
-    ## @brief      { function_description }
-    ##
     ## @param      parent  The parent
     ## @param      name    The name
     ##
@@ -70,29 +64,85 @@ class Ext4FSExplorer(object):
         if parent_inode is None:
             return self.root_dir_inode()
 
-        for entry in self._parse_entries(parent_inode):
-            todo("implement entry selection based on name...")
+        d = Ext4Directory(self._fs, self._bf, parent_inode)
+
+        for entry in d.entries():
+            if dirent.ftype() == Ext4FileType.DIRECTORY:
+                dirent_name = dirent.name(string=True)
+                if fnmatch(dirent_name, name):
+                    return dirent.inode()
+
+        return None
     ##
     ## @brief      { function_description }
     ##
     ## @param      path  The path
     ##
-    def _find_root(self, path):
+    def _find_top(self, path):
         p = Path(path)
         if not p.is_absolute():
+            LGR.error("path must be absolute!")
             return None
 
         inode = None
         parts = p.parts
         while len(parts) > 0:
             part = parts[0]
+
             inode = self._find_inode(inode, part)
             if inode is None:
-                return False
+                LGR.warn("file not found!")
+                return None
+
             parts = parts[1:]
 
         return inode
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      path  The path
+    ##
+    ## @return     { description_of_the_return_value }
+    ##
+    def scandir(self, path='/', dirent_only=True):
+        top = self._find_top(path)
 
+        if top is None:
+            return None
+
+        for entry in top.entries(dirent_only):
+            yield entry
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      topd         The topd
+    ## @param      dirent_only  The dirent only
+    ## @param      topdown      The topdown
+    ## @param      followlinks  The followlinks
+    ##
+    def _walk(self, path, topd, dirent_only, topdown, followlinks):
+        root = path.joinpath(topd.fname())
+        dirs, nondirs = [], []
+
+        for entry in topd.entries(path, dirent_only):
+            if entry.ftype() == Ext4FileType.DIRECTORY:
+                dirs.append(entry)
+            else:
+                nondirs.append(entry)
+
+        if topdown:
+            yield str(root), dirs, nondirs
+
+        for d in dirs:
+
+            if followlinks and d.is_symlink():
+                d = d.resolve()
+
+            for x in self._walk(root, d, dirent_only, topdown, followlinks):
+                yield x
+
+        if not topdown:
+            yield str(root), dirs, nondirs
     ##
     ## @brief      { function_description }
     ##
@@ -100,26 +150,8 @@ class Ext4FSExplorer(object):
     ##
     ## @return     { description_of_the_return_value }
     ##
-    def walk(self, path='/'):
-        inode = self._find_root(path)
-    ##
-    ## @brief      { function_description }
-    ##
-    ## @param      path  The path
-    ##
-    ## @return     { description_of_the_return_value }
-    ##
-    def scandir(self, path='/'):
-        inode = self._find_root(path)
-    ##
-    ## @brief      { function_description }
-    ##
-    ## @param      path  The path
-    ##
-    ## @return     { description_of_the_return_value }
-    ##
-    def listdir(self, path='/'):
-        inode = self._find_root(path)
+    def walk(self, path='/', dirent_only=True, topdown=True, followlinks=False):
+
     # -------------------------------------------------------------------------
     #  SPECIFIC INODES
     # -------------------------------------------------------------------------

@@ -45,45 +45,45 @@ class Ext4File(object):
     ##
     ## @param      inode  The inode
     ##
-    def __init__(self, fname, fs, bf, inode):
+    def __init__(self, fs, bf, entry):
         super(Ext4File, self).__init__()
         if not isinstance(type, Ext4FileType):
             LGR.error("Ext4File type argument must be a instance of "
                       "Ext4FileType.")
-        self._fname = fname
         self._fs = fs
-        self._fs_blk_size = fs.block_size()
         self._bf = bf
-        self._inode = inode
-        self._reader = Ext4InodeReader(fs, bf, inode)
+        self._entry = entry
+        self._fname = entry.name(string=True)
+        self._fs_blk_size = fs.block_size()
+        self.slack_space = None
     ##
     ## @brief      { function_description }
     ##
-    def ftype(self):
-        return self._inode.ftype()
+    @lazy_getter('_inode')
+    def inode(self):
+        return self._entry.inode()
+    ##
+    ## @brief      { function_description }
+    ##
+    @lazy_getter('_reader')
+    def reader(self):
+        return Ext4InodeReader(self._fs, self._bf, self.inode())
     ##
     ## @brief      Returns the description using the following format
     ##             10228426 -rw-r--r-- 1 paul paul  1,4G janv.  7 15:33 partition.3.1c566bda.ds
     ##
     def description(self, human=False):
-        uid = self._inode.uid()
-        gid = self._inode.gid()
-        size = self._inode.size()
-
-        if human:
-            uid = "{} ({})".format(uid, "root" if uid == 0 else "unknown")
-            gid = "{} ({})".format(gid, "root" if gid == 0 else "unknown")
-            size = format_size(size)
-
-        return "{} {} {} {} {} {} {} {}".format(self._inode.number,
-                                                self._inode.permissions(),
-                                                self._inode.links_count(),
-                                                uid, gid, size,
-                                                self._inode.ctime(),
-                                                self._inode.atime(),
-                                                self._inode.mtime(),
-                                                self._inode.dtime(),
-                                                self._fname)
+        return self._entry.description(self._fname, human)
+    ##
+    ## @brief      { function_description }
+    ##
+    def fname(self):
+        return self._fname
+    ##
+    ## @brief      { function_description }
+    ##
+    def ftype(self):
+        return self._entry.ftype()
     ##
     ## @brief      { function_description }
     ##
@@ -109,7 +109,7 @@ class Ext4File(object):
 
         data = b''
         for k in range(fst_blk_idx, lst_blk_idx+1):
-            data += self._reader.block(k)
+            data += self.reader().block(k)
 
         rseek = seek - (fst_blk_idx * self._fs_blk_size)
         return data[rseek:rseek+size]

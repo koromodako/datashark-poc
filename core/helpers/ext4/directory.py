@@ -59,32 +59,34 @@ class Ext4Directory(Ext4File):
     ##
     ## @brief      Yields entries as Ext4Dirent
     ##
-    @lazy_getter('_entries')
-    def entries(self):
-        entries = []
+    def __entries(self):
         data = b''
         for blk in self._reader.blocks():
             data += blk
+
             dirent = Ext4Dirent(self._dirent_vers, bytes=data)
-            entries.append(dirent)
+            yield dirent
+
             while len(data) > dirent.st_size():
                 data = data[dirent.st_size():]
-                entries.append(Ext4Dirent(self._dirent_vers, bytes=data))
+                yield Ext4Dirent(self._dirent_vers, bytes=data)
 
-        self.slack_space = b''
-        if len(data) > 0:
+        if self.slack_space is None:
             self.slack_space = data
     ##
     ## @brief      Yields entries as Ext4File subclasses instances
     ##
-    def files(self):
-        for entry in self.entries():
-            inode_num = entry.inode_num()
-
-            if inode_num <= 0:
+    def entries(self, dirent_only=True):
+        for entry in self.__entries():
+            if dirent_only:
+                yield entry
                 continue
 
-            inode = self._fs.inode(inode_num)
+            inode = entry.inode()
+
+            if inode is None:
+                continue
+
             ftype = inode.ftype()
 
             if ftype == Ext4FileType.DIRECTORY:
