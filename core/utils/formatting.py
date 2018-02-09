@@ -23,6 +23,7 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # IMPORTS
 # =============================================================================
+from enum import Enum
 from termcolor import colored
 #
 from utils.logging import get_logger
@@ -203,3 +204,127 @@ def hexdiff_lines(d1, d2, col_sz=2, col_num=4, human=True):
 @trace_func(__name__)
 def hexdiff(d1, d2, col_sz=2, col_num=4, human=True):
     return '\n'.join(hexdiff_lines(d1, d2, col_sz, col_num, human))
+##
+## @brief      Class for column.
+##
+class Column(object):
+    ##
+    ## @brief      Class for alignment.
+    ##
+    class Alignment(Enum):
+        LEFT = 0
+        RIGHT = 1
+        CENTERED = 2
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      name   The name
+    ## @param      align  The align
+    ##
+    def __init__(self, name=None, alignment=Alignment.LEFT, fmtr=None):
+        self.name = name
+        if not isinstance(alignment, Column.Alignment):
+            LGR.error("programmatical error: align argument must be an "
+                      "instance of Column.Alignment.")
+        self.alignment = alignment
+        self.fmtr = fmtr
+    ##
+    ## @brief      Returns value formatted using given fmtr or "stringified"
+    ##
+    ## @param      value  The value
+    ##
+    def format(self, value):
+        if self.fmtr is not None:
+            value = self.fmtr(value)
+
+        if not isinstance(value, str):
+            value = str(value)
+
+        return value
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      value      The value
+    ## @param      max_width  The maximum width
+    ##
+    def align(self, value, max_width):
+        vlen = len(value)
+        miss = (max_width - vlen + 2)
+
+        if self.alignment == Column.Alignment.LEFT:
+            value += miss * BS
+
+        elif self.alignment == Column.Alignment.RIGHT:
+            value = miss * BS + value
+
+        elif self.alignment == Column.Alignment.CENTERED:
+            value = (miss // 2) * BS + value + (miss // 2) * BS
+            value += BS if (miss % 2) == 1 else ''
+
+        else:
+            LGR.error("invalid alignment value => defaulting to "
+                      "Column.Alignment.NONE.")
+
+        return value
+##
+## @brief      Class for table.
+##
+class Table(object):
+    ##
+    ## @brief      Constructs the object.
+    ##
+    ## @param      rows  The rows
+    ## @param      cols  The cols
+    ##
+    def __init__(self, cols=[]):
+        self.cols = cols
+        self.clen = len(cols)
+        self.rows = []
+        self.max_width_per_col = [0 for i in range(self.clen)]
+    ##
+    ## @brief      Adds a row.
+    ##
+    ## @param      row   The row
+    ##
+    def add_row(self, row):
+        if len(row) != self.clen:
+            LGR.error("incomplete row (row element count and col count "
+                      "mismatch) => row ignored.")
+            return False
+        # process row elements
+        for i in range(self.clen):
+            # format element using Column formatter
+            row[i] = self.cols[i].format(row[i])
+            # update max width array if needed
+            elen = len(row[i])
+            if elen > self.max_width_per_col[i]:
+                self.max_width_per_col[i] = elen
+        # append row
+        self.rows.append(row)
+        return True
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      print_header  Prints header
+    ##
+    def print(self, print_header=True):
+        rows = self.rows
+
+        if print_header:
+            row = []
+            for i in range(self.clen):
+                name = self.cols[i].name
+                nlen = len(name)
+
+                row.append(name)
+
+                if nlen > self.max_width_per_col[i]:
+                    self.max_width_per_col[i] = nlen
+
+            rows = [row] + rows
+
+        for row in rows:
+            line = ""
+            for i in range(self.clen):
+                line += self.cols[i].align(row[i], self.max_width_per_col[i])
+            print(line)

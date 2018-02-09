@@ -21,6 +21,22 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+# -------------------------------------------------------------------------
+#  SPECIFIC INODES
+# -------------------------------------------------------------------------
+#   0  Doesn't exist; there is no inode 0.
+#   1   List of defective blocks.
+#   2   Root directory.
+#   3   User quota.
+#   4   Group quota.
+#   5   Boot loader.
+#   6   Undelete directory.
+#   7   Reserved group descriptors inode. ("resize inode")
+#   8   Journal inode.
+#   9   The "exclude" inode, for snapshots(?)
+#   10  Replica inode, used for some non-upstream feature?
+#   11  Traditional first non-reserved inode. Usually this is the lost+found
+#       directory. See s_first_ino in the superblock.
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # =============================================================================
 #  IMPORTS
@@ -32,11 +48,12 @@ from utils.logging import get_logger
 from helpers.ext4.symlink import Ext4Symlink
 from helpers.ext4.regfile import Ext4RegularFile
 from helpers.ext4.directory import Ext4Directory
-from helpers.ext4.constants import Ext4FileType
+from helpers.ext4.inode_reader import Ext4InodeReader
 # =============================================================================
 #  GLOBALS / CONFIG
 # =============================================================================
 LGR = get_logger(__name__)
+ROOT = '/'
 # =============================================================================
 #  CLASSES
 # =============================================================================
@@ -55,22 +72,29 @@ class Ext4FSExplorer(object):
         self._fs = fs
         self._bf = bf
     ##
+    ## @brief      Returns a generator which yields root entries
+    ##
+    def _root_entries_generator(self):
+        inode_reader = Ext4InodeReader(self._fs, self._bf, self._fs.inode(2))
+        return Ext4Directory.parse_entries(self._fs, inode_reader, {})
+    ##
     ## @brief      { function_description }
     ##
     ## @param      parent  The parent
     ## @param      name    The name
     ##
-    def _find_inode(self, parent_inode, name):
-        if parent_inode is None:
-            return self.root_dir_inode()
+    def _find_dirent(self, parent_dirent, name):
+        if parent_dirent is None:
+            entries_generator = self._root_entries_generator()
+        else:
+            d = Ext4Directory(self._fs, self._bf, parent_dirent)
+            entries_generator = d.entries()
 
-        d = Ext4Directory(self._fs, self._bf, parent_inode)
-
-        for entry in d.entries():
-            if dirent.ftype() == Ext4FileType.DIRECTORY:
+        for dirent in entries_generator:
+            if dirent.isdir():
                 dirent_name = dirent.name(string=True)
                 if fnmatch(dirent_name, name):
-                    return dirent.inode()
+                    return dirent
 
         return None
     ##
@@ -84,34 +108,35 @@ class Ext4FSExplorer(object):
             LGR.error("path must be absolute!")
             return None
 
-        inode = None
+        dirent = None
         parts = p.parts
         while len(parts) > 0:
             part = parts[0]
 
-            inode = self._find_inode(inode, part)
-            if inode is None:
-                LGR.warn("file not found!")
+            dirent = self._find_dirent(dirent, part)
+            if dirent is None:
+                LGR.warn("file not found: {}".format(path))
                 return None
 
             parts = parts[1:]
 
-        return inode
+        return Ext4Directory(self._fs, self._bf, dirent)
     ##
     ## @brief      { function_description }
     ##
-    ## @param      path  The path
+    ## @param      self               The object
+    ## @param      entries_generator  The entries generator
     ##
-    ## @return     { description_of_the_return_value }
-    ##
-    def scandir(self, path='/', dirent_only=True):
-        top = self._find_top(path)
+    def _sort_entries(self, entries_generator):
+        dirs, nondirs = [], []
 
-        if top is None:
-            return None
+        for entry in entries_generator:
+            if entry.isdir():
+                dirs.append(entry)
+            else:
+                nondirs.append(entry)
 
-        for entry in top.entries(dirent_only):
-            yield entry
+        return (dirs, nondirs)
     ##
     ## @brief      { function_description }
     ##
@@ -122,23 +147,25 @@ class Ext4FSExplorer(object):
     ##
     def _walk(self, path, topd, dirent_only, topdown, followlinks):
         root = path.joinpath(topd.fname())
-        dirs, nondirs = [], []
 
-        for entry in topd.entries(path, dirent_only):
-            if entry.ftype() == Ext4FileType.DIRECTORY:
-                dirs.append(entry)
-            else:
-                nondirs.append(entry)
+        dirs, nondirs = self._sort_entries(topd.entries(path, dirent_only))
 
         if topdown:
             yield str(root), dirs, nondirs
 
-        for d in dirs:
+        for cdir in dirs:
 
-            if followlinks and d.is_symlink():
-                d = d.resolve()
+            if cdir.islink():
+                if not followlinks:
+                    continue
 
-            for x in self._walk(root, d, dirent_only, topdown, followlinks):
+                cdir = cdir.resolve()
+
+                if cdir is None:
+                    LGR.warn("failed to resolve symlink to directory.")
+                    continue
+
+            for x in self._walk(root, cdir, dirent_only, topdown, followlinks):
                 yield x
 
         if not topdown:
@@ -148,44 +175,31 @@ class Ext4FSExplorer(object):
     ##
     ## @param      path  The path
     ##
-    ## @return     { description_of_the_return_value }
-    ##
-    def walk(self, path='/', dirent_only=True, topdown=True, followlinks=False):
+    def scandir(self, path=ROOT, dirent_only=True):
+        if path == ROOT:
+            for entry in self._root_entries_generator():
+                yield entry
+        else:
+            topd = self._find_top(path)
 
-    # -------------------------------------------------------------------------
-    #  SPECIFIC INODES
-    # -------------------------------------------------------------------------
-    #   0  Doesn't exist; there is no inode 0.
-    #   1   List of defective blocks.
-    def defective_blocks_inode(self):
-        return self._fs.inode(1)
-    #   2   Root directory.
-    def root_dir_inode(self):
-        return self._fs.inode(2)
-    #   3   User quota.
-    def user_quota_inode(self):
-        return self._fs.inode(3)
-    #   4   Group quota.
-    def group_quota_inode(self):
-        return self._fs.inode(4)
-    #   5   Boot loader.
-    def boot_loader_inode(self):
-        return self._fs.inodes(5)
-    #   6   Undelete directory.
-    def undelete_dir_inode(self):
-        return self._fs.inode(6)
-    #   7   Reserved group descriptors inode. ("resize inode")
-    def reserved_group_desc_inode(self):
-        return self._fs.inode(7)
-    #   8   Journal inode.
-    def journal_inode(self):
-        return self._fs.inode(8)
-    #   9   The "exclude" inode, for snapshots(?)
-    def exclude_inode(self):
-        return self._fs.inode(9)
-    #   10  Replica inode, used for some non-upstream feature?
-    def replica_inode(self):
-        return self._fs.inode(10)
-    #   11  Traditional first non-reserved inode. Usually this is the lost+found directory. See s_first_ino in the superblock.
-    def lost_found_inode(self):
-        return self._fs.inode(11)
+            if topd is None:
+                return None
+
+            for entry in topd.entries(dirent_only):
+                yield entry
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      path  The path
+    ##
+    def walk(self, path=ROOT, dirent_only=True, topdown=True, followlinks=False):
+        if path == ROOT:
+            dirs, nondirs = self._sort_entries(self._root_entries_generator())
+            yield (ROOT, dirs, nondirs)
+        else:
+            topd = self._find_top(path)
+
+            if topd is None:
+                return (None, None, None)
+
+            return self._walk(Path(path), topd, dirent_only, topdown, followlinks)

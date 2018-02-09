@@ -42,8 +42,8 @@ class Ext4RegularFile(Ext4File):
     ##
     ## @brief      Constructs the object.
     ##
-    ## @param      inode  The inode
+    ## @param      entry  The directory entry
     ##
-    def __init__(self, fs, bf, inode):
-        super(Ext4RegularFile, self).__init__(fs, bf, inode)
+    def __init__(self, fs, bf, entry):
+        super(Ext4RegularFile, self).__init__(fs, bf, entry)
 

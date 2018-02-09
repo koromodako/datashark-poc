@@ -26,12 +26,13 @@
 #  IMPORTS
 # =============================================================================
 from utils.wrapper import trace
+from utils.wrapper import lazy_getter
 from utils.logging import get_logger
 from utils.struct.factory import StructFactory
 from utils.struct.wrapper import StructWrapper
 from helpers.ext4.constants import EXT4_NAME_LEN
-from helpers.ext4.constants import Ext4FileType
 from helpers.ext4.constants import Ext4DirentVersion
+from helpers.ext4.constants import Ext4DirentFileType
 from utils.struct.simple_member import SimpleMember
 from utils.struct.byte_array_member import ByteArrayMember
 # =============================================================================
@@ -58,7 +59,7 @@ StructFactory.st_register(S_EXT4_DIR_ENTRY_2, [
     # Length of the file name.
     SimpleMember('name_len', 'B'),
     # File type code, one of:
-    SimpleMember('file_type', 'B', fmtr=Ext4FileType),
+    SimpleMember('file_type', 'B', fmtr=Ext4DirentFileType),
     # File name.
     ByteArrayMember('name', EXT4_NAME_LEN)
 ])
@@ -89,7 +90,7 @@ class Ext4Dirent(StructWrapper):
         ## @param      bf       { parameter_description }
         ## @param      oft      The oft
         ##
-        def __init__(self, fs, version, bytes, oft):
+        def __init__(self, fs, version, bytes, oft=0):
             self._fs = fs
             self.version = version
             if self.version == Ext4DirentVersion.V1:
@@ -129,13 +130,14 @@ class Ext4Dirent(StructWrapper):
         ##
         ## @brief      { function_description }
         ##
-        @lazy_getter('_ftype')
-        def ftype(self):
+        @lazy_getter('_file_type')
+        def file_type(self):
             if self.version == Ext4DirentVersion.V2:
-                return Ext4FileType(self._s.file_type)
+                return Ext4DirentFileType(self._s.file_type)
 
-            inode = self.inode()
-            return (None if inode is None else inode.ftype())
+            LGR.warn("calling file_type on a V1 directory entry => None "
+                     "returned.")
+            return None
         ##
         ## @brief      { function_description }
         ##
@@ -144,12 +146,99 @@ class Ext4Dirent(StructWrapper):
                 return self._s.name[:self.name_len()].decode()
             return self._s.name
         ##
+        ## @brief      Determines if symlink.
+        ##
+        ## @return     True if symlink, False otherwise.
+        ##
+        @lazy_getter('_islink')
+        def islink(self):
+            if self.version == Ext4DirentVersion.V2:
+                return (self.file_type() == Ext4DirentFileType.LNK)
+
+            inode = self.inode()
+            if inode is None:
+                return False
+
+            return self.inode().islink()
+        ##
+        ## @brief      Returns file type
+        ##
+        @lazy_getter('_isdir')
+        def isdir(self):
+            if self.version == Ext4DirentVersion.V2:
+                return (self.file_type() == Ext4DirentFileType.DIR)
+
+            inode = self.inode()
+            if inode is None:
+                return False
+
+            return inode.isdir()
+        ##
+        ## @brief      { function_description }
+        ##
+        @lazy_getter('_isfile')
+        def isfile(self):
+            if self.version == Ext4DirentVersion.V2:
+                return (self.file_type() == Ext4DirentFileType.REG)
+
+            inode = self.inode()
+            if inode is None:
+                return False
+
+            return inode.isfile()
+        ##
+        ## @brief      Determines if fifo.
+        ##
+        ## @return     True if fifo, False otherwise.
+        ##
+        @lazy_getter('_isfifo')
+        def isfifo(self):
+            if self.version == Ext4DirentVersion.V2:
+                return (self.file_type() == Ext4DirentFileType.FIFO)
+
+            inode = self.inode()
+            if inode is None:
+                return False
+
+            return inode.isfifo()
+        ##
+        ## @brief      Determines if socket.
+        ##
+        ## @return     True if socket, False otherwise.
+        ##
+        @lazy_getter('_issock')
+        def issock(self):
+            if self.version == Ext4DirentVersion.V2:
+                return (self.file_type() == Ext4DirentFileType.SOCK)
+
+            inode = self.inode()
+            if inode is None:
+                return False
+
+            return inode.issock()
+        ##
+        ## @brief      Determines if device.
+        ##
+        ## @return     True if device, False otherwise.
+        ##
+        @lazy_getter('_isdev')
+        def isdev(self):
+            if self.version == Ext4DirentVersion.V2:
+                ftype = self.file_type()
+                return (ftype == Ext4DirentFileType.BLK or
+                        ftype == Ext4DirentFileType.CHR)
+
+            inode = self.inode()
+            if inode is None:
+                return False
+
+            return inode.isdev()
+        ##
         ## @brief      Returns the description using the following format
         ##             10228426 -rw-r--r-- 1 paul paul  1,4G janv.  7 15:33 partition.3.1c566bda.ds
         ##
         def description(self, human=False):
             inode = self.inode()
-
             if inode is None:
                 return "[empty dirent]"
 

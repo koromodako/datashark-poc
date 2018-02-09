@@ -32,6 +32,7 @@ from helpers.ext4.file import Ext4File
 from helpers.ext4.dirent import Ext4Dirent
 from helpers.ext4.symlink import Ext4Symlink
 from helpers.ext4.regfile import Ext4RegularFile
+from helpers.ext4.constants import Ext4DirentVersion
 # =============================================================================
 #  GLOBALS / CONFIG
 # =============================================================================
@@ -48,31 +49,51 @@ class Ext4Directory(Ext4File):
     ##
     ## @param      fs     The file system
     ## @param      bf     The binary file containing the entire partition
-    ## @param      inode  The inode
+    ## @param      entry  The directory entry
     ##
-    def __init__(self, fs, bf, inode):
-        super(Ext4Directory, self).__init__(fs, bf, inode)
+    def __init__(self, fs, bf, entry):
+        super(Ext4Directory, self).__init__(fs, bf, entry)
         if self._fs.filetype():
-            self._dirent_vers = Ext4DirentVersion.V2
+            self._dirent_version = Ext4DirentVersion.V2
         else:
-            self._dirent_vers = Ext4DirentVersion.V1
+            self._dirent_version = Ext4DirentVersion.V1
+    ##
+    ## @brief      Yields entries as Ext4Dirent
+    ##
+    ## @param      fs            The file system
+    ## @param      inode_reader  The inode reader
+    ## @param      extra         The extra
+    ##
+    @staticmethod
+    def parse_entries(fs, inode_reader, extra):
+        version = Ext4DirentVersion.V2 if fs.filetype() else Ext4DirentVersion.V1
+
+        data = b''
+        for blk_idx, blk in inode_reader.blocks():
+            data += blk
+
+            dirent = Ext4Dirent(fs, version, bytes=data)
+            yield dirent
+
+            while True:
+                data = data[dirent.rec_len():]
+
+                if len(data) < dirent.st_size():
+                    break
+
+                dirent = Ext4Dirent(fs, version, bytes=data)
+                yield dirent
+
+        extra['slack_space'] = data
     ##
     ## @brief      Yields entries as Ext4Dirent
     ##
     def __entries(self):
-        data = b''
-        for blk in self._reader.blocks():
-            data += blk
-
-            dirent = Ext4Dirent(self._dirent_vers, bytes=data)
+        extra = {}
+        for dirent in self.parse_entries(self._fs, self._reader, extra):
             yield dirent
 
-            while len(data) > dirent.st_size():
-                data = data[dirent.st_size():]
-                yield Ext4Dirent(self._dirent_vers, bytes=data)
-
-        if self.slack_space is None:
-            self.slack_space = data
+        self.set_slack_space(extra['slack_space'])
     ##
     ## @brief      Yields entries as Ext4File subclasses instances
     ##
@@ -87,17 +108,11 @@ class Ext4Directory(Ext4File):
             if inode is None:
                 continue
 
-            ftype = inode.ftype()
-
-            if ftype == Ext4FileType.DIRECTORY:
-                yield Ext4Directory(entry.name(string=True),
-                                    self._fs, self._bf, inode)
-            elif ftype == Ext4FileType.SYMLINK:
-                yield Ext4Symlink(entry.name(string=True),
-                                  self._fs, self._bf, inode)
-            elif ftype == Ext4FileType.REG_FILE:
-                yield Ext4RegularFile(entry.name(string=True),
-                                      self._fs, self._bf, inode)
+            if inode.islink():
+                yield Ext4Symlink(self._fs, self._bf, entry)
+            elif inode.isdir():
+                yield Ext4Directory(self._fs, self._bf, entry)
+            elif inode.isfile():
+                yield Ext4RegularFile(self._fs, self._bf, entry)
             else:
-                yield Ext4File(entry.name(string=True),
-                               self._fs, self._bf, inode)
+                yield Ext4File(self._fs, self._bf, entry)

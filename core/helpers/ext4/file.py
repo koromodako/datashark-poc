@@ -26,6 +26,7 @@
 #  IMPORTS
 # =============================================================================
 from utils.wrapper import trace
+from utils.wrapper import lazy_getter
 from utils.logging import get_logger
 from utils.formatting import format_size
 from helpers.ext4.inode_reader import Ext4InodeReader
@@ -47,15 +48,22 @@ class Ext4File(object):
     ##
     def __init__(self, fs, bf, entry):
         super(Ext4File, self).__init__()
-        if not isinstance(type, Ext4FileType):
-            LGR.error("Ext4File type argument must be a instance of "
-                      "Ext4FileType.")
         self._fs = fs
         self._bf = bf
         self._entry = entry
         self._fname = entry.name(string=True)
         self._fs_blk_size = fs.block_size()
-        self.slack_space = None
+        self._slack_space = None
+    ##
+    ## @brief      Sets the slack space.
+    ##
+    ## @param      data  The data
+    ##
+    def _set_slack_space(self, data):
+        cond = self._slack_space is None
+        if cond:
+            self._slack_space = data
+        return cond
     ##
     ## @brief      { function_description }
     ##
@@ -80,15 +88,16 @@ class Ext4File(object):
     def fname(self):
         return self._fname
     ##
-    ## @brief      { function_description }
+    ## @brief      Returns file's slack space
     ##
-    def ftype(self):
-        return self._entry.ftype()
+    def slack_space(self):
+        return self._slack_space
     ##
-    ## @brief      { function_description }
+    ## @brief      Reads  `size` bytes of the file from offset `seek`
     ##
-    ## @param      size  The size
-    ## @param      seek  The seek
+    ## @param      size  Number of bytes to read, if negative the whole data
+    ##                   is read excluding slack space.
+    ## @param      seek  The offset from which read operation should start
     ##
     def read(self, size=-1, seek=0):
         max_size = self.size()

@@ -60,19 +60,7 @@ def str2int(s):
         LGR.error("str2int expects input to be a <str> instance.")
         return None
 
-    if s[0] != '-':
-        prefix = s[0:2]
-    else:
-        prefix = s[1:3]
-
-    if prefix == '0x':
-        return int(s, 16)
-    elif prefix == '0o':
-        return int(s, 8)
-    elif prefix == '0b':
-        return int(s, 2)
-
-    return int(s, 10)
+    return int(s, base=0)
 ##
 ## @brief      Merges 2 parts of a number using binary bitwise 'shift' and 'or'
 ##             operations.

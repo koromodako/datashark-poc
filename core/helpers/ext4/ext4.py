@@ -35,6 +35,7 @@ from helpers.ext4.constants import Ext4Incompat
 from helpers.ext4.constants import Ext4ROCompat
 from helpers.ext4.constants import Ext4BlockSize
 from helpers.ext4.superblock import Ext4SuperBlock
+from helpers.ext4.fs_explorer import Ext4FSExplorer
 from helpers.ext4.inode_reader import Ext4InodeReader
 from helpers.ext4.bg_descriptor import Ext4BlkGrpDesc
 # =============================================================================
@@ -145,8 +146,9 @@ class Ext4FS(object):
     @trace()
     def inode(self, n):
         if n < 1 or n > self.sb.inodes_count():
-            raise ValueError("inode index out-of-bounds: index starts at 1, "
-                             "see superblock for max inode number.")
+            raise ValueError("inode index out-of-bounds: index starts at 1 "
+                             "and stops at {} (n={}).".format(
+                                self.sb.inodes_count(), n))
 
         bgd_idx = (n - 1) // self.sb.inodes_per_group()
         inode_bg_idx = (n - 1) % self.sb.inodes_per_group()
@@ -178,6 +180,12 @@ class Ext4FS(object):
     def inode_block(self, inode, blk_idx):
         reader = Ext4InodeReader(self, self._bf, inode)
         return reader.block(blk_idx)
+    ##
+    ## @brief      { function_description }
+    ##
+    @trace()
+    def explorer(self):
+        return Ext4FSExplorer(self, self._bf)
     ##
     ## @brief      Determines if valid.
     ##

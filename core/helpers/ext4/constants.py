@@ -479,12 +479,6 @@ class Ext4NodeType(enum.Enum):
     INDEX = 0
     LEAF = 1
 ##
-## @brief      Enum for extent 4 dirent version.
-##
-class Ext4DirentVersion(enum.Enum):
-    V1 = 1
-    V2 = 2
-##
 ## @brief      Class for extent 4 inode version.
 ##
 class Ext4InodeVersion(enum.Enum):
@@ -492,22 +486,28 @@ class Ext4InodeVersion(enum.Enum):
     HURD = 2
     MASIX = 3
 ##
+## @brief      Enum for extent 4 dirent version.
+##
+class Ext4DirentVersion(enum.Enum):
+    V1 = 1
+    V2 = 2
+##
 ## @brief      Enum for extent 4 file type.
 ##
-class Ext4FileType(enum.Enum):
+class Ext4DirentFileType(enum.Enum):
     # Unknown.
     UNKNOW = 0x0
     # Regular file.
-    REG_FILE = 0x1
+    REG = 0x1
     # Directory.
-    DIRECTORY = 0x2
+    DIR = 0x2
     # Character device file.
-    CHR_DEV = 0x3
+    CHR = 0x3
     # Block device file.
-    BLK_DEV = 0x4
+    BLK = 0x4
     # FIFO.
     FIFO = 0x5
     # Socket.
-    SOCKET = 0x6
+    SOCK = 0x6
     # Symbolic link.
-    SYMLINK = 0x7
+    LNK = 0x7

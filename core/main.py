@@ -34,6 +34,7 @@ if not check_python_version(3, 6, 0):
     exit(100)
 #
 import os
+import functools
 import utils.logging as logging
 import workspace.workspace as workspace
 import utils.config as config
@@ -103,26 +104,26 @@ def parse_args():
                         help="Number of workers to be used to dissect "
                         "containers.")
 
-    parser.add_argument('-m', '--magic-file', type=str,
+    parser.add_argument('-m', '--magic-file',
                         help="Magic file to be used internally.")
 
-    parser.add_argument('--whitelist-config', type=str,
+    parser.add_argument('--whitelist-config',
                         help="Specify a different whitelist db configuration "
                         "file.")
-    parser.add_argument('--blacklist-config', type=str,
+    parser.add_argument('--blacklist-config',
                         help="Specify a different blacklist db configuration "
                         "file.")
-    parser.add_argument('--dissection-config', type=str,
+    parser.add_argument('--dissection-config',
                         help="Specify a different dissection configuration "
                         "file.")
 
-    parser.add_argument('--include-dirs', type=str,
+    parser.add_argument('--include-dirs',
                         help="Comma-separated list of patterns.")
-    parser.add_argument('--exclude-dirs', type=str,
+    parser.add_argument('--exclude-dirs',
                         help="Comma-separated list of patterns.")
-    parser.add_argument('--include-files', type=str,
+    parser.add_argument('--include-files',
                         help="Comma-separated list of patterns.")
-    parser.add_argument('--exclude-files', type=str,
+    parser.add_argument('--exclude-files',
                         help="Comma-separated list of patterns.")
 
     # optional processing
@@ -141,17 +142,18 @@ def parse_args():
     parser.add_argument('--max-lines', type=int, default=20,
                         help="Max number of lines to display when "
                              "'hexdumping'. Set it to 0 for infinite.")
-    parser.add_argument('-i', '--index', type=str,
+    parser.add_argument('-i', '--index', type=str2int,
                         help="An index: integer value as 0b, 0o, 0x or dec.")
-    parser.add_argument('-o', '--offset', type=str,
+    parser.add_argument('-o', '--offset', type=str2int,
                         help="An offset: integer value as 0b, 0o, 0x or dec.")
-    parser.add_argument('-s', '--size', type=str,
+    parser.add_argument('-s', '--size', type=str2int,
                         help="A size: integer value as 0b, 0o, 0x or dec.")
+    parser.add_argument('-p', '--path',
+                        help="")
 
     # positional arguments
     parser.add_argument('action',
                         nargs='?',
-                        type=str,
                         default=None,
                         help="Action to perform.")
     parser.add_argument('files',
@@ -159,23 +161,6 @@ def parse_args():
                         help="Files to process.")
 
     return parser.parse_args()
-##
-## @brief      { function_description }
-##
-## @param      args  The arguments
-##
-## @return     { description_of_the_return_value }
-##
-@trace_func(__name__)
-def convert_args(args):
-    if args.index is not None:
-        args.index = str2int(args.index)
-
-    if args.offset is not None:
-        args.offset = str2int(args.offset)
-
-    if args.size is not None:
-        args.size = str2int(args.size)
 ##
 ## @brief      { function_description }
 ##
@@ -210,7 +195,6 @@ def handle_action(args):
 def main():
     # parse input arguments
     args = parse_args()
-    convert_args(args)
 
     logging.reconfigure(args.quiet, args.verbose, args.debug)
     LGR.debug('args: {}'.format(args))

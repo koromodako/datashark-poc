@@ -34,7 +34,6 @@ from utils.converting import lohi2int
 from utils.converting import timestamp2utc
 from utils.struct.factory import StructFactory
 from utils.struct.wrapper import StructWrapper
-from helpers.ext4.constants import Ext4FileType
 from helpers.ext4.constants import Ext4InodeMode
 from helpers.ext4.constants import Ext4InodeFlag
 from helpers.ext4.constants import Ext4InodeVersion
@@ -217,7 +216,7 @@ class Ext4Inode(StructWrapper):
     # -------------------------------------------------------------------------
     ##
     ## @brief      Returns mode as a flag instance (including file type and
-    #              permissions)
+    ##             permissions)
     ##
     @lazy_getter('_mode')
     def mode(self):
@@ -228,33 +227,51 @@ class Ext4Inode(StructWrapper):
 
         return Ext4InodeMode(mode)
     ##
+    ## @brief      Determines if symlink.
+    ##
+    ## @return     True if symlink, False otherwise.
+    ##
+    @lazy_getter('_islink')
+    def islink(self):
+        return is_flag_set(self.mode(), Ext4InodeMode.S_IFLNK)
+    ##
     ## @brief      Returns file type
     ##
-    @lazy_getter('_ftype')
-    def ftype(self):
+    @lazy_getter('_isdir')
+    def isdir(self):
+        return is_flag_set(self.mode(), Ext4InodeMode.S_IFDIR)
+    ##
+    ## @brief      { function_description }
+    ##
+    @lazy_getter('_isfile')
+    def isfile(self):
+        return is_flag_set(self.mode(), Ext4InodeMode.S_IFREG)
+    ##
+    ## @brief      Determines if fifo.
+    ##
+    ## @return     True if fifo, False otherwise.
+    ##
+    @lazy_getter('_isfifo')
+    def isfifo(self):
+        return is_flag_set(self.mode(), Ext4InodeMode.S_IFIFO)
+    ##
+    ## @brief      Determines if socket.
+    ##
+    ## @return     True if socket, False otherwise.
+    ##
+    @lazy_getter('_issock')
+    def issock(self):
+        return is_flag_set(self.mode(), Ext4InodeMode.S_IFSOCK)
+    ##
+    ## @brief      Determines if device.
+    ##
+    ## @return     True if device, False otherwise.
+    ##
+    @lazy_getter('_isdev')
+    def isdev(self):
         mode = self.mode()
-        if is_flag_set(mode, Ext4InodeMode.S_IFLNK):
-            return Ext4FileType.SYMLINK
-
-        elif is_flag_set(mode, Ext4InodeMode.S_IFIFO):
-            return Ext4FileType.FIFO
-
-        elif is_flag_set(mode, Ext4InodeMode.S_IFCHR):
-            return Ext4FileType.CHR_DEV
-
-        elif is_flag_set(mode, Ext4InodeMode.S_IFDIR):
-            return Ext4FileType.DIRECTORY
-
-        elif is_flag_set(mode, Ext4InodeMode.S_IFBLK):
-            return Ext4FileType.BLK_DEV
-
-        elif is_flag_set(mode, Ext4InodeMode.S_IFREG):
-            return Ext4FileType.REG_FILE
-
-        elif is_flag_set(mode, Ext4InodeMode.S_IFSOCK):
-            return Ext4FileType.SOCKET
-
-        return Ext4FileType.UNKNOWN
+        return (is_flag_set(mode, Ext4InodeMode.S_IFCHR) or
+                is_flag_set(mode, Ext4InodeMode.S_IFBLK))
     ##
     ## @brief      Returns file permissions using POSIX syntax
     ##
@@ -262,11 +279,9 @@ class Ext4Inode(StructWrapper):
     def permissions(self):
         perm = ['-' for k in range(10)]
 
-        ftype = self.ftype()
-
-        if ftype == Ext4FileType.SYMLINK:
+        if self.islink():
             perm[0] = 'l'
-        elif ftype == Ext4FileType.DIRECTORY:
+        elif self.isdir():
             perm[0] = 'd'
 
         mode = self.mode()
@@ -425,12 +440,7 @@ class Ext4Inode(StructWrapper):
             gid = "({}:{})".format(gid, "root" if gid == 0 else "unknown")
             size = format_size(size)
 
-        return "{} {} {} {} {} {} {} {}".format(self.number,
-                                                self.permissions(),
-                                                self.links_count(),
-                                                uid, gid, size,
-                                                self.ctime(),
-                                                self.atime(),
-                                                self.mtime(),
-                                                self.dtime(),
-                                                name)
+        return [self.number, self.permissions(), self.links_count(),
+                uid, gid, size,
+                self.ctime(), self.atime(), self.mtime(), self.dtime(),
+                name]

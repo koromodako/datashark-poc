@@ -27,12 +27,14 @@
 # =============================================================================
 from utils.logging import get_logger
 from utils.wrapper import trace_func
+from utils.formatting import Table
+from utils.formatting import Column
 from utils.formatting import hexdump
 from utils.binary_file import BinaryFile
 from helpers.ext4.ext4 import Ext4FS
+from helpers.ext4.inode import Ext4Inode
 from utils.action_group import ActionGroup
 from container.container import Container
-from helpers.ext4.constants import Ext4FileType
 # =============================================================================
 # GLOBALS / CONFIG
 # =============================================================================
@@ -107,8 +109,6 @@ def dissect(container):
 ## @brief      { function_description }
 ## @warning    public mandatory function that the module must define
 ##
-## @return     { description_of_the_return_value }
-##
 @trace_func(__name__)
 def action_group():
     ##
@@ -116,8 +116,6 @@ def action_group():
     ##
     ## @param      keywords  The keywords
     ## @param      args      The arguments
-    ##
-    ## @return     { description_of_the_return_value }
     ##
     @trace_func(__name__)
     def __action_superblock(keywords, args):
@@ -149,8 +147,6 @@ def action_group():
     ## @param      keywords  The keywords
     ## @param      args      The arguments
     ##
-    ## @return     { description_of_the_return_value }
-    ##
     @trace_func(__name__)
     def __action_bg_desc(keywords, args):
         for f in args.files:
@@ -179,8 +175,6 @@ def action_group():
     ## @param      keywords  The keywords
     ## @param      args      The arguments
     ##
-    ## @return     { description_of_the_return_value }
-    ##
     @trace_func(__name__)
     def __action_inodes(keywords, args):
         for f in args.files:
@@ -205,8 +199,6 @@ def action_group():
     ##
     ## @param      keywords  The keywords
     ## @param      args      The arguments
-    ##
-    ## @return     { description_of_the_return_value }
     ##
     @trace_func(__name__)
     def __action_inode(keywords, args):
@@ -244,8 +236,6 @@ def action_group():
     ## @param      keywords  The keywords
     ## @param      args      The arguments
     ##
-    ## @return     { description_of_the_return_value }
-    ##
     @trace_func(__name__)
     def __action_inode_blocks(keywords, args):
         for f in args.files:
@@ -281,14 +271,11 @@ def action_group():
                     k += 1
 
         return True
-
     ##
     ## @brief      { function_description }
     ##
     ## @param      keywords  The keywords
     ## @param      args      The arguments
-    ##
-    ## @return     { description_of_the_return_value }
     ##
     @trace_func(__name__)
     def __action_inode_block(keywords, args):
@@ -333,6 +320,52 @@ def action_group():
                 print(hexdump(blk, max_lines=args.max_lines))
 
         return True
+    ##
+    ## @brief      { function_description }
+    ##
+    ## @param      keywords  The keywords
+    ## @param      args      The arguments
+    ##
+    @trace_func(__name__)
+    def __action_scandir(keywords, args):
+        for f in args.files:
+
+            if not BinaryFile.exists(f):
+                LGR.warn("invalid path <{}> => skipped.".format(f))
+                continue
+
+            with BinaryFile(f, 'r') as bf:
+                fs = Ext4FS(bf)
+
+                if not fs.is_valid():
+                    LGR.warn("invalid fs or superblock.")
+                    continue
+
+                explorer = fs.explorer()
+
+                if args.path is None:
+                    args.path = '/'
+
+                table = Table([
+                    Column('inode_num'),
+                    Column('permissions'),
+                    Column('links_count'),
+                    Column('uid'),
+                    Column('gid'),
+                    Column('size'),
+                    Column('ctime'),
+                    Column('atime'),
+                    Column('mtime'),
+                    Column('dtime'),
+                    Column('name')
+                ])
+                for entry in explorer.scandir(args.path):
+                    table.add_row(entry.description())
+
+                print("\npath: {}".format(args.path))
+                table.print()
+
+        return True
 
     return ActionGroup('ext4', {
         'superblock': ActionGroup.action(__action_superblock,
@@ -343,17 +376,20 @@ def action_group():
                                      "display all inodes present in the "
                                      "filesystem."),
         'inode': ActionGroup.action(__action_inode,
-                                     "display seclected inode and additional "
-                                     "information. This action requires an "
-                                     "index to be specified using --index "
-                                     "option."),
+                                    "display seclected inode and additional "
+                                    "information. This action requires an "
+                                    "index to be specified using --index "
+                                    "option."),
         'inode_blocks': ActionGroup.action(__action_inode_blocks,
                                            "display inode blocks. This action "
                                            "requires an index to be specified "
                                            "using --index option."),
         'inode_block': ActionGroup.action(__action_inode_block,
-                                           "display inode blocks. This action "
-                                           "requires an index and offset to "
-                                           "be specified using --index and "
-                                           "--offset options.")
+                                          "display inode blocks. This action "
+                                          "requires an index and offset to "
+                                          "be specified using --index and "
+                                          "--offset options."),
+        'scandir': ActionGroup.action(__action_scandir,
+                                      "list directory entries. This action "
+                                      "accepts a path specified with --path.")
     })

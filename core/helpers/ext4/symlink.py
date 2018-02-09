@@ -42,8 +42,8 @@ class Ext4Symlink(Ext4File):
     ##
     ## @brief      Constructs the object.
     ##
-    ## @param      inode  The inode
+    ## @param      entry  The directory entry
     ##
-    def __init__(self, fs, bf, inode):
-        super(Ext4Symlink, self).__init__(fs, bf, inode)
+    def __init__(self, fs, bf, entry):
+        super(Ext4Symlink, self).__init__(fs, bf, entry)
 

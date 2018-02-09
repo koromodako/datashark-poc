@@ -30,7 +30,6 @@ from utils.wrapper import lazy_getter
 from utils.logging import get_logger
 from helpers.ext4.tree import Ext4Tree
 from helpers.ext4.block_map import Ext4BlockMap
-from helpers.ext4.constants import Ext4FileType
 from helpers.ext4.constants import Ext4InodeFlag
 # =============================================================================
 #  GLOBALS / CONFIG
@@ -55,7 +54,7 @@ class Ext4InodeReader(object):
         self._fs_blk_sz = fs.block_size()
         self._fs_inline_data = fs.inline_data()
         self._fs_use_extents = fs.use_extents()
-        self._i_type = inode.ftype()
+        self._i_islink = inode.islink()
         self._i_size = inode.size()
         self._i_block = inode.block()
         self._i_inline = inode.flags(Ext4InodeFlag.EXT4_INLINE_DATA_FL)
@@ -97,7 +96,7 @@ class Ext4InodeReader(object):
     ##
     @trace()
     def blocks(self):
-        if self._i_type == Ext4FileType.SYMLINK and self._i_size < 60:
+        if self._i_islink and self._i_size < 60:
             yield self._iblock()
 
         elif self._fs_inline_data and self._i_inline:
@@ -126,7 +125,7 @@ class Ext4InodeReader(object):
     ##
     @trace()
     def block(self, f_blk_idx):
-        if self._i_type == Ext4FileType.SYMLINK and self._i_size < 60:
+        if self._i_islink and self._i_size < 60:
 
             if f_blk_idx > 0:
                 LGR.warn("block index is out-of-bounds. (inline symlink)")
