@@ -44,6 +44,7 @@
 from pathlib import Path
 from fnmatch import fnmatch
 from utils.logging import todo
+from utils.wrapper import trace
 from utils.logging import get_logger
 from helpers.ext4.symlink import Ext4Symlink
 from helpers.ext4.regfile import Ext4RegularFile
@@ -67,6 +68,7 @@ class Ext4FSExplorer(object):
     ## @param      fs    The file system
     ## @param      bf    { parameter_description }
     ##
+    @trace()
     def __init__(self, fs, bf):
         super(Ext4FSExplorer, self).__init__()
         self._fs = fs
@@ -74,6 +76,7 @@ class Ext4FSExplorer(object):
     ##
     ## @brief      Returns a generator which yields root entries
     ##
+    @trace()
     def _root_entries_generator(self):
         inode_reader = Ext4InodeReader(self._fs, self._bf, self._fs.inode(2))
         return Ext4Directory.parse_entries(self._fs, inode_reader, {})
@@ -83,6 +86,7 @@ class Ext4FSExplorer(object):
     ## @param      parent  The parent
     ## @param      name    The name
     ##
+    @trace()
     def _find_dirent(self, parent_dirent, name):
         if parent_dirent is None:
             entries_generator = self._root_entries_generator()
@@ -102,6 +106,7 @@ class Ext4FSExplorer(object):
     ##
     ## @param      path  The path
     ##
+    @trace()
     def _find_top(self, path):
         p = Path(path)
         if not p.is_absolute():
@@ -109,7 +114,7 @@ class Ext4FSExplorer(object):
             return None
 
         dirent = None
-        parts = p.parts
+        parts = p.parts[1:]
         while len(parts) > 0:
             part = parts[0]
 
@@ -127,6 +132,7 @@ class Ext4FSExplorer(object):
     ## @param      self               The object
     ## @param      entries_generator  The entries generator
     ##
+    @trace()
     def _sort_entries(self, entries_generator):
         dirs, nondirs = [], []
 
@@ -145,6 +151,7 @@ class Ext4FSExplorer(object):
     ## @param      topdown      The topdown
     ## @param      followlinks  The followlinks
     ##
+    @trace()
     def _walk(self, path, topd, dirent_only, topdown, followlinks):
         root = path.joinpath(topd.fname())
 
@@ -175,6 +182,7 @@ class Ext4FSExplorer(object):
     ##
     ## @param      path  The path
     ##
+    @trace()
     def scandir(self, path=ROOT, dirent_only=True):
         if path == ROOT:
             for entry in self._root_entries_generator():
@@ -192,6 +200,7 @@ class Ext4FSExplorer(object):
     ##
     ## @param      path  The path
     ##
+    @trace()
     def walk(self, path=ROOT, dirent_only=True, topdown=True, followlinks=False):
         if path == ROOT:
             dirs, nondirs = self._sort_entries(self._root_entries_generator())

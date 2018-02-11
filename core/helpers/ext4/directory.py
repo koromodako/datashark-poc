@@ -90,10 +90,10 @@ class Ext4Directory(Ext4File):
     ##
     def __entries(self):
         extra = {}
-        for dirent in self.parse_entries(self._fs, self._reader, extra):
+        for dirent in self.parse_entries(self._fs, self.reader(), extra):
             yield dirent
 
-        self.set_slack_space(extra['slack_space'])
+        self._set_slack_space(extra['slack_space'])
     ##
     ## @brief      Yields entries as Ext4File subclasses instances
     ##

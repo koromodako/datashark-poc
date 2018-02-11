@@ -34,19 +34,15 @@ LGR = get_logger(__name__)
 # =============================================================================
 #  FUNCTIONS
 # =============================================================================
-
-
+##
+## @brief      Wraps a class method with this function to turn it into a lazy
+##             getter.
+##             Class member value will be computed on the first call to this
+##             function and will never be computed again after that.
+##
+## @param      cls_member_name  Name of the member to use
+##
 def lazy_getter(cls_member_name):
-    """
-    @brief      Wraps a class method with this function to turn it into a lazy
-                getter.
-                Class member value will be computed on the first call to this
-                function and will never be computed again after that.
-
-    @param      cls_member_name  Name of the member to use
-
-    @return     wrapper
-    """
     def wrapper(f):
         @wraps(f)
         def wrapped(self, *args, **kwds):
@@ -58,96 +54,94 @@ def lazy_getter(cls_member_name):
         return wrapped
 
     return wrapper
-
-
-def __in(called, *args, **kwds):
-    """
-    @brief      Traces when a function is entered
-
-    @param      called  Called function's complete name
-    @param      args    Arguments passed to the function
-    @param      kwds    Keyword args passed to the function
-    """
-    LGR.debug("I> {}(...)".format(called))
-
-
-def __out(called, ret):
-    """
-    @brief      Traces when a function is left
-
-    @param      called  Called function's complete name
-    @param      ret     Called function's return value
-    """
-    LGR.debug("O> {}(...) => ...".format(called))
-
-
-def trace():
-    """
-    @brief      Wraps a method with this function to trace when it's called
-
-    @return     wrapper
-    """
+##
+## @brief      Traces when a function is entered
+##
+## @param      called       Called function's complete name
+## @param      args         Arguments passed to the function
+## @param      kwargs       Keyword args passed to the function
+## @param      trace_input  The trace input
+##
+def __in(called, args, kwargs, trace_input):
+    input_args = '...'
+    if trace_input:
+        input_args = "args={},kwargs={}".format(args, kwargs)
+    LGR.debug("I> {}({})".format(called, input_args))
+##
+## @brief      Traces when a function is left
+##
+## @param      called        Called function's complete name
+## @param      ret           Called function's return value
+## @param      trace_output  The trace output
+##
+def __out(called, ret, trace_output):
+    LGR.debug("O> {}(...) => {}".format(called, ret if trace_output else '...'))
+##
+## @brief      Wraps a method with this function to trace when it's called
+##
+## @param      trace_input   The trace input
+## @param      trace_output  The trace output
+##
+def trace(trace_input=False, trace_output=False):
     def wrapper(f):
         @wraps(f)
         def wrapped(self, *args, **kwds):
             cls_name = type(self).__name__
             method_name = f.__name__
             called = "{}.{}".format(cls_name, method_name)
-            __in(called, args, kwds)
+            __in(called, args, kwds, trace_input)
 
             ret = f(self, *args, **kwds)
 
-            __out(called, ret)
+            __out(called, ret, trace_output)
             return ret
 
         return wrapped
 
     return wrapper
-
-
-def trace_static(cls_name):
-    """
-    @brief      Wraps a static method with this function to trace when it's
-                called
-
-    @param      cls_name  Class' name
-
-    @return     wrapper
-    """
+##
+## @brief      Wraps a static method with this function to trace when it's
+##             called
+##
+## @param      cls_name      Class' name
+## @param      trace_input   The trace input
+## @param      trace_output  The trace output
+##
+def trace_static(cls_name, trace_input=False, trace_output=False):
     def wrapper(f):
         @wraps(f)
         def wrapped(*args, **kwds):
             called = "{}.{}".format(cls_name, f.__name__)
-            __in(called, args, kwds)
+            __in(called, args, kwds, trace_input)
 
             ret = f(*args, **kwds)
 
-            __out(called, ret)
+            __out(called, ret, trace_output)
             return ret
 
         return wrapped
 
     return wrapper
-
-
-def trace_func(module_name):
-    """
-    @brief      Wraps a module function with this function to trace when it's
-                called
-
-    @param      module_name  The module name
-
-    @return     wrapper
-    """
+##
+## @brief      Wraps a module function with this function to trace when it's
+##             called
+##
+## @param      module_name   The module name
+## @param      trace_input   The trace input
+## @param      trace_output  The trace output
+##
+## @return     { description_of_the_return_value }
+##
+def trace_func(module_name, trace_input=False, trace_output=False):
     def wrapper(f):
         @wraps(f)
         def wrapped(*args, **kwds):
             called = "{}.{}".format(module_name, f.__name__)
-            __in(called, args, kwds)
+            __in(called, args, kwds, trace_input)
 
             ret = f(*args, **kwds)
 
-            __out(called, ret)
+            __out(called, ret, trace_output)
             return ret
 
         return wrapped
