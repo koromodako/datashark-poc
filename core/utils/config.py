@@ -1,7 +1,7 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #    file: config.py
 #    date: 2017-11-12
-#  author: paul.dautry
+#  author: koromodako
 # purpose:
 #    Utils program configuration
 # license:

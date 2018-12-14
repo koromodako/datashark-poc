@@ -1,13 +1,13 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #    file: dissection.py
 #    date: 2017-11-12
-#  author: paul.dautry
+#  author: koromodako
 # purpose:
 #
 #       http://www.iana.org/assignments/media-types/media-types.xhtml
 # license:
 #   Datashark <progdesc>
-#   Copyright (C) 2017 paul.dautry
+#   Copyright (C) 2017 koromodako
 #
 #   This program is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by

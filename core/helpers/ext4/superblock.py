@@ -1,12 +1,12 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #     file: ext4_super_block.py
 #     date: 2018-01-07
-#   author: paul.dautry
+#   author: koromodako
 #  purpose:
 #
 #  license:
 #    Datashark <progdesc>
-#    Copyright (C) 2018 paul.dautry
+#    Copyright (C) 2018 koromodako
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by

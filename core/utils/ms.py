@@ -1,7 +1,7 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #    file: ms.py
 #    date: 2017-11-12
-#  author: paul.dautry
+#  author: koromodako
 # purpose:
 #    Microsoft Windows helpers
 # license:

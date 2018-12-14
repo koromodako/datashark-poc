@@ -1,12 +1,12 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #     file: vdi_extractor.py
 #     date: 2017-12-08
-#   author: paul.dautry
+#   author: koromodako
 #  purpose:
 #
 #  license:
 #    Datashark <progdesc>
-#    Copyright (C) 2017 paul.dautry
+#    Copyright (C) 2017 koromodako
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
